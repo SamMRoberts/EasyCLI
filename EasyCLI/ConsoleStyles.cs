@@ -39,5 +39,13 @@ namespace EasyCLI
         public static readonly ConsoleStyle Heading = new(1, 36);     // bold + cyan
         public static readonly ConsoleStyle Info = new(36);           // cyan
         public static readonly ConsoleStyle Hint = new(90);           // bright black
+
+    // Helper functions mirroring examples in the checklist
+    public static string Red(string s) => new ConsoleStyle(31).Apply(s);
+    public static string BoldText(string s) => new ConsoleStyle(1).Apply(s);
+
+    // Truecolor helpers
+    public static ConsoleStyle TrueColor(int r, int g, int b) => new(38, 2, r, g, b);
+    public static ConsoleStyle TrueBg(int r, int g, int b) => new(48, 2, r, g, b);
     }
 }
