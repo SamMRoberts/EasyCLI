@@ -10,9 +10,11 @@ namespace EasyCLI.Prompts
     public sealed class ChoicePrompt<T> : BasePrompt<T>
     {
         private readonly IReadOnlyList<Choice<T>> _choices;
-    private bool _renderedChoices = false;
-    private int _page = 0;
+        private bool _renderedChoices = false;
+        private int _page = 0;
         private readonly IKeyReader? _keyReader;
+    private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
+    private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
         {
@@ -27,7 +29,7 @@ namespace EasyCLI.Prompts
             {
                 if (_options.EnablePaging && _choices.Count > _options.PageSize)
                 {
-                    RenderPage();
+                    RenderPageFiltered("");
                 }
                 else
                 {
@@ -38,115 +40,161 @@ namespace EasyCLI.Prompts
             base.RenderPrompt();
         }
 
-        private void RenderPage()
-        {
-            var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
-            var start = _page * _options.PageSize;
-            var endExclusive = Math.Min(start + _options.PageSize, _choices.Count);
-            RenderList(_choices.Skip(start).Take(endExclusive - start).ToList(), start);
-            _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
-        }
-
         private void RenderList(IReadOnlyList<Choice<T>> list, int offset=0)
         {
-            for (int i = 0; i < list.Count; i++)
-                _writer.WriteLine($"  {offset + i + 1}) {list[i].Label}");
+            foreach (var (item, idx) in list.Select((c,i)=>(c,i)))
+                _writer.WriteLine($"  {offset + idx + 1}) {item.Label}");
+            _lastRenderLines = list.Count; // update count (no footer)
         }
+
+        private IReadOnlyList<Choice<T>> ApplyFilter(string filter)
+        {
+            if (!_options.EnableFiltering || string.IsNullOrEmpty(filter)) return _choices;
+            var comparison = StringComparison.OrdinalIgnoreCase;
+            return _options.FilterMatchStartsWith
+                ? _choices.Where(c => c.Label.StartsWith(filter, comparison)).ToList()
+                : _choices.Where(c => c.Label.IndexOf(filter, comparison) >= 0).ToList();
+        }
+
+        private void RenderPageFiltered(string filter)
+        {
+            var list = ApplyFilter(filter);
+            var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+            if (_page >= totalPages && totalPages > 0) _page = 0;
+            var start = _page * _options.PageSize;
+            var slice = list.Skip(start).Take(_options.PageSize).ToList();
+            RenderList(slice, start);
+            if (_options.EnablePaging && totalPages > 1)
+            {
+                _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
+                _lastRenderLines += 1; // include footer line
+            }
+            _renderedChoices = true;
+        }
+
+        // TODO: Implement clearing of previous render
+        private void ClearPreviousRender() { /* no-op in new save/restore model */ }
 
         protected override bool TryConvert(string raw, out T value)
         {
-            // interactive key-based filter path: if keyReader provided and filtering enabled, bypass raw line parsing with interactive session.
-            if (_keyReader != null && _options.EnableFiltering)
-            {
-                return InteractiveFilter(out value);
-            }
-
-            // paging navigation
-            if (_options.EnablePaging && _choices.Count > _options.PageSize)
-            {
-                if (raw.Equals("n", StringComparison.OrdinalIgnoreCase) || raw.Equals("next", StringComparison.OrdinalIgnoreCase))
-                {
-                    var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
-                    _page = (_page + 1) % totalPages;
-                    RenderPage();
-                    value = default!; return false; // continue loop
-                }
-                if (raw.Equals("p", StringComparison.OrdinalIgnoreCase) || raw.Equals("prev", StringComparison.OrdinalIgnoreCase))
-                {
-                    var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
-                    _page = (_page - 1 + totalPages) % totalPages;
-                    RenderPage();
-                    value = default!; return false;
-                }
-            }
-
-            // index
             if (int.TryParse(raw, out var idx))
             {
                 if (idx >= 1 && idx <= _choices.Count)
                 {
-                    value = _choices[idx - 1].Value;
-                    return true;
+                    value = _choices[idx - 1].Value; return true;
                 }
             }
-            // label match (case-insensitive, startswith)
             var match = _choices.FirstOrDefault(c => c.Label.Equals(raw, StringComparison.OrdinalIgnoreCase))
                         ?? _choices.FirstOrDefault(c => c.Label.StartsWith(raw, StringComparison.OrdinalIgnoreCase));
             if (match != null)
             {
-                value = match.Value;
-                return true;
+                value = match.Value; return true;
             }
-            value = default!;
-            return false;
+            value = default!; return false;
         }
 
-        private bool InteractiveFilter(out T value)
+        public new T Get()
         {
-            // Basic incremental filtering: user types letters; Enter selects if unique or numeric index; ESC clears filter; Backspace edits.
-            var filter = string.Empty;
-            var current = _choices;
+            if (_keyReader != null)
+                return InteractiveKeyLoop();
+            // fallback line-based
             while (true)
             {
-                Console.Write($"\rFilter: {filter.PadRight(Console.WindowWidth - 8)}\rFilter: {filter}");
-                var key = _keyReader!.ReadKey(true);
-                if (key.Key == ConsoleKey.Enter)
+                RenderPrompt();
+                var raw = _reader.ReadLine();
+                if (_options.EnableEscapeCancel && raw == "\u001b") return HandleCancel();
+                if (string.IsNullOrEmpty(raw) && Default is not null) return Default!;
+                if (TryConvert(raw, out var converted)) return converted;
+                WriteError($"Invalid value: '{raw}'");
+            }
+        }
+
+        private T InteractiveKeyLoop()
+        {
+            string filter = string.Empty;
+            while (true)
+            {
+                // Save cursor position once; thereafter restore + clear region.
+                if (!_savedCursor)
                 {
-                    if (int.TryParse(filter, out var idx) && idx >=1 && idx <= _choices.Count)
-                    {
-                        value = _choices[idx-1].Value; return true;
-                    }
-                    if (current.Count == 1)
-                    {
-                        value = current[0].Value; return true;
-                    }
-                    continue; // need disambiguation
+                    Console.Write("\u001b[s"); // save cursor
+                    _savedCursor = true;
+                }
+                else
+                {
+                    Console.Write("\u001b[u\u001b[J"); // restore & clear to end of screen
+                }
+
+                // Re-render list (always fresh block)
+                _renderedChoices = false;
+                if (_options.EnablePaging && _choices.Count > _options.PageSize)
+                    RenderPageFiltered(filter);
+                else
+                {
+                    var listCurrent = ApplyFilter(filter);
+                    RenderList(listCurrent);
+                    _renderedChoices = true;
+                }
+                // Prompt line
+                RenderPrompt();
+                if (_options.EnableFiltering)
+                {
+                    Console.Write($"Filter: {filter}");
+                }
+
+                var key = _keyReader!.ReadKey(true);
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    if (_options.EnableEscapeCancel)
+                        return HandleCancel();
+                    filter = string.Empty; _page = 0; continue;
+                }
+                if (key.Key == ConsoleKey.N && _options.EnablePaging && _choices.Count > _options.PageSize)
+                {
+                    var list = ApplyFilter(filter);
+                    var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+                    if (totalPages > 1)
+                    { _page = (_page + 1) % totalPages; }
+                    continue;
+                }
+                if (key.Key == ConsoleKey.P && _options.EnablePaging && _choices.Count > _options.PageSize)
+                {
+                    var list = ApplyFilter(filter);
+                    var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+                    if (totalPages > 1)
+                    { _page = (_page - 1 + totalPages) % totalPages; }
+                    continue;
                 }
                 if (key.Key == ConsoleKey.Backspace)
                 {
-                    if (filter.Length>0) filter = filter[..^1];
+                    if (filter.Length > 0) { filter = filter[..^1]; _page = 0; }
+                    continue;
                 }
-                else if (key.Key == ConsoleKey.Escape)
+                if (key.Key == ConsoleKey.Enter)
                 {
-                    filter = string.Empty;
+                    var list = ApplyFilter(filter);
+                    if (string.IsNullOrEmpty(filter) && Default is not null) return Default!;
+                    if (int.TryParse(filter, out var idx) && idx >= 1 && idx <= _choices.Count) return _choices[idx - 1].Value;
+                    if (list.Count == 1) return list[0].Value;
+                    var match = _choices.FirstOrDefault(c => c.Label.Equals(filter, StringComparison.OrdinalIgnoreCase))
+                               ?? _choices.FirstOrDefault(c => c.Label.StartsWith(filter, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) return match.Value;
+                    WriteError($"Invalid value: '{filter}'");
+                    filter = string.Empty; _page = 0; continue;
                 }
-                else if (!char.IsControl(key.KeyChar))
+                if (!char.IsControl(key.KeyChar))
                 {
-                    filter += key.KeyChar;
+                    if (_options.EnableFiltering)
+                    { filter += key.KeyChar; _page = 0; continue; }
+                    else
+                    {
+                        if (char.IsDigit(key.KeyChar))
+                        {
+                            var d = key.KeyChar - '0';
+                            if (d >= 1 && d <= _choices.Count) return _choices[d - 1].Value;
+                        }
+                    }
                 }
-                var comparison = StringComparison.OrdinalIgnoreCase;
-                current = _options.FilterMatchStartsWith
-                    ? _choices.Where(c => c.Label.StartsWith(filter, comparison)).ToList()
-                    : _choices.Where(c => c.Label.IndexOf(filter, comparison) >= 0).ToList();
-                // redraw list below filter line
-                // (simplistic: no clearing of prior lines; acceptable for initial implementation)
-                if (filter.Length==0) current = _choices;
-                // show top page of filtered results if paging still enabled
-                // truncated to PageSize
-                var display = current;
-                if (_options.EnablePaging && current.Count > _options.PageSize)
-                    display = current.Take(_options.PageSize).ToList();
-                RenderList(display);
             }
         }
     }
