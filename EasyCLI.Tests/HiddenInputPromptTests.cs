@@ -59,5 +59,18 @@ namespace EasyCLI.Tests
             Assert.Equal("fallback", v);
             Assert.Equal('*', hidden.LastMask);
         }
+
+        private sealed class EscHidden : IHiddenInputSource
+        {
+            public string ReadHidden(char? mask = null) => "\u001b"; // simulate ESC
+        }
+
+        [Fact]
+        public void HiddenInputPrompt_Cancel_ReturnsDefault()
+        {
+            var prompt = new HiddenInputPrompt("Password", new DummyWriter(), new DummyReader(), hiddenSource: new EscHidden(), @default: "fallback", mask: '*');
+            var v = prompt.Get();
+            Assert.Equal("fallback", v);
+        }
     }
 }

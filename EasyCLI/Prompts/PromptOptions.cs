@@ -13,5 +13,7 @@ namespace EasyCLI.Prompts
         public ConsoleStyle? DefaultStyle { get; set; } = ConsoleStyles.Hint;
         public ConsoleStyle? ErrorStyle { get; set; } = ConsoleStyles.Error;
         public bool EchoInput { get; set; } = true; // future secure input scenario could set false
+    public bool EnableEscapeCancel { get; set; } = true;
+    public PromptCancelBehavior CancelBehavior { get; set; } = PromptCancelBehavior.ReturnDefault;
     }
 }

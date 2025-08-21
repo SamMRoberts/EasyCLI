@@ -1,3 +1,5 @@
+using System;
+
 namespace EasyCLI.Prompts
 {
     /// <summary>
@@ -27,6 +29,10 @@ namespace EasyCLI.Prompts
             {
                 RenderPrompt();
                 var captured = _hiddenSource.ReadHidden(_mask);
+                if (_options.EnableEscapeCancel && captured == "\u001b")
+                {
+                    return HandleCancel();
+                }
                 if (string.IsNullOrEmpty(captured) && Default is not null)
                     return Default;
                 return captured;

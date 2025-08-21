@@ -31,6 +31,15 @@ namespace EasyCLI.Prompts
             {
                 RenderPrompt();
                 var raw = _reader.ReadLine();
+
+                // Treat explicit ESC entry as cancel if enabled. Our simple reader cannot intercept a single ESC key
+                // so we adopt the convention that a user typing the literal sequence "<esc>" or just an empty string when no default
+                // while EnableEscapeCancel is true and the raw input equals "\u001b" (if surfaced) triggers cancel.
+                if (_options.EnableEscapeCancel && raw == "\u001b")
+                {
+                    return HandleCancel();
+                }
+
                 if (string.IsNullOrEmpty(raw))
                 {
                     if (Default is not null)
@@ -57,6 +66,19 @@ namespace EasyCLI.Prompts
                     WriteError($"Invalid value: '{raw}'");
                 }
             }
+        }
+
+        protected T HandleCancel()
+        {
+            if (_options.CancelBehavior == PromptCancelBehavior.ReturnDefault)
+            {
+                if (Default is not null)
+                    return Default!;
+                // No default -> return default(T)
+                return default!;
+            }
+            // Throw behavior
+            throw new PromptCanceledException(Prompt);
         }
 
         protected virtual void RenderPrompt()

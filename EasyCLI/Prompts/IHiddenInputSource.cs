@@ -22,6 +22,10 @@ namespace EasyCLI.Prompts
             while (true)
             {
                 var key = Console.ReadKey(intercept: true);
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    return "\u001b"; // sentinel for cancel
+                }
                 if (key.Key == ConsoleKey.Enter)
                 {
                     Console.WriteLine();

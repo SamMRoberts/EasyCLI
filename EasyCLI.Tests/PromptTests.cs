@@ -76,5 +76,37 @@ namespace EasyCLI.Tests
             Assert.Equal(50, val);
             Assert.Contains("between 1 and 100", writer.Output);
         }
+
+        [Fact]
+        public void StringPrompt_Cancel_ReturnsDefault()
+        {
+            var reader = new FakeConsoleReader(new[] { "\u001b" });
+            var writer = new FakeConsoleWriter();
+            var opts = new PromptOptions { EnableEscapeCancel = true, CancelBehavior = PromptCancelBehavior.ReturnDefault };
+            var p = new StringPrompt("Name", writer, reader, options: opts, @default: "Fallback");
+            var val = p.Get();
+            Assert.Equal("Fallback", val);
+        }
+
+        [Fact]
+        public void StringPrompt_Cancel_NoDefault_ReturnsNull()
+        {
+            var reader = new FakeConsoleReader(new[] { "\u001b" });
+            var writer = new FakeConsoleWriter();
+            var opts = new PromptOptions { EnableEscapeCancel = true, CancelBehavior = PromptCancelBehavior.ReturnDefault };
+            var p = new StringPrompt("Name", writer, reader, options: opts);
+            var val = p.Get();
+            Assert.Null(val);
+        }
+
+        [Fact]
+        public void StringPrompt_Cancel_Throws_WhenConfigured()
+        {
+            var reader = new FakeConsoleReader(new[] { "\u001b" });
+            var writer = new FakeConsoleWriter();
+            var opts = new PromptOptions { EnableEscapeCancel = true, CancelBehavior = PromptCancelBehavior.Throw };
+            var p = new StringPrompt("Name", writer, reader, options: opts);
+            Assert.Throws<PromptCanceledException>(() => p.Get());
+        }
     }
 }
