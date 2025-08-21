@@ -1,4 +1,4 @@
-# EasyCLI
+# EasyCLI <img src="https://img.shields.io/github/actions/workflow/status/SamMRoberts/EasyCLI/ci.yml?branch=main" alt="CI"/>
 
 This is a .NET (C#) class library intended for building PowerShell Cmdlets and reusable CLI tooling. It includes a lightweight ANSI styling layer for console output.
 
@@ -53,4 +53,10 @@ For more details on authoring PowerShell Cmdlets in C#, see the official Microso
 
 ```sh
 dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj -v minimal
+```
+
+## Run the demo
+
+```sh
+dotnet run --project EasyCLI.Demo/EasyCLI.Demo.csproj
 ```
