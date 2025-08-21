@@ -1,6 +1,8 @@
 namespace EasyCLI
 {
-    // Predefined ANSI SGR styles for convenience.
+    /// <summary>
+    /// Predefined ANSI SGR styles for convenience.
+    /// </summary>
     public static class ConsoleStyles
     {
         // Effects
