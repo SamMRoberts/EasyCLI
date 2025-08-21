@@ -10,8 +10,8 @@ namespace EasyCLI.Prompts
     public sealed class ChoicePrompt<T> : BasePrompt<T>
     {
         private readonly IReadOnlyList<Choice<T>> _choices;
-    private bool _renderedChoices = false;
-    private int _page = 0;
+        private bool _renderedChoices = false;
+        private int _page = 0;
         private readonly IKeyReader? _keyReader;
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
@@ -47,7 +47,7 @@ namespace EasyCLI.Prompts
             _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
         }
 
-        private void RenderList(IReadOnlyList<Choice<T>> list, int offset=0)
+        private void RenderList(IReadOnlyList<Choice<T>> list, int offset = 0)
         {
             for (int i = 0; i < list.Count; i++)
                 _writer.WriteLine($"  {offset + i + 1}) {list[i].Label}");
@@ -112,9 +112,9 @@ namespace EasyCLI.Prompts
                 var key = _keyReader!.ReadKey(true);
                 if (key.Key == ConsoleKey.Enter)
                 {
-                    if (int.TryParse(filter, out var idx) && idx >=1 && idx <= _choices.Count)
+                    if (int.TryParse(filter, out var idx) && idx >= 1 && idx <= _choices.Count)
                     {
-                        value = _choices[idx-1].Value; return true;
+                        value = _choices[idx - 1].Value; return true;
                     }
                     if (current.Count == 1)
                     {
@@ -124,7 +124,7 @@ namespace EasyCLI.Prompts
                 }
                 if (key.Key == ConsoleKey.Backspace)
                 {
-                    if (filter.Length>0) filter = filter[..^1];
+                    if (filter.Length > 0) filter = filter[..^1];
                 }
                 else if (key.Key == ConsoleKey.Escape)
                 {
@@ -140,7 +140,7 @@ namespace EasyCLI.Prompts
                     : _choices.Where(c => c.Label.IndexOf(filter, comparison) >= 0).ToList();
                 // redraw list below filter line
                 // (simplistic: no clearing of prior lines; acceptable for initial implementation)
-                if (filter.Length==0) current = _choices;
+                if (filter.Length == 0) current = _choices;
                 // show top page of filtered results if paging still enabled
                 // truncated to PageSize
                 var display = current;

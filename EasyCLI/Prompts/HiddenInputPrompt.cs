@@ -9,7 +9,7 @@ namespace EasyCLI.Prompts
     {
         private readonly IHiddenInputSource? _hiddenSource;
         private readonly char? _mask;
-        public HiddenInputPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, IHiddenInputSource? hiddenSource = null, PromptOptions? options = null, string? @default = null, char? mask='*')
+        public HiddenInputPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, IHiddenInputSource? hiddenSource = null, PromptOptions? options = null, string? @default = null, char? mask = '*')
             : base(prompt, writer, reader, options, @default)
         {
             _hiddenSource = hiddenSource;
