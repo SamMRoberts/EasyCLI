@@ -18,3 +18,4 @@
             ProjectUri = 'https://github.com/SamMRoberts/EasyCLI'
         }
     }
+}
