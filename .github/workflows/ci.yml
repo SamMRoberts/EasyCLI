@@ -35,4 +35,4 @@ jobs:
         run: dotnet build EasyCLI.Demo/EasyCLI.Demo.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj --configuration Release --no-build --verbosity minimal
+        run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj --configuration Release --no-restore --verbosity minimal
