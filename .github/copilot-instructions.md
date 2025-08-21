@@ -7,13 +7,17 @@
   - Write(string message, ConsoleStyle style)
   - WriteLine(string message, ConsoleStyle style)
   - Predefine styles: Success, Warning, Error, Heading, Dim, etc.
-- [ ] Implement ANSI styling
+- [x] Implement ANSI styling
   - Use SGR codes: 30–37/90–97 (fg), 40–47/100–107 (bg), 1 (bold), 3 (italic), 4 (underline), 2 (dim), 0 (reset).
   - Example helpers:
     - string Red(string s) => $"\u001b[31m{s}\u001b[0m";
     - string Bold(string s) => $"\u001b[1m{s}\u001b[0m";
     - For truecolor: $"\u001b[38;2;R;G;Bm{text}\u001b[0m"
   - Always reset (…\u001b[0m) after each styled segment.
+  - **Optional next steps**
+    - [ ] Implement a ConsoleWriter that honors NO_COLOR/FORCE_COLOR and output redirection.
+    - [ ] Add a small demo method that prints a palette using the helpers.
+    - [ ] Provide unit tests to confirm ANSI sequences and reset behavior.
 - [ ] Make it robust
   - Detect color support (disable if Console.IsOutputRedirected or NO_COLOR is set).
   - Honor NO_COLOR and FORCE_COLOR environment variables.

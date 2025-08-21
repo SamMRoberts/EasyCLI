@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+          cache: true
+
+      - name: Restore (Library)
+        run: dotnet restore EasyCLI/EasyCLI.csproj
+
+      - name: Restore (Tests)
+        run: dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj
+
+      - name: Restore (Demo)
+        run: dotnet restore EasyCLI.Demo/EasyCLI.Demo.csproj
+
+      - name: Build (Library)
+        run: dotnet build EasyCLI/EasyCLI.csproj --configuration Release --no-restore
+
+      - name: Build (Demo)
+        run: dotnet build EasyCLI.Demo/EasyCLI.Demo.csproj --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj --configuration Release --no-build --verbosity minimal

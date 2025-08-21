@@ -5,12 +5,6 @@ namespace EasyCLI
     /// <summary>
     /// Represents an ANSI SGR style (e.g., bold, colors). Immutable.
     /// </summary>
-    /// Represents an ANSI SGR style (e.g., bold, colors). Immutable.
-    /// </summary>
-    /// Represents an ANSI SGR style (e.g., bold, colors). Immutable.
-    /// </summary>
-    /// Represents an ANSI SGR style (e.g., bold, colors). Immutable.
-    /// </summary>
     public readonly struct ConsoleStyle
     {
         public ConsoleStyle(params int[] codes)
