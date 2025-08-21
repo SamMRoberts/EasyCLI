@@ -4,6 +4,22 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+  <Description>EasyCLI - ANSI styling &amp; formatting helpers plus PowerShell cmdlet utilities.</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>EasyCLI</PackageId>
+    <Authors>SamMRoberts</Authors>
+    <Company>SamMRoberts</Company>
+    <RepositoryUrl>https://github.com/SamMRoberts/EasyCLI</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>cli powershell ansi console formatting</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="EasyCLI.psd1" Pack="true" PackagePath="" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

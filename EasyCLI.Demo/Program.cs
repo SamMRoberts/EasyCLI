@@ -26,8 +26,21 @@ w.WriteTableSimple(
 	headerStyle: ConsoleStyles.Bold,
 	cellStyle: null);
 
-var theme = new ConsoleTheme { Success = new ConsoleStyle(92), Heading = new ConsoleStyle(95) };
-w.WriteHeadingBlock("Themed", theme.Heading, ConsoleStyles.Hint);
-w.WriteSuccessLine("All good", theme);
 
-w.WriteTitledBox(new[] { "Boxed line 1", "Boxed line 2" }, title: "Box", borderStyle: ConsoleStyles.Info, titleStyle: ConsoleStyles.Heading);
+// Demo all built-in theme presets
+var themes = new[] {
+	("Dark", ConsoleThemes.Dark),
+	("Light", ConsoleThemes.Light),
+	("HighContrast", ConsoleThemes.HighContrast)
+};
+foreach (var (label, theme) in themes)
+{
+	w.WriteTitleRule($"Theme: {label}", filler: '-', width: 0, titleStyle: theme.Heading, fillerStyle: theme.Hint);
+	w.WriteSuccessLine("Success message", theme);
+	w.WriteWarningLine("Warning message", theme);
+	w.WriteErrorLine("Error message", theme);
+	w.WriteInfoLine("Info message", theme);
+	w.WriteHintLine("Hint message", theme);
+	w.WriteTitledBox(new[] { $"This is a titled box in {label} theme." }, title: $"{label} Box", borderStyle: theme.Info, titleStyle: theme.Heading);
+	w.WriteLine("");
+}

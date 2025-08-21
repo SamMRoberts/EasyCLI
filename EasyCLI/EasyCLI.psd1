@@ -1,0 +1,21 @@
+@{
+    RootModule = 'EasyCLI.dll'
+    ModuleVersion = '0.1.0'
+    GUID = '00000000-0000-4000-8000-000000000001'
+    Author = 'SamMRoberts'
+    CompanyName = 'SamMRoberts'
+    Copyright = '(c) 2025 Sam'
+    Description = 'EasyCLI PowerShell module exposing ANSI styling helpers and Show-EasyMessage cmdlet.'
+    PowerShellVersion = '7.0'
+    FunctionsToExport = @()
+    CmdletsToExport = @('Show-EasyMessage')
+    AliasesToExport = @()
+    FormatsToProcess = @()
+    PrivateData = @{
+        PSData = @{
+            Tags = @('cli','ansi','formatting','EasyCLI')
+            LicenseUri = 'https://opensource.org/licenses/MIT'
+            ProjectUri = 'https://github.com/SamMRoberts/EasyCLI'
+        }
+    }
+}
