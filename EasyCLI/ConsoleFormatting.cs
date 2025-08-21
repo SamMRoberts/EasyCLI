@@ -27,6 +27,16 @@ namespace EasyCLI
             return new string(ch, width);
         }
 
+            public static string TitleRule(string title, char filler = '─', int width = 0, int gap = 1)
+            {
+                title ??= string.Empty;
+                if (width <= 0) width = GetConsoleWidthOr(80);
+                var g = new string(' ', Math.Max(0, gap));
+                var prefix = string.IsNullOrEmpty(title) ? string.Empty : title + g;
+                int remaining = Math.Max(0, width - prefix.Length);
+                return prefix + new string(filler, remaining);
+            }
+
         public static string HeadingUnderline(string text, char underlineChar = '─')
         {
             if (text == null) text = string.Empty;
@@ -252,6 +262,22 @@ namespace EasyCLI
         {
             var line = ConsoleFormatting.Rule(ch, width);
             if (style.HasValue) w.WriteLine(line, style.Value); else w.WriteLine(line);
+        }
+
+        public static void WriteTitleRule(this IConsoleWriter w, string title, int width = 0, char filler = '─', int gap = 1, ConsoleStyle? titleStyle = null, ConsoleStyle? fillerStyle = null)
+        {
+            var line = ConsoleFormatting.TitleRule(title, filler, width, gap);
+            if (string.IsNullOrEmpty(title))
+            {
+                if (fillerStyle.HasValue) w.WriteLine(line, fillerStyle.Value); else w.WriteLine(line);
+                return;
+            }
+            // Style title and filler separately if provided
+            var g = new string(' ', Math.Max(0, gap));
+            var prefix = title + g;
+            var suffix = line.Substring(prefix.Length);
+            if (titleStyle.HasValue) w.Write(prefix, titleStyle.Value); else w.Write(prefix);
+            if (fillerStyle.HasValue) w.WriteLine(suffix, fillerStyle.Value); else w.WriteLine(suffix);
         }
 
         public static void WriteHeadingBlock(this IConsoleWriter w, string text, ConsoleStyle? titleStyle = null, ConsoleStyle? underlineStyle = null, char underlineChar = '─')

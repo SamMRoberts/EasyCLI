@@ -3,8 +3,7 @@ using static EasyCLI.ConsoleFormatting;
 
 var w = new ConsoleWriter();
 
-w.WriteHeadingLine("EasyCLI Demo");
-w.WriteRule(width: 0, style: ConsoleStyles.Hint);
+w.WriteTitleRule("EasyCLI Demo", width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
 
 var lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur quis orci vitae leo consequat.";
 w.WriteWrapped(lorem, width: 0, indent: 2, style: ConsoleStyles.Dim);
