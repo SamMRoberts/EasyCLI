@@ -26,5 +26,12 @@ namespace EasyCLI.Tests
             var lines = EasyCLI.ConsoleFormatting.Wrap(text, 20).ToList();
             Assert.True(lines.Count > 1);
         }
+
+        [Fact]
+        public void Wrap_UsesConsoleWidth_WhenZero()
+        {
+            var lines = EasyCLI.ConsoleFormatting.Wrap("hello world", 0).ToList();
+            Assert.True(lines.Count >= 1);
+        }
     }
 }

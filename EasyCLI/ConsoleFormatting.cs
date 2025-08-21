@@ -9,9 +9,21 @@ namespace EasyCLI
     /// </summary>
     public static class ConsoleFormatting
     {
+        private static int GetConsoleWidthOr(int fallback)
+        {
+            try
+            {
+                var w = Console.WindowWidth;
+                return w > 0 ? w : fallback;
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
         public static string Rule(char ch = '─', int width = 80)
         {
-            if (width <= 0) width = 80;
+            if (width <= 0) width = GetConsoleWidthOr(80);
             return new string(ch, width);
         }
 
@@ -34,6 +46,7 @@ namespace EasyCLI
         public static IEnumerable<string> Wrap(string text, int width)
         {
             if (string.IsNullOrEmpty(text)) yield break;
+            if (width <= 0) width = GetConsoleWidthOr(80);
             if (width <= 10) { yield return text; yield break; }
 
             var words = text.Replace("\r\n", "\n").Replace('\r', '\n').Split(new[] { ' ', '\n' }, StringSplitOptions.None);
@@ -83,7 +96,9 @@ namespace EasyCLI
             }
         }
 
-        public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1)
+    public enum CellAlign { Left, Center, Right }
+
+    public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1, int maxWidth = 0, IReadOnlyList<CellAlign>? alignments = null)
         {
             headers ??= Array.Empty<string>();
             var cols = headers.Count;
@@ -105,11 +120,71 @@ namespace EasyCLI
                 widths[c] = w + (padding * 2);
             }
 
-            string PadCell(string? s, int width)
+            // Limit total width to available console width if requested
+            int avail = maxWidth > 0 ? maxWidth : GetConsoleWidthOr(0);
+            if (avail > 0 && cols > 0)
+            {
+                // Border line width calculation: sum(widths) + (cols + 1) for '+' characters
+                int borderWidth = (cols + 1);
+                for (int c = 0; c < cols; c++) borderWidth += widths[c];
+
+                if (borderWidth > avail)
+                {
+                    int reduce = borderWidth - avail;
+                    int minCol = Math.Max(3, padding * 2 + 1); // keep at least one char plus padding
+                    bool reduced;
+                    int guard = 10000;
+                    do
+                    {
+                        reduced = false;
+                        for (int c = 0; c < cols && reduce > 0; c++)
+                        {
+                            if (widths[c] > minCol)
+                            {
+                                widths[c] -= 1;
+                                reduce -= 1;
+                                reduced = true;
+                            }
+                        }
+                        if (--guard == 0) break;
+                    } while (reduce > 0 && reduced);
+                }
+            }
+
+            CellAlign GetAlign(int c)
+            {
+                if (alignments != null && c < alignments.Count) return alignments[c];
+                return CellAlign.Left;
+            }
+
+            string PadCell(string? s, int width, CellAlign align)
             {
                 s ??= string.Empty;
-                var inner = new string(' ', padding) + s + new string(' ', Math.Max(0, width - padding - s.Length));
-                return inner;
+                int innerWidth = Math.Max(0, width - (padding * 2));
+                string content;
+                if (s.Length > innerWidth)
+                {
+                    if (innerWidth <= 0) content = string.Empty;
+                    else if (innerWidth == 1) content = "…";
+                    else content = s.Substring(0, innerWidth - 1) + "…";
+                }
+                else
+                {
+                    content = s;
+                }
+                int remaining = Math.Max(0, innerWidth - content.Length);
+                int leftPad = 0, rightPad = remaining;
+                switch (align)
+                {
+                    case CellAlign.Right:
+                        leftPad = remaining; rightPad = 0; break;
+                    case CellAlign.Center:
+                        leftPad = remaining / 2; rightPad = remaining - leftPad; break;
+                    case CellAlign.Left:
+                    default:
+                        leftPad = 0; rightPad = remaining; break;
+                }
+                return new string(' ', padding) + new string(' ', leftPad) + content + new string(' ', rightPad) + new string(' ', padding);
             }
 
             string MakeSep()
@@ -125,7 +200,7 @@ namespace EasyCLI
                 for (int c = 0; c < cols; c++)
                 {
                     var cell = c < r.Count ? r[c] : string.Empty;
-                    parts[c] = PadCell(cell, widths[c]);
+                    parts[c] = PadCell(cell, widths[c], GetAlign(c));
                 }
                 return "|" + string.Join("|", parts) + "|";
             }
@@ -241,10 +316,15 @@ namespace EasyCLI
             }
         }
 
+        // Back-compat overload
         public static void WriteTableSimple(this IConsoleWriter w, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, ConsoleStyle? borderStyle = null, ConsoleStyle? headerStyle = null, ConsoleStyle? cellStyle = null)
+            => WriteTableSimple(w, headers, rows, padding: 1, maxWidth: 0, alignments: null, borderStyle, headerStyle, cellStyle);
+
+        // Extended overload with padding, maxWidth, and column alignments
+    public static void WriteTableSimple(this IConsoleWriter w, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding, int maxWidth, IReadOnlyList<ConsoleFormatting.CellAlign>? alignments, ConsoleStyle? borderStyle = null, ConsoleStyle? headerStyle = null, ConsoleStyle? cellStyle = null)
         {
             bool headerPrinted = false;
-            foreach (var line in ConsoleFormatting.BuildSimpleTable(headers, rows))
+            foreach (var line in ConsoleFormatting.BuildSimpleTable(headers, rows, padding, maxWidth, alignments))
             {
                 if (line.StartsWith("+") && borderStyle.HasValue)
                 {
