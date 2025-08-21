@@ -9,7 +9,7 @@ namespace EasyCLI.Tests
     {
         private sealed class FakeHidden : IHiddenInputSource
         {
-            private readonly string _value; private readonly char? _mask; public string CapturedMaskOutput = string.Empty;
+            private readonly string _value;
             public FakeHidden(string value){ _value = value; }
             public string ReadHidden(char? mask = null) => _value; // mask ignored for test
         }
