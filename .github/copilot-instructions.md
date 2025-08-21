@@ -1,26 +1,31 @@
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
-- [x] Verify that the copilot-instructions.md file in the .github directory is created.
-
-- [x] Clarify Project Requirements
-	- Project type: .NET (C#) class library for PowerShell Cmdlet CLI tool
-
-- [x] Scaffold the Project
-	- .NET class library created using `dotnet new classlib -n EasyCLI`
-
-- [ ] Customize the Project
-	- Next: Implement Cmdlet class and logic as needed.
-
-- [ ] Install Required Extensions
-	- No extensions required for this project type.
-
-- [ ] Compile the Project
-	- Next: Build and check for errors.
-
-- [ ] Create and Run Task
-	- Next: Add build/run tasks if needed.
-
-- [ ] Launch the Project
-	- Not applicable for class library; skip unless user requests test/launch.
-
-- [ ] Ensure Documentation is Complete
-	- README.md created and up to date.
+- [x] Decide your styling approach
+  - Basic: ANSI SGR escape codes for colors and styles (fast, no dependency).
+  - ~~Rich: A library (e.g., Spectre.Console) if you need tables, progress bars, markup.~~
+- [x] Extend your abstraction
+  - Keep IConsoleWriter and add style-aware methods, or pass a style parameter:
+  - Write(string message, ConsoleStyle style)
+  - WriteLine(string message, ConsoleStyle style)
+  - Predefine styles: Success, Warning, Error, Heading, Dim, etc.
+- [ ] Implement ANSI styling
+  - Use SGR codes: 30–37/90–97 (fg), 40–47/100–107 (bg), 1 (bold), 3 (italic), 4 (underline), 2 (dim), 0 (reset).
+  - Example helpers:
+    - string Red(string s) => $"\u001b[31m{s}\u001b[0m";
+    - string Bold(string s) => $"\u001b[1m{s}\u001b[0m";
+    - For truecolor: $"\u001b[38;2;R;G;Bm{text}\u001b[0m"
+  - Always reset (…\u001b[0m) after each styled segment.
+- [ ] Make it robust
+  - Detect color support (disable if Console.IsOutputRedirected or NO_COLOR is set).
+  - Honor NO_COLOR and FORCE_COLOR environment variables.
+  - Support 8/16, 256, and truecolor (use truecolor when COLORTERM=truecolor).
+  - Provide a “theme” map from semantic kinds to styles (e.g., Info -> cyan, Warn -> yellow, Error -> bright red).
+- [ ] Layout and formatting
+  - Add helpers for headings, rules, bullets, and indentation.
+  - Support multi-line wrapping and prefixing (e.g., timestamp, level tags).
+  - Add an option to show/hide timestamps and prefixes.
+- [ ] VS Code run and debug
+  - For color output, run in the Integrated Terminal (not Debug Console). In launch.json set console to integratedTerminal for .NET.
+  - Pick a high-contrast theme and tweak terminal readability (see settings below).
+- [ ] Test quickly
+  - Print a palette and style samples on startup in a debug build.
+  - Verify on dark and light themes. Adjust contrast in VS Code if needed.
