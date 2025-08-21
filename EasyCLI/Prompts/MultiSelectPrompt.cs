@@ -11,7 +11,8 @@ namespace EasyCLI.Prompts
     public sealed class MultiSelectPrompt<T> : BasePrompt<IReadOnlyList<T>>
     {
         private readonly IReadOnlyList<Choice<T>> _choices;
-        private bool _renderedChoices = false;
+    private bool _renderedChoices = false;
+    private int _page = 0;
         public MultiSelectPrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null)
             : base(prompt, writer, reader, options, @default: null)
         {
@@ -23,17 +24,53 @@ namespace EasyCLI.Prompts
         {
             if (!_renderedChoices)
             {
-                for (int i = 0; i < _choices.Count; i++)
+                if (_options.EnablePaging && _choices.Count > _options.PageSize)
                 {
-                    _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+                    RenderPage();
                 }
-                _renderedChoices = true;
+                else
+                {
+                    for (int i = 0; i < _choices.Count; i++)
+                        _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+                    _renderedChoices = true;
+                }
             }
             base.RenderPrompt();
         }
 
+        private void RenderPage()
+        {
+            var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+            var start = _page * _options.PageSize;
+            var endExclusive = Math.Min(start + _options.PageSize, _choices.Count);
+            for (int i = start; i < endExclusive; i++)
+            {
+                _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+            }
+            _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
+        }
+
         protected override bool TryConvert(string raw, out IReadOnlyList<T> value)
         {
+            // paging navigation (does not select values directly)
+            if (_options.EnablePaging && _choices.Count > _options.PageSize)
+            {
+                if (raw.Equals("n", StringComparison.OrdinalIgnoreCase) || raw.Equals("next", StringComparison.OrdinalIgnoreCase))
+                {
+                    var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+                    _page = (_page + 1) % totalPages;
+                    RenderPage();
+                    value = default!; return false;
+                }
+                if (raw.Equals("p", StringComparison.OrdinalIgnoreCase) || raw.Equals("prev", StringComparison.OrdinalIgnoreCase))
+                {
+                    var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+                    _page = (_page - 1 + totalPages) % totalPages;
+                    RenderPage();
+                    value = default!; return false;
+                }
+            }
+
             var results = new List<T>();
             var tokens = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             foreach (var token in tokens)

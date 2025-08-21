@@ -15,5 +15,8 @@ namespace EasyCLI.Prompts
         public bool EchoInput { get; set; } = true; // future secure input scenario could set false
     public bool EnableEscapeCancel { get; set; } = true;
     public PromptCancelBehavior CancelBehavior { get; set; } = PromptCancelBehavior.ReturnDefault;
+    // Paging (used by choice-style prompts). When EnablePaging is true and item count exceeds PageSize, choices are shown in pages.
+    public bool EnablePaging { get; set; } = true;
+    public int PageSize { get; set; } = 10;
     }
 }
