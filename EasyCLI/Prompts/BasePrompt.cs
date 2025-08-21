@@ -40,8 +40,8 @@ namespace EasyCLI.Prompts
                 if (_validator != null)
                 {
                     var result = _validator.Validate(raw, out var value);
-                    if (result.IsValid && value is not null)
-                        return value!;
+                    if (result.IsValid)
+                        return value;
                     if (!result.IsValid)
                     {
                         if (!string.IsNullOrEmpty(result.Error))
