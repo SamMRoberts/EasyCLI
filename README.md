@@ -56,10 +56,68 @@ Environment controls:
 - FORCE_COLOR=1 forces colors (overrides NO_COLOR)
 - Colors are disabled when output is redirected unless forced
 
+## Interactive Prompts
+
+EasyCLI provides a lightweight prompting framework.
+
+### Basic string / int / yes-no
+
+```csharp
+var writer = new ConsoleWriter();
+var reader = new ConsoleReader();
+var name = new EasyCLI.Prompts.StringPrompt("Name", writer, reader, @default: "Anon").Get();
+var age = new EasyCLI.Prompts.IntPrompt("Age", writer, reader).Get();
+var proceed = new EasyCLI.Prompts.YesNoPrompt("Continue", writer, reader, @default: true).Get();
+writer.WriteInfoLine($"Name={name}, Age={age}, Proceed={proceed}");
+```
+
+### Hidden input (password)
+
+```csharp
+var secret = new EasyCLI.Prompts.HiddenInputPrompt("Password", writer, reader, hiddenSource: new EasyCLI.Prompts.ConsoleHiddenInputSource()).Get();
+```
+
+### Validators
+
+Use built-in validators or create your own.
+
+```csharp
+using EasyCLI.Prompts.Validators;
+
+var percent = new EasyCLI.Prompts.IntPrompt(
+  "Percent", writer, reader,
+  validator: new IntRangeValidator(0,100)).Get();
+
+var email = new EasyCLI.Prompts.StringPrompt(
+  "Email", writer, reader,
+  validator: new RegexValidator(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", "Invalid email"))
+  .Get();
+```
+
+### Choice & Multi-select
+
+```csharp
+var fruits = new [] {
+  new EasyCLI.Prompts.Choice<string>("Apple", "apple"),
+  new EasyCLI.Prompts.Choice<string>("Banana", "banana"),
+  new EasyCLI.Prompts.Choice<string>("Cherry", "cherry"),
+};
+var fruit = new EasyCLI.Prompts.ChoicePrompt<string>("Pick a fruit", fruits, writer, reader).Get();
+
+var nums = new [] {
+  new EasyCLI.Prompts.Choice<int>("One",1),
+  new EasyCLI.Prompts.Choice<int>("Two",2),
+  new EasyCLI.Prompts.Choice<int>("Three",3),
+  new EasyCLI.Prompts.Choice<int>("Four",4),
+};
+var selected = new EasyCLI.Prompts.MultiSelectPrompt<int>("Select numbers", nums, writer, reader).Get();
+```
+
 ## Project Structure
 
 - `EasyCLI/` - Contains the class library source code.
   - `ConsoleStyle`, `ConsoleStyles`, `ConsoleWriter`, `ConsoleWriterExtensions`, `ConsoleReader`
+  - `Prompts/` prompt abstractions, validators, and implementations (string, int, yes/no, hidden, choice, multi-select)
 - `.github/copilot-instructions.md` - Workspace-specific Copilot instructions.
  - `EasyCLI.Tests/` - Unit tests for ANSI behavior and console helpers.
 
