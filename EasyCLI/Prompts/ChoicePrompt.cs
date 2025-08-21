@@ -43,7 +43,10 @@ namespace EasyCLI.Prompts
             var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
             var start = _page * _options.PageSize;
             var endExclusive = Math.Min(start + _options.PageSize, _choices.Count);
-            RenderList(_choices.Skip(start).Take(endExclusive - start).ToList(), start);
+            for (int i = start; i < endExclusive; i++)
+            {
+                _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+            }
             _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
         }
 
