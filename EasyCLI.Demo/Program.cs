@@ -1,5 +1,6 @@
 ﻿using EasyCLI;
 using static EasyCLI.ConsoleFormatting;
+using EasyCLI.Prompts;
 
 var w = new ConsoleWriter();
 
@@ -44,3 +45,17 @@ foreach (var (label, theme) in themes)
 	w.WriteTitledBox(new[] { $"This is a titled box in {label} theme." }, title: $"{label} Box", borderStyle: theme.Info, titleStyle: theme.Heading);
 	w.WriteLine("");
 }
+
+	// Simple interactive prompt demo (only runs if input is interactive)
+	if (!Console.IsInputRedirected)
+	{
+		var reader = new ConsoleReader();
+		var namePrompt = new StringPrompt("Enter your name", w, reader, @default: "Anon");
+		var agePrompt = new IntPrompt("Enter age", w, reader);
+		var confirmPrompt = new YesNoPrompt("Proceed", w, reader, @default: true);
+
+		var name = namePrompt.Get();
+		var age = agePrompt.Get();
+		var proceed = confirmPrompt.Get();
+		w.WriteInfoLine($"Hello {name}, age {age}, proceed={proceed}");
+	}
