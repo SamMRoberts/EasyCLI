@@ -37,6 +37,26 @@ namespace EasyCLI
                 return prefix + new string(filler, remaining);
             }
 
+            public static string CenterTitleRule(string title, char filler = '─', int width = 0, int gap = 1)
+            {
+                title ??= string.Empty;
+                if (width <= 0) width = GetConsoleWidthOr(80);
+                var titleBlock = string.IsNullOrEmpty(title) ? string.Empty : new string(' ', Math.Max(0, gap)) + title + new string(' ', Math.Max(0, gap));
+                if (titleBlock.Length >= width)
+                {
+                    // Truncate with ellipsis to fit
+                    if (width <= 1) return new string(filler, Math.Max(0, width));
+                    if (width == 2) return new string(filler, 2);
+                    var content = titleBlock.Trim();
+                    if (content.Length > width - 1) content = content.Substring(0, width - 1) + "…";
+                    return content.PadLeft((width + content.Length) / 2).PadRight(width);
+                }
+                int remaining = width - titleBlock.Length;
+                int left = remaining / 2;
+                int right = remaining - left;
+                return new string(filler, left) + titleBlock + new string(filler, right);
+            }
+
         public static string HeadingUnderline(string text, char underlineChar = '─')
         {
             if (text == null) text = string.Empty;
@@ -251,6 +271,36 @@ namespace EasyCLI
             }
             yield return bottom;
         }
+
+        public static IEnumerable<string> BuildTitledBox(IEnumerable<string> contentLines, string title, int padding = 1,
+            char h = '─', char v = '│', char tl = '┌', char tr = '┐', char bl = '└', char br = '┘')
+        {
+            title ??= string.Empty;
+            var lines = new List<string>();
+            if (contentLines != null) lines.AddRange(contentLines);
+            int innerWidth = Math.Max(title.Length + 2, 0); // at least title plus spaces
+            foreach (var l in lines) innerWidth = Math.Max(innerWidth, (l ?? string.Empty).Length);
+            innerWidth += padding * 2;
+
+            // Top border with centered title block
+            var titleBlock = string.IsNullOrEmpty(title) ? string.Empty : " " + title + " ";
+            int total = innerWidth;
+            int left = Math.Max(0, (total - titleBlock.Length) / 2);
+            int right = Math.Max(0, total - titleBlock.Length - left);
+            string top = tl + new string(h, left) + titleBlock + new string(h, right) + tr;
+            yield return top;
+
+            string pad = new string(' ', padding);
+            foreach (var l in lines)
+            {
+                var s = l ?? string.Empty;
+                var extra = innerWidth - (padding * 2) - s.Length;
+                if (extra < 0) extra = 0;
+                yield return v + pad + s + new string(' ', extra) + pad + v;
+            }
+            string bottom = bl + new string(h, innerWidth) + br;
+            yield return bottom;
+        }
     }
 
     /// <summary>
@@ -278,6 +328,66 @@ namespace EasyCLI
             var suffix = line.Substring(prefix.Length);
             if (titleStyle.HasValue) w.Write(prefix, titleStyle.Value); else w.Write(prefix);
             if (fillerStyle.HasValue) w.WriteLine(suffix, fillerStyle.Value); else w.WriteLine(suffix);
+        }
+
+        public static void WriteCenterTitleRule(this IConsoleWriter w, string title, int width = 0, char filler = '─', int gap = 1, ConsoleStyle? titleStyle = null, ConsoleStyle? fillerStyle = null)
+        {
+            var s = ConsoleFormatting.CenterTitleRule(title, filler, width, gap);
+            if (string.IsNullOrEmpty(title) || !titleStyle.HasValue && !fillerStyle.HasValue)
+            {
+                if (fillerStyle.HasValue) w.WriteLine(s, fillerStyle.Value); else w.WriteLine(s);
+                return;
+            }
+            // If styling both, split around title block
+            var titleBlock = (gap > 0 ? new string(' ', gap) : string.Empty) + (title ?? string.Empty) + (gap > 0 ? new string(' ', gap) : string.Empty);
+            int idx = s.IndexOf(titleBlock);
+            if (idx < 0)
+            {
+                if (titleStyle.HasValue) w.WriteLine(s, titleStyle.Value); else w.WriteLine(s);
+                return;
+            }
+            var left = s.Substring(0, idx);
+            var mid = titleBlock;
+            var right = s.Substring(idx + titleBlock.Length);
+            if (fillerStyle.HasValue) w.Write(left, fillerStyle.Value); else w.Write(left);
+            if (titleStyle.HasValue) w.Write(mid, titleStyle.Value); else w.Write(mid);
+            if (fillerStyle.HasValue) w.WriteLine(right, fillerStyle.Value); else w.WriteLine(right);
+        }
+
+        public static void WriteTitledBox(this IConsoleWriter w, IEnumerable<string> contentLines, string title, ConsoleStyle? borderStyle = null, ConsoleStyle? titleStyle = null, ConsoleStyle? textStyle = null)
+        {
+            foreach (var line in ConsoleFormatting.BuildTitledBox(contentLines, title))
+            {
+                bool isBorder = line.StartsWith("┌") || line.StartsWith("└") || line.StartsWith("│") || line.StartsWith("┐") || line.StartsWith("┘");
+                if (isBorder && borderStyle.HasValue)
+                {
+                    // Try to style title segment differently on the top border
+                    if (titleStyle.HasValue && line.StartsWith("┌"))
+                    {
+                        int start = line.IndexOf(' ');
+                        int end = line.LastIndexOf(' ');
+                        if (start >= 0 && end > start)
+                        {
+                            var left = line.Substring(0, start);
+                            var mid = line.Substring(start, end - start);
+                            var right = line.Substring(end);
+                            w.Write(left, borderStyle.Value);
+                            w.Write(mid, titleStyle.Value);
+                            w.WriteLine(right, borderStyle.Value);
+                            continue;
+                        }
+                    }
+                    w.WriteLine(line, borderStyle.Value);
+                }
+                else if (!isBorder && textStyle.HasValue)
+                {
+                    w.WriteLine(line, textStyle.Value);
+                }
+                else
+                {
+                    w.WriteLine(line);
+                }
+            }
         }
 
         public static void WriteHeadingBlock(this IConsoleWriter w, string text, ConsoleStyle? titleStyle = null, ConsoleStyle? underlineStyle = null, char underlineChar = '─')
