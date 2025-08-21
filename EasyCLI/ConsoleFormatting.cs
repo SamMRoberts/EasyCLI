@@ -62,6 +62,110 @@ namespace EasyCLI
             }
             if (sb.Length > 0) yield return sb.ToString();
         }
+
+        public static IEnumerable<string> BuildKeyValues(IEnumerable<(string key, string value)> items, int indent = 0, int gap = 2, string sep = ":")
+        {
+            if (items == null) yield break;
+            int keyWidth = 0;
+            var snapshot = new List<(string key, string value)>();
+            foreach (var (k, v) in items)
+            {
+                var kk = k ?? string.Empty;
+                var vv = v ?? string.Empty;
+                snapshot.Add((kk, vv));
+                if (kk.Length > keyWidth) keyWidth = kk.Length;
+            }
+            string pad = indent > 0 ? new string(' ', indent) : string.Empty;
+            string gapSpaces = new string(' ', gap < 0 ? 0 : gap);
+            foreach (var (k, v) in snapshot)
+            {
+                yield return pad + k.PadRight(keyWidth) + " " + sep + gapSpaces + v;
+            }
+        }
+
+        public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1)
+        {
+            headers ??= Array.Empty<string>();
+            var cols = headers.Count;
+            var rowList = new List<IReadOnlyList<string>>();
+            if (rows != null)
+                rowList.AddRange(rows);
+
+            // Determine column count by max across headers/rows
+            foreach (var r in rowList)
+                if (r.Count > cols) cols = r.Count;
+
+            int[] widths = new int[cols];
+            for (int c = 0; c < cols; c++)
+            {
+                int w = 0;
+                if (c < headers.Count) w = Math.Max(w, (headers[c] ?? string.Empty).Length);
+                foreach (var r in rowList)
+                    if (c < r.Count) w = Math.Max(w, (r[c] ?? string.Empty).Length);
+                widths[c] = w + (padding * 2);
+            }
+
+            string PadCell(string? s, int width)
+            {
+                s ??= string.Empty;
+                var inner = new string(' ', padding) + s + new string(' ', Math.Max(0, width - padding - s.Length));
+                return inner;
+            }
+
+            string MakeSep()
+            {
+                var parts = new string[cols];
+                for (int c = 0; c < cols; c++) parts[c] = new string('-', widths[c]);
+                return "+" + string.Join("+", parts) + "+";
+            }
+
+            string MakeRow(IReadOnlyList<string> r)
+            {
+                var parts = new string[cols];
+                for (int c = 0; c < cols; c++)
+                {
+                    var cell = c < r.Count ? r[c] : string.Empty;
+                    parts[c] = PadCell(cell, widths[c]);
+                }
+                return "|" + string.Join("|", parts) + "|";
+            }
+
+            if (cols == 0)
+                yield break;
+
+            var top = MakeSep();
+            yield return top;
+            if (headers.Count > 0)
+            {
+                yield return MakeRow(headers);
+                yield return MakeSep();
+            }
+            foreach (var r in rowList)
+                yield return MakeRow(r);
+            yield return MakeSep();
+        }
+
+        public static IEnumerable<string> BuildBox(IEnumerable<string> contentLines, int padding = 1,
+            char h = '─', char v = '│', char tl = '┌', char tr = '┐', char bl = '└', char br = '┘')
+        {
+            var lines = new List<string>();
+            if (contentLines != null) lines.AddRange(contentLines);
+            int innerWidth = 0;
+            foreach (var l in lines) innerWidth = Math.Max(innerWidth, (l ?? string.Empty).Length);
+            innerWidth += padding * 2;
+            string top = tl + new string(h, innerWidth) + tr;
+            string bottom = bl + new string(h, innerWidth) + br;
+            yield return top;
+            string pad = new string(' ', padding);
+            foreach (var l in lines)
+            {
+                var s = l ?? string.Empty;
+                var extra = innerWidth - (padding * 2) - s.Length;
+                if (extra < 0) extra = 0;
+                yield return v + pad + s + new string(' ', extra) + pad + v;
+            }
+            yield return bottom;
+        }
     }
 
     /// <summary>
@@ -112,6 +216,67 @@ namespace EasyCLI
         public static string TimestampPrefix(string? format = "HH:mm:ss")
         {
             return DateTime.Now.ToString(format ?? "HH:mm:ss");
+        }
+
+        public static void WriteKeyValues(this IConsoleWriter w, IEnumerable<(string key, string value)> items, int indent = 0, int gap = 2, string sep = ":", ConsoleStyle? keyStyle = null, ConsoleStyle? valueStyle = null)
+        {
+            foreach (var line in ConsoleFormatting.BuildKeyValues(items, indent, gap, sep))
+            {
+                if (keyStyle.HasValue || valueStyle.HasValue)
+                {
+                    // Split back into key/sep/value to apply styles separately
+                    var idx = line.IndexOf(sep);
+                    if (idx > 0)
+                    {
+                        var before = line.Substring(0, idx);
+                        var after = line.Substring(idx, line.Length - idx);
+                        if (keyStyle.HasValue) w.Write(before, keyStyle.Value); else w.Write(before);
+                        w.Write(after.Substring(0, sep.Length));
+                        var rest = after.Substring(sep.Length);
+                        if (valueStyle.HasValue) w.WriteLine(rest, valueStyle.Value); else w.WriteLine(rest);
+                        continue;
+                    }
+                }
+                w.WriteLine(line);
+            }
+        }
+
+        public static void WriteTableSimple(this IConsoleWriter w, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, ConsoleStyle? borderStyle = null, ConsoleStyle? headerStyle = null, ConsoleStyle? cellStyle = null)
+        {
+            bool headerPrinted = false;
+            foreach (var line in ConsoleFormatting.BuildSimpleTable(headers, rows))
+            {
+                if (line.StartsWith("+") && borderStyle.HasValue)
+                {
+                    w.WriteLine(line, borderStyle.Value);
+                }
+                else if (!headerPrinted && headers.Count > 0)
+                {
+                    w.WriteLine(line, headerStyle ?? cellStyle ?? default);
+                    headerPrinted = true;
+                }
+                else if (line.StartsWith("|") && cellStyle.HasValue)
+                {
+                    w.WriteLine(line, cellStyle.Value);
+                }
+                else
+                {
+                    w.WriteLine(line);
+                }
+            }
+        }
+
+        public static void WriteBox(this IConsoleWriter w, IEnumerable<string> contentLines, ConsoleStyle? borderStyle = null, ConsoleStyle? textStyle = null)
+        {
+            foreach (var line in ConsoleFormatting.BuildBox(contentLines))
+            {
+                if ((line.StartsWith("┌") || line.StartsWith("└") || line.StartsWith("│") || line.StartsWith("┐") || line.StartsWith("┘")) && borderStyle.HasValue)
+                    w.WriteLine(line, borderStyle.Value);
+                else if (textStyle.HasValue && line.StartsWith("│"))
+                    w.WriteLine(line, textStyle.Value);
+                else
+                    w.WriteLine(line);
+            }
         }
     }
 }
