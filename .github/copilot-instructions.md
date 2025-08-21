@@ -18,18 +18,18 @@
     - [x] Implement a ConsoleWriter that honors NO_COLOR/FORCE_COLOR and output redirection.
     - [x] Add a small demo method that prints a palette using the helpers.
     - [x] Provide unit tests to confirm ANSI sequences and reset behavior.
-- [ ] Make it robust
+- [x] Make it robust
   - Detect color support (disable if Console.IsOutputRedirected or NO_COLOR is set).
   - Honor NO_COLOR and FORCE_COLOR environment variables.
   - Support 8/16, 256, and truecolor (use truecolor when COLORTERM=truecolor).
   - Provide a “theme” map from semantic kinds to styles (e.g., Info -> cyan, Warn -> yellow, Error -> bright red).
-- [ ] Layout and formatting
+- [x] Layout and formatting
   - Add helpers for headings, rules, bullets, and indentation.
   - Support multi-line wrapping and prefixing (e.g., timestamp, level tags).
   - Add an option to show/hide timestamps and prefixes.
-- [ ] VS Code run and debug
+- [x] VS Code run and debug
   - For color output, run in the Integrated Terminal (not Debug Console). In launch.json set console to integratedTerminal for .NET.
   - Pick a high-contrast theme and tweak terminal readability (see settings below).
-- [ ] Test quickly
+- [x] Test quickly
   - Print a palette and style samples on startup in a debug build.
   - Verify on dark and light themes. Adjust contrast in VS Code if needed.

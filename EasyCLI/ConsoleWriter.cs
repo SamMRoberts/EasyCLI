@@ -12,9 +12,11 @@ namespace EasyCLI
         {
             Output = output ?? Console.Out;
             ColorEnabled = DecideColorEnabled(enableColors);
+            ColorLevel = ColorEnabled ? DetectColorLevel() : ColorSupportLevel.None;
         }
 
         public bool ColorEnabled { get; }
+        public ColorSupportLevel ColorLevel { get; }
         public TextWriter Output { get; }
 
         public void Write(string message)
@@ -64,6 +66,22 @@ namespace EasyCLI
                 return false;
 
             return true;
+        }
+
+        private static ColorSupportLevel DetectColorLevel()
+        {
+            // Truecolor hint
+            var colorterm = Environment.GetEnvironmentVariable("COLORTERM");
+            if (!string.IsNullOrEmpty(colorterm) && colorterm.Contains("truecolor", StringComparison.OrdinalIgnoreCase))
+                return ColorSupportLevel.TrueColor;
+
+            // TERM based detection
+            var term = Environment.GetEnvironmentVariable("TERM") ?? string.Empty;
+            if (term.Contains("256color", StringComparison.OrdinalIgnoreCase))
+                return ColorSupportLevel.Indexed256;
+
+            // Fallback basic
+            return ColorSupportLevel.Basic16;
         }
     }
 }

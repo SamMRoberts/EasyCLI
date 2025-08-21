@@ -47,6 +47,11 @@ namespace EasyCLI
     // Truecolor helpers
     public static ConsoleStyle TrueColor(int r, int g, int b) => new(38, 2, r, g, b);
     public static ConsoleStyle TrueBg(int r, int g, int b) => new(48, 2, r, g, b);
+        public static ConsoleStyle Indexed256(int index)
+        {
+            if (index < 0 || index > 255) throw new System.ArgumentOutOfRangeException(nameof(index));
+            return new ConsoleStyle(38, 5, index);
+        }
 
 #if DEBUG
     public static void PrintPalette(IConsoleWriter w)
