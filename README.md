@@ -28,6 +28,29 @@ var purple = EasyCLI.ConsoleStyles.TrueColor(180, 0, 200);
 w.WriteLine("Vivid text", purple);
 ```
 
+### Theme presets
+
+Use built-in presets to quickly match your terminal background. You can also override any style.
+
+```csharp
+var w = new EasyCLI.ConsoleWriter();
+var theme = EasyCLI.ConsoleThemes.Dark; // or Light, HighContrast
+w.WriteHeadingLine("Themed Heading", theme);
+w.WriteSuccessLine("Success message", theme);
+
+// Override a couple of styles
+var custom = new EasyCLI.ConsoleTheme
+{
+  Success = EasyCLI.ConsoleThemes.Dark.Success,
+  Warning = EasyCLI.ConsoleStyles.FgMagenta,
+  Error = EasyCLI.ConsoleThemes.Dark.Error,
+  Heading = EasyCLI.ConsoleThemes.Dark.Heading,
+  Info = EasyCLI.ConsoleThemes.Dark.Info,
+  Hint = EasyCLI.ConsoleThemes.Dark.Hint
+};
+w.WriteWarningLine("Magenta warning", custom);
+```
+
 Environment controls:
 - NO_COLOR=1 disables colors
 - FORCE_COLOR=1 forces colors (overrides NO_COLOR)
