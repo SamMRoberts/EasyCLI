@@ -27,35 +27,35 @@ namespace EasyCLI
             return new string(ch, width);
         }
 
-            public static string TitleRule(string title, char filler = '─', int width = 0, int gap = 1)
-            {
-                title ??= string.Empty;
-                if (width <= 0) width = GetConsoleWidthOr(80);
-                var g = new string(' ', Math.Max(0, gap));
-                var prefix = string.IsNullOrEmpty(title) ? string.Empty : title + g;
-                int remaining = Math.Max(0, width - prefix.Length);
-                return prefix + new string(filler, remaining);
-            }
+        public static string TitleRule(string title, char filler = '─', int width = 0, int gap = 1)
+        {
+            title ??= string.Empty;
+            if (width <= 0) width = GetConsoleWidthOr(80);
+            var g = new string(' ', Math.Max(0, gap));
+            var prefix = string.IsNullOrEmpty(title) ? string.Empty : title + g;
+            int remaining = Math.Max(0, width - prefix.Length);
+            return prefix + new string(filler, remaining);
+        }
 
-            public static string CenterTitleRule(string title, char filler = '─', int width = 0, int gap = 1)
+        public static string CenterTitleRule(string title, char filler = '─', int width = 0, int gap = 1)
+        {
+            title ??= string.Empty;
+            if (width <= 0) width = GetConsoleWidthOr(80);
+            var titleBlock = string.IsNullOrEmpty(title) ? string.Empty : new string(' ', Math.Max(0, gap)) + title + new string(' ', Math.Max(0, gap));
+            if (titleBlock.Length >= width)
             {
-                title ??= string.Empty;
-                if (width <= 0) width = GetConsoleWidthOr(80);
-                var titleBlock = string.IsNullOrEmpty(title) ? string.Empty : new string(' ', Math.Max(0, gap)) + title + new string(' ', Math.Max(0, gap));
-                if (titleBlock.Length >= width)
-                {
-                    // Truncate with ellipsis to fit
-                    if (width <= 1) return new string(filler, Math.Max(0, width));
-                    if (width == 2) return new string(filler, 2);
-                    var content = titleBlock.Trim();
-                    if (content.Length > width - 1) content = content.Substring(0, width - 1) + "…";
-                    return content.PadLeft((width + content.Length) / 2).PadRight(width);
-                }
-                int remaining = width - titleBlock.Length;
-                int left = remaining / 2;
-                int right = remaining - left;
-                return new string(filler, left) + titleBlock + new string(filler, right);
+                // Truncate with ellipsis to fit
+                if (width <= 1) return new string(filler, Math.Max(0, width));
+                if (width == 2) return new string(filler, 2);
+                var content = titleBlock.Trim();
+                if (content.Length > width - 1) content = content.Substring(0, width - 1) + "…";
+                return content.PadLeft((width + content.Length) / 2).PadRight(width);
             }
+            int remaining = width - titleBlock.Length;
+            int left = remaining / 2;
+            int right = remaining - left;
+            return new string(filler, left) + titleBlock + new string(filler, right);
+        }
 
         public static string HeadingUnderline(string text, char underlineChar = '─')
         {
@@ -126,9 +126,9 @@ namespace EasyCLI
             }
         }
 
-    public enum CellAlign { Left, Center, Right }
+        public enum CellAlign { Left, Center, Right }
 
-    public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1, int maxWidth = 0, IReadOnlyList<CellAlign>? alignments = null)
+        public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1, int maxWidth = 0, IReadOnlyList<CellAlign>? alignments = null)
         {
             headers ??= Array.Empty<string>();
             var cols = headers.Count;
@@ -457,7 +457,7 @@ namespace EasyCLI
             => WriteTableSimple(w, headers, rows, padding: 1, maxWidth: 0, alignments: null, borderStyle, headerStyle, cellStyle);
 
         // Extended overload with padding, maxWidth, and column alignments
-    public static void WriteTableSimple(this IConsoleWriter w, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding, int maxWidth, IReadOnlyList<ConsoleFormatting.CellAlign>? alignments, ConsoleStyle? borderStyle = null, ConsoleStyle? headerStyle = null, ConsoleStyle? cellStyle = null)
+        public static void WriteTableSimple(this IConsoleWriter w, IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding, int maxWidth, IReadOnlyList<ConsoleFormatting.CellAlign>? alignments, ConsoleStyle? borderStyle = null, ConsoleStyle? headerStyle = null, ConsoleStyle? cellStyle = null)
         {
             bool headerPrinted = false;
             foreach (var line in ConsoleFormatting.BuildSimpleTable(headers, rows, padding, maxWidth, alignments))

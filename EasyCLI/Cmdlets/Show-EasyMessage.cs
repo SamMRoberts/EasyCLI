@@ -6,9 +6,9 @@ namespace EasyCLI.Cmdlets
     [OutputType(typeof(string))]
     public class ShowEasyMessageCommand : PSCmdlet
     {
-    internal const string DefaultSet = "Default";
+        internal const string DefaultSet = "Default";
 
-    [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ParameterSetName = DefaultSet)]
+        [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ParameterSetName = DefaultSet)]
         public string? Message { get; set; }
 
         [Parameter]
