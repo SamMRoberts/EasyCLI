@@ -15,9 +15,9 @@
     - For truecolor: $"\u001b[38;2;R;G;Bm{text}\u001b[0m"
   - Always reset (…\u001b[0m) after each styled segment.
   - **Optional next steps**
-    - [ ] Implement a ConsoleWriter that honors NO_COLOR/FORCE_COLOR and output redirection.
-    - [ ] Add a small demo method that prints a palette using the helpers.
-    - [ ] Provide unit tests to confirm ANSI sequences and reset behavior.
+    - [x] Implement a ConsoleWriter that honors NO_COLOR/FORCE_COLOR and output redirection.
+    - [x] Add a small demo method that prints a palette using the helpers.
+    - [x] Provide unit tests to confirm ANSI sequences and reset behavior.
 - [ ] Make it robust
   - Detect color support (disable if Console.IsOutputRedirected or NO_COLOR is set).
   - Honor NO_COLOR and FORCE_COLOR environment variables.
