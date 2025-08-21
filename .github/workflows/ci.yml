@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -18,15 +17,16 @@ jobs:
         with:
           dotnet-version: '9.x'
           cache: true
+          cache-dependency-path: '**/packages.lock.json'
 
       - name: Restore (Library)
-        run: dotnet restore EasyCLI/EasyCLI.csproj
+        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode
 
       - name: Restore (Tests)
-        run: dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj
+        run: dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode
 
       - name: Restore (Demo)
-        run: dotnet restore EasyCLI.Demo/EasyCLI.Demo.csproj
+        run: dotnet restore EasyCLI.Demo/EasyCLI.Demo.csproj --locked-mode
 
       - name: Build (Library)
         run: dotnet build EasyCLI/EasyCLI.csproj --configuration Release --no-restore
@@ -35,4 +35,4 @@ jobs:
         run: dotnet build EasyCLI.Demo/EasyCLI.Demo.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj --configuration Release --no-build --verbosity minimal
+        run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj --configuration Release --no-restore --verbosity minimal
