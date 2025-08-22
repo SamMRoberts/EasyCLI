@@ -1,6 +1,7 @@
 ﻿using EasyCLI;
 using static EasyCLI.ConsoleFormatting;
 using EasyCLI.Prompts;
+using EasyCLI.Prompts.Validators;
 
 var w = new ConsoleWriter();
 
@@ -73,20 +74,4 @@ if (!Console.IsInputRedirected)
 	string fruit = fruitPrompt.Get();
 	var nums = multiPrompt.Get();
 	w.WriteInfoLine($"Hello {name}, age {age}, proceed={proceed}, fruit={fruit}, secret={secret}, nums=[{string.Join(',', nums)}]");
-}
-
-// Supporting validator example
-public sealed class IntRangeValidator : IPromptValidator<int>
-{
-	private readonly int _min,_max;
-	public IntRangeValidator(int min,int max){_min=min;_max=max;}
-	public PromptValidationResult Validate(string raw, out int value)
-	{
-		value = default;
-		if (!int.TryParse(raw, out var num))
-			return PromptValidationResult.Fail("Not a number");
-		if (num < _min || num > _max)
-			return PromptValidationResult.Fail($"Value must be between {_min} and {_max}");
-		value = num; return PromptValidationResult.Success();
-	}
 }
