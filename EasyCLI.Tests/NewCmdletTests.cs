@@ -36,6 +36,22 @@ namespace EasyCLI.Tests
             Assert.Contains("─", results[0].BaseObject.ToString());
         }
 
+                [Fact]
+                public void WriteEasyRule_PassThruObject()
+                {
+                        using var ps = CreatePowerShell();
+                        ps.AddCommand("Write-Rule")
+                            .AddParameter("Title", "MyTitle")
+                            .AddParameter("Center")
+                            .AddParameter("PassThruObject");
+                        var results = ps.Invoke();
+                        Assert.Single(results);
+                        var obj = Assert.IsType<EasyCLI.Cmdlets.RuleInfo>(results[0].BaseObject);
+                        Assert.Equal("MyTitle", obj.Title);
+                        Assert.True(obj.Center);
+                        Assert.Contains("MyTitle", obj.Line);
+                }
+
         [Fact]
         public void WriteEasyRule_Title()
         {
@@ -60,6 +76,19 @@ namespace EasyCLI.Tests
             Assert.Contains("MyBox", outText);
             Assert.Contains("a", outText);
             Assert.Contains("b", outText);
+        }
+
+        [Fact]
+        public void WriteEasyTitledBox_PassThruObject()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddScript("'x','y' | Write-TitledBox -Title Demo -PassThruObject");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            var obj = Assert.IsType<EasyCLI.Cmdlets.TitledBoxInfo>(results[0].BaseObject);
+            Assert.Equal("Demo", obj.Title);
+            Assert.Equal(new[] { "x", "y" }, obj.Lines);
+            Assert.True(obj.BoxLines.Count >= 4);
         }
     }
 }

@@ -5,23 +5,28 @@ namespace EasyCLI.Cmdlets
     {
         internal const string DefaultSet = "Default";
 
-        [Parameter]
-        public int Width { get; set; } = 0; // 0 => auto console width logic
+    [Parameter]
+    [ValidateRange(0, int.MaxValue)]
+    public int Width { get; set; } = 0; // 0 => auto console width logic
 
-        [Parameter]
-        public char Char { get; set; } = '─';
+    [Parameter]
+    public char Char { get; set; } = '─';
 
         [Parameter]
         public SwitchParameter NoColor { get; set; }
 
-        [Parameter]
-        public SwitchParameter Center { get; set; }
+    [Parameter]
+    public SwitchParameter Center { get; set; }
 
-        [Parameter]
-        public string? Title { get; set; }
+    [Parameter]
+    public string? Title { get; set; }
 
-        [Parameter]
-        public int Gap { get; set; } = 1;
+    [Parameter]
+    [ValidateRange(0, 20)]
+    public int Gap { get; set; } = 1;
+
+    [Parameter]
+    public SwitchParameter PassThruObject { get; set; }
 
         private ConsoleWriter? _writer;
 
@@ -48,7 +53,14 @@ namespace EasyCLI.Cmdlets
                 line = ConsoleFormatting.Rule(Char, Width);
             }
             w.WriteLine(line);
-            WriteObject(line);
+            if (PassThruObject.IsPresent)
+            {
+                WriteObject(new RuleInfo(line, Title, Width, Char, Center.IsPresent, Gap));
+            }
+            else
+            {
+                WriteObject(line);
+            }
         }
     }
 }

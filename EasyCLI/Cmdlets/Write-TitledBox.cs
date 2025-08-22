@@ -11,11 +11,14 @@ namespace EasyCLI.Cmdlets
         [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ValueFromRemainingArguments = true)]
         public string? Line { get; set; }
 
-        [Parameter]
-        public string Title { get; set; } = string.Empty;
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
 
-        [Parameter]
-        public SwitchParameter NoColor { get; set; }
+    [Parameter]
+    public SwitchParameter NoColor { get; set; }
+
+    [Parameter]
+    public SwitchParameter PassThruObject { get; set; }
 
         private readonly List<string> _lines = new();
         private ConsoleWriter? _writer;
@@ -67,8 +70,15 @@ namespace EasyCLI.Cmdlets
                     w.WriteLine(line, theme.Hint);
                 }
             }
-            foreach (var l in boxLines)
-                WriteObject(l);
+            if (PassThruObject.IsPresent)
+            {
+                WriteObject(new TitledBoxInfo(Title, _lines.AsReadOnly(), boxLines));
+            }
+            else
+            {
+                foreach (var l in boxLines)
+                    WriteObject(l);
+            }
         }
     }
 }

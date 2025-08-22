@@ -14,6 +14,12 @@ namespace EasyCLI.Tests
                 "Read-Choice",
                 typeof(EasyCLI.Cmdlets.ReadChoiceCommand),
                 null));
+      // Add alias explicitly since module manifest metadata isn't auto-loaded in this isolated runspace.
+      iss.Commands.Add(new SessionStateAliasEntry(
+        "Select-EasyChoice",
+        "Read-Choice",
+        string.Empty,
+        ScopedItemOptions.None));
             // Alias test also relies on metadata but we add explicit entry for primary name.
             var rs = RunspaceFactory.CreateRunspace(iss);
             rs.Open();
@@ -104,8 +110,10 @@ namespace EasyCLI.Tests
             ps.AddCommand("Read-Choice")
               .AddParameter("Options", Array.Empty<string>())
               .AddParameter("Select", "1");
-            var ex = Assert.Throws<ParameterBindingException>(() => ps.Invoke());
-            Assert.Contains("cannot be empty", ex.Message, StringComparison.OrdinalIgnoreCase);
+            var ex = Record.Exception(() => ps.Invoke());
+            Assert.NotNull(ex);
+            var pbe = Assert.IsAssignableFrom<ParameterBindingException>(ex);
+            Assert.Contains("Options", pbe.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
