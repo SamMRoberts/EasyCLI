@@ -8,6 +8,24 @@ namespace EasyCLI.Formatting
     /// </summary>
     public static class ConsoleFormatting
     {
+        // Reused split characters to avoid per-call allocations (CA1861)
+    private static readonly char[] WrapSplitChars = new[] { ' ', '\n' };
+
+        private static string TruncateWithEllipsis(string value, int maxWithEllipsis)
+        {
+            if (maxWithEllipsis <= 0)
+            {
+                return string.Empty;
+            }
+
+            if (value.Length <= maxWithEllipsis)
+            {
+                return value;
+            }
+
+            // Use span-based concat (CA1845)
+            return string.Concat(value.AsSpan(0, maxWithEllipsis), "…");
+        }
         private static int GetConsoleWidthOr(int fallback)
         {
             try
@@ -48,7 +66,7 @@ namespace EasyCLI.Formatting
                 if (width <= 1) return new string(filler, Math.Max(0, width));
                 if (width == 2) return new string(filler, 2);
                 string content = titleBlock.Trim();
-                if (content.Length > width - 1) content = content.Substring(0, width - 1) + "…";
+                if (content.Length > width - 1) content = TruncateWithEllipsis(content, width - 1);
                 return content.PadLeft((width + content.Length) / 2).PadRight(width);
             }
             int remaining = width - titleBlock.Length;
@@ -83,7 +101,8 @@ namespace EasyCLI.Formatting
                 yield break;
             }
 
-            string[] words = text.Replace("\r\n", "\n").Replace('\r', '\n').Split(new[] { ' ', '\n' }, StringSplitOptions.None);
+            // Use cached array to avoid reallocation (CA1861)
+            string[] words = text.Replace("\r\n", "\n").Replace('\r', '\n').Split(WrapSplitChars, StringSplitOptions.None);
             StringBuilder sb = new StringBuilder();
             foreach (string word in words)
             {
@@ -119,18 +138,18 @@ namespace EasyCLI.Formatting
             if (items == null) yield break;
             int keyWidth = 0;
             List<(string key, string value)> snapshot = new List<(string key, string value)>();
-            foreach (var (k, v) in items)
+            foreach ((string key, string value) in items)
             {
-                string kk = k ?? string.Empty;
-                string vv = v ?? string.Empty;
+                string kk = key ?? string.Empty;
+                string vv = value ?? string.Empty;
                 snapshot.Add((kk, vv));
                 if (kk.Length > keyWidth) keyWidth = kk.Length;
             }
             string pad = indent > 0 ? new string(' ', indent) : string.Empty;
             string gapSpaces = new string(' ', gap < 0 ? 0 : gap);
-            foreach (var (k, v) in snapshot)
+            foreach ((string key, string value) in snapshot)
             {
-                yield return pad + k.PadRight(keyWidth) + " " + sep + gapSpaces + v;
+                yield return pad + key.PadRight(keyWidth) + " " + sep + gapSpaces + value;
             }
         }
 
@@ -143,9 +162,16 @@ namespace EasyCLI.Formatting
             List<IReadOnlyList<string>> rowList = new List<IReadOnlyList<string>>();
             if (rows != null)
             {
-                foreach (var r in rows) rowList.Add(r);
+                foreach (IReadOnlyList<string> r in rows)
+                {
+                    rowList.Add(r);
+                }
             }
-            foreach (var r in rowList) if (r.Count > cols) cols = r.Count;
+
+            foreach (IReadOnlyList<string> r in rowList)
+            {
+                if (r.Count > cols) cols = r.Count;
+            }
             if (cols == 0) yield break;
 
             int[] widths = new int[cols];
@@ -202,7 +228,7 @@ namespace EasyCLI.Formatting
                 {
                     if (innerWidth <= 0) content = string.Empty;
                     else if (innerWidth == 1) content = "…";
-                    else content = s.Substring(0, innerWidth - 1) + "…";
+                    else content = TruncateWithEllipsis(s, innerWidth - 1);
                 }
                 else
                 {
