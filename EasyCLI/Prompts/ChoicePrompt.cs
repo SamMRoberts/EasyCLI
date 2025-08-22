@@ -13,8 +13,8 @@ namespace EasyCLI.Prompts
         private bool _renderedChoices = false;
         private int _page = 0;
         private readonly IKeyReader? _keyReader;
-    private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
-    private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
+        private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
+        private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
         {
@@ -40,9 +40,9 @@ namespace EasyCLI.Prompts
             base.RenderPrompt();
         }
 
-        private void RenderList(IReadOnlyList<Choice<T>> list, int offset=0)
+        private void RenderList(IReadOnlyList<Choice<T>> list, int offset = 0)
         {
-            foreach (var (item, idx) in list.Select((c,i)=>(c,i)))
+            foreach (var (item, idx) in list.Select((c, i) => (c, i)))
                 _writer.WriteLine($"  {offset + idx + 1}) {item.Label}");
             _lastRenderLines = list.Count; // update count (no footer)
         }
