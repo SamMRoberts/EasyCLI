@@ -9,7 +9,7 @@
     PowerShellVersion = '7.0'
     FunctionsToExport = @()
     # Exported cmdlets (keep in sync with implemented PSCmdlet classes)
-    CmdletsToExport = @('Show-Message','Write-Rule','Write-TitledBox')
+    CmdletsToExport = @('Show-Message','Write-Rule','Write-TitledBox','Read-Choice')
     AliasesToExport = @()
     FormatsToProcess = @()
     PrivateData = @{
