@@ -43,14 +43,19 @@ namespace EasyCLI.Prompts
         private void RenderList(IReadOnlyList<Choice<T>> list, int offset = 0)
         {
             foreach (var (item, idx) in list.Select((c, i) => (c, i)))
+            {
                 _writer.WriteLine($"  {offset + idx + 1}) {item.Label}");
+            }
             _lastRenderLines = list.Count; // update count (no footer)
         }
 
         private IReadOnlyList<Choice<T>> ApplyFilter(string filter)
         {
-            if (!_options.EnableFiltering || string.IsNullOrEmpty(filter)) return _choices;
-            var comparison = StringComparison.OrdinalIgnoreCase;
+            if (!_options.EnableFiltering || string.IsNullOrEmpty(filter))
+            {
+                return _choices;
+            }
+            StringComparison comparison = StringComparison.OrdinalIgnoreCase;
             return _options.FilterMatchStartsWith
                 ? _choices.Where(c => c.Label.StartsWith(filter, comparison)).ToList()
                 : _choices.Where(c => c.Label.IndexOf(filter, comparison) >= 0).ToList();
@@ -60,9 +65,12 @@ namespace EasyCLI.Prompts
         {
             var list = ApplyFilter(filter);
             var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
-            if (_page >= totalPages && totalPages > 0) _page = 0;
-            var start = _page * _options.PageSize;
-            var slice = list.Skip(start).Take(_options.PageSize).ToList();
+            if (_page >= totalPages && totalPages > 0)
+            {
+                _page = 0;
+            }
+            int start = _page * _options.PageSize;
+            List<Choice<T>> slice = list.Skip(start).Take(_options.PageSize).ToList();
             RenderList(slice, start);
             if (_options.EnablePaging && totalPages > 1)
             {
@@ -73,36 +81,47 @@ namespace EasyCLI.Prompts
         }
 
         // TODO: Implement clearing of previous render
-    private static void ClearPreviousRender() { /* no-op in new save/restore model */ }
+        private static void ClearPreviousRender()
+        {
+            /* no-op in new save/restore model */
+        }
 
         protected override bool TryConvert(string raw, out T value)
         {
-            if (int.TryParse(raw, out var idx))
+            if (int.TryParse(raw, out int idx))
             {
                 if (idx >= 1 && idx <= _choices.Count)
                 {
-                    value = _choices[idx - 1].Value; return true;
+                    value = _choices[idx - 1].Value;
+                    return true;
                 }
             }
             var match = _choices.FirstOrDefault(c => c.Label.Equals(raw, StringComparison.OrdinalIgnoreCase))
                         ?? _choices.FirstOrDefault(c => c.Label.StartsWith(raw, StringComparison.OrdinalIgnoreCase));
             if (match != null)
             {
-                value = match.Value; return true;
+                value = match.Value;
+                return true;
             }
-            value = default!; return false;
+            value = default!;
+            return false;
         }
 
         public new T Get()
         {
             if (_keyReader != null)
+            {
                 return InteractiveKeyLoop();
+            }
             // fallback line-based
             while (true)
             {
                 RenderPrompt();
                 var raw = _reader.ReadLine();
-                if (_options.EnableEscapeCancel && raw == "\u001b") return HandleCancel();
+                if (_options.EnableEscapeCancel && raw == "\u001b")
+                {
+                    return HandleCancel();
+                }
                 // Simple line-based paging navigation (legacy behavior for tests)
                 if (_options.EnablePaging && _choices.Count > _options.PageSize && !string.IsNullOrEmpty(raw))
                 {
@@ -124,8 +143,14 @@ namespace EasyCLI.Prompts
                         }
                     }
                 }
-                if (string.IsNullOrEmpty(raw) && Default is not null) return Default!;
-                if (TryConvert(raw, out var converted)) return converted;
+                if (string.IsNullOrEmpty(raw) && Default is not null)
+                {
+                    return Default!;
+                }
+                if (TryConvert(raw, out var converted))
+                {
+                    return converted;
+                }
                 WriteError($"Invalid value: '{raw}'");
             }
         }
@@ -149,7 +174,9 @@ namespace EasyCLI.Prompts
                 // Re-render list (always fresh block)
                 _renderedChoices = false;
                 if (_options.EnablePaging && _choices.Count > _options.PageSize)
+                {
                     RenderPageFiltered(filter);
+                }
                 else
                 {
                     var listCurrent = ApplyFilter(filter);
@@ -167,15 +194,21 @@ namespace EasyCLI.Prompts
                 if (key.Key == ConsoleKey.Escape)
                 {
                     if (_options.EnableEscapeCancel)
+                    {
                         return HandleCancel();
-                    filter = string.Empty; _page = 0; continue;
+                    }
+                    filter = string.Empty;
+                    _page = 0;
+                    continue;
                 }
                 if (key.Key == ConsoleKey.N && _options.EnablePaging && _choices.Count > _options.PageSize)
                 {
                     var list = ApplyFilter(filter);
                     var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
                     if (totalPages > 1)
-                    { _page = (_page + 1) % totalPages; }
+                    {
+                        _page = (_page + 1) % totalPages;
+                    }
                     continue;
                 }
                 if (key.Key == ConsoleKey.P && _options.EnablePaging && _choices.Count > _options.PageSize)
@@ -183,36 +216,63 @@ namespace EasyCLI.Prompts
                     var list = ApplyFilter(filter);
                     var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
                     if (totalPages > 1)
-                    { _page = (_page - 1 + totalPages) % totalPages; }
+                    {
+                        _page = (_page - 1 + totalPages) % totalPages;
+                    }
                     continue;
                 }
                 if (key.Key == ConsoleKey.Backspace)
                 {
-                    if (filter.Length > 0) { filter = filter[..^1]; _page = 0; }
+                    if (filter.Length > 0)
+                    {
+                        filter = filter[..^1];
+                        _page = 0;
+                    }
                     continue;
                 }
                 if (key.Key == ConsoleKey.Enter)
                 {
                     var list = ApplyFilter(filter);
-                    if (string.IsNullOrEmpty(filter) && Default is not null) return Default!;
-                    if (int.TryParse(filter, out var idx) && idx >= 1 && idx <= _choices.Count) return _choices[idx - 1].Value;
-                    if (list.Count == 1) return list[0].Value;
-                    var match = _choices.FirstOrDefault(c => c.Label.Equals(filter, StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrEmpty(filter) && Default is not null)
+                    {
+                        return Default!;
+                    }
+                    if (int.TryParse(filter, out var idxEnter) && idxEnter >= 1 && idxEnter <= _choices.Count)
+                    {
+                        return _choices[idxEnter - 1].Value;
+                    }
+                    if (list.Count == 1)
+                    {
+                        return list[0].Value;
+                    }
+                    var matchEnter = _choices.FirstOrDefault(c => c.Label.Equals(filter, StringComparison.OrdinalIgnoreCase))
                                ?? _choices.FirstOrDefault(c => c.Label.StartsWith(filter, StringComparison.OrdinalIgnoreCase));
-                    if (match != null) return match.Value;
+                    if (matchEnter != null)
+                    {
+                        return matchEnter.Value;
+                    }
                     WriteError($"Invalid value: '{filter}'");
-                    filter = string.Empty; _page = 0; continue;
+                    filter = string.Empty;
+                    _page = 0;
+                    continue;
                 }
                 if (!char.IsControl(key.KeyChar))
                 {
                     if (_options.EnableFiltering)
-                    { filter += key.KeyChar; _page = 0; continue; }
+                    {
+                        filter += key.KeyChar;
+                        _page = 0;
+                        continue;
+                    }
                     else
                     {
                         if (char.IsDigit(key.KeyChar))
                         {
                             var d = key.KeyChar - '0';
-                            if (d >= 1 && d <= _choices.Count) return _choices[d - 1].Value;
+                            if (d >= 1 && d <= _choices.Count)
+                            {
+                                return _choices[d - 1].Value;
+                            }
                         }
                     }
                 }

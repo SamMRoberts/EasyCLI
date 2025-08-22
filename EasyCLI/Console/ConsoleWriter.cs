@@ -31,38 +31,56 @@ namespace EasyCLI
         public void Write(string message, ConsoleStyle style)
         {
             if (ColorEnabled && style.Codes.Length > 0)
+            {
                 Output.Write(style.Apply(message));
+            }
             else
+            {
                 Output.Write(message);
+            }
         }
 
         public void WriteLine(string message, ConsoleStyle style)
         {
             if (ColorEnabled && style.Codes.Length > 0)
+            {
                 Output.WriteLine(style.Apply(message));
+            }
             else
+            {
                 Output.WriteLine(message);
+            }
         }
 
         private static bool DecideColorEnabled(bool? enableColors)
         {
             if (enableColors.HasValue)
+            {
                 return enableColors.Value;
+            }
 
-            var noColor = Environment.GetEnvironmentVariable("NO_COLOR");
+            string? noColor = Environment.GetEnvironmentVariable("NO_COLOR");
             if (!string.IsNullOrEmpty(noColor))
+            {
                 return false;
+            }
 
-            var forceColor = Environment.GetEnvironmentVariable("FORCE_COLOR");
+            string? forceColor = Environment.GetEnvironmentVariable("FORCE_COLOR");
             if (!string.IsNullOrEmpty(forceColor))
+            {
                 return true;
+            }
 
             if (Console.IsOutputRedirected)
+            {
                 return false;
+            }
 
-            var term = Environment.GetEnvironmentVariable("TERM");
+            string? term = Environment.GetEnvironmentVariable("TERM");
             if (string.Equals(term, "dumb", StringComparison.OrdinalIgnoreCase))
+            {
                 return false;
+            }
 
             return true;
         }
@@ -70,14 +88,18 @@ namespace EasyCLI
         private static ColorSupportLevel DetectColorLevel()
         {
             // Truecolor hint
-            var colorterm = Environment.GetEnvironmentVariable("COLORTERM");
+            string? colorterm = Environment.GetEnvironmentVariable("COLORTERM");
             if (!string.IsNullOrEmpty(colorterm) && colorterm.Contains("truecolor", StringComparison.OrdinalIgnoreCase))
+            {
                 return ColorSupportLevel.TrueColor;
+            }
 
             // TERM based detection
-            var term = Environment.GetEnvironmentVariable("TERM") ?? string.Empty;
+            string term = Environment.GetEnvironmentVariable("TERM") ?? string.Empty;
             if (term.Contains("256color", StringComparison.OrdinalIgnoreCase))
+            {
                 return ColorSupportLevel.Indexed256;
+            }
 
             // Fallback basic
             return ColorSupportLevel.Basic16;

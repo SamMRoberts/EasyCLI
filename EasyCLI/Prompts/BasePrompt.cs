@@ -30,7 +30,7 @@ namespace EasyCLI.Prompts
             while (true)
             {
                 RenderPrompt();
-                var raw = _reader.ReadLine();
+                string? raw = _reader.ReadLine();
 
                 // Treat explicit ESC entry as cancel if enabled. Our simple reader cannot intercept a single ESC key
                 // so we adopt the convention that a user typing the literal sequence "<esc>" or just an empty string when no default
@@ -43,26 +43,34 @@ namespace EasyCLI.Prompts
                 if (string.IsNullOrEmpty(raw))
                 {
                     if (Default is not null)
+                    {
                         return Default!;
+                    }
                 }
 
                 if (_validator != null)
                 {
-                    var result = _validator.Validate(raw, out var value);
+                    PromptValidationResult result = _validator.Validate(raw, out T value);
                     if (result.IsValid)
+                    {
                         return value;
+                    }
                     if (!result.IsValid)
                     {
                         if (!string.IsNullOrEmpty(result.Error))
+                        {
                             WriteError(result.Error);
+                        }
                         continue; // ask again
                     }
                 }
                 else
                 {
                     // Try simple parse
-                    if (TryConvert(raw, out var converted))
+                    if (TryConvert(raw, out T converted))
+                    {
                         return converted;
+                    }
                     WriteError($"Invalid value: '{raw}'");
                 }
             }
@@ -73,10 +81,14 @@ namespace EasyCLI.Prompts
             if (_options.CancelBehavior == PromptCancelBehavior.ReturnDefault)
             {
                 if (Default is not null)
+                {
                     return Default!;
+                }
+
                 // No default -> return default(T)
                 return default!;
             }
+
             // Throw behavior
             throw new PromptCanceledException(Prompt);
         }
@@ -84,17 +96,25 @@ namespace EasyCLI.Prompts
         protected virtual void RenderPrompt()
         {
             if (_options.LabelStyle != null)
+            {
                 _writer.Write(Prompt, _options.LabelStyle.Value);
+            }
             else
+            {
                 _writer.Write(Prompt);
+            }
 
             if (Default is not null)
             {
-                var defText = $"[{Default}]";
+                string defText = $"[{Default}]";
                 if (_options.DefaultStyle != null)
+                {
                     _writer.Write(" " + defText, _options.DefaultStyle.Value);
+                }
                 else
+                {
                     _writer.Write(" " + defText);
+                }
             }
 
             _writer.Write(_options.Suffix ?? ": ");
@@ -103,9 +123,13 @@ namespace EasyCLI.Prompts
         protected virtual void WriteError(string message)
         {
             if (_options.ErrorStyle != null)
+            {
                 _writer.WriteErrorLine(message);
+            }
             else
+            {
                 _writer.WriteLine(message);
+            }
         }
 
         protected abstract bool TryConvert(string raw, out T value);
