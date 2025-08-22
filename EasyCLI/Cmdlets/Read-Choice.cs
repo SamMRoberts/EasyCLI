@@ -31,6 +31,12 @@ public class ReadChoiceCommand : PSCmdlet
     public SwitchParameter NoColor { get; set; }
 
     /// <summary>
+    /// Allow the user to press ESC to cancel (no output produced).
+    /// </summary>
+    [Parameter]
+    public SwitchParameter CancelOnEscape { get; set; }
+
+    /// <summary>
     /// When set, emit the zero-based index (int) of the selection instead of the value.
     /// </summary>
     [Parameter]
@@ -72,10 +78,9 @@ public class ReadChoiceCommand : PSCmdlet
         string? selection = Select;
         if (string.IsNullOrEmpty(selection))
         {
-            w.WriteHeadingLine(Prompt + (Default != null ? $" [{Default}]" : string.Empty));
-            selection = Console.ReadLine();
-            if (string.IsNullOrEmpty(selection) && Default != null)
-                selection = Default;
+            selection = ReadInteractiveSelection(w);
+            if (selection == null) // cancelled
+                return;
         }
 
         if (string.IsNullOrEmpty(selection))
@@ -122,5 +127,47 @@ public class ReadChoiceCommand : PSCmdlet
                 return (Options[i], i);
         }
         return (null, -1);
+    }
+
+    private string? ReadInteractiveSelection(ConsoleWriter w)
+    {
+        var promptText = Prompt + (Default != null ? $" [{Default}]" : string.Empty) + ": ";
+        w.WriteHeading(promptText);
+        var buffer = new StringBuilder();
+        while (true)
+        {
+            var key = Console.ReadKey(intercept: true);
+            if (key.Key == ConsoleKey.Escape)
+            {
+                if (CancelOnEscape)
+                {
+                    w.WriteWarningLine("<cancelled>");
+                    return null;
+                }
+                continue; // ignore ESC if not canceling
+            }
+            if (key.Key == ConsoleKey.Enter)
+            {
+                w.WriteLine("");
+                if (buffer.Length == 0 && Default != null)
+                    return Default;
+                return buffer.ToString();
+            }
+            if (key.Key == ConsoleKey.Backspace)
+            {
+                if (buffer.Length > 0)
+                {
+                    buffer.Length--;
+                    // Erase last char visually
+                    Console.Write("\b \b");
+                }
+                continue;
+            }
+            if (!char.IsControl(key.KeyChar))
+            {
+                buffer.Append(key.KeyChar);
+                Console.Write(key.KeyChar);
+            }
+        }
     }
 }
