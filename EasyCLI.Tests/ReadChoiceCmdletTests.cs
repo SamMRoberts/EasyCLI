@@ -1,0 +1,88 @@
+using System;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using Xunit;
+
+namespace EasyCLI.Tests
+{
+    public class ReadChoiceCmdletTests
+    {
+        private PowerShell CreatePowerShell()
+        {
+            var iss = InitialSessionState.CreateDefault();
+            iss.Commands.Add(new SessionStateCmdletEntry(
+                "Read-Choice",
+                typeof(EasyCLI.Cmdlets.ReadChoiceCommand),
+                null));
+            // Alias test also relies on metadata but we add explicit entry for primary name.
+            var rs = RunspaceFactory.CreateRunspace(iss);
+            rs.Open();
+            return PowerShell.Create(rs);
+        }
+
+        [Fact]
+        public void ReadChoice_Select_By_Number()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Alpha", "Beta", "Gamma" })
+              .AddParameter("Select", "2");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Beta", results[0].BaseObject);
+            Assert.False(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_Select_By_Label_Prefix()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Start", "Status", "Stop" })
+              .AddParameter("Select", "Sta"); // ambiguous prefix resolves to first exact or prefix (Start)
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Start", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_PassThruIndex()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Red", "Green", "Blue" })
+              .AddParameter("Select", "Blue")
+              .AddParameter("PassThruIndex");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal(2, (int)results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_PassThruObject()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "One", "Two", "Three" })
+              .AddParameter("Select", "3")
+              .AddParameter("PassThruObject");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            dynamic obj = results[0].BaseObject;
+            Assert.Equal(2, (int)obj.Index);
+            Assert.Equal("Three", (string)obj.Value);
+        }
+
+        [Fact]
+        public void ReadChoice_InvalidSelection_ReportsError()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "One", "Two" })
+              .AddParameter("Select", "99");
+            var results = ps.Invoke();
+            Assert.Empty(results);
+            Assert.True(ps.HadErrors);
+        }
+    }
+}
