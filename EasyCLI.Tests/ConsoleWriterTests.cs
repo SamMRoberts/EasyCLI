@@ -32,7 +32,7 @@ namespace EasyCLI.Tests
         [Fact]
         public void Apply_ComposesCodesAndResets()
         {
-            var style = new EasyCLI.ConsoleStyle(1, 36);
+            var style = new EasyCLI.Styling.ConsoleStyle(1, 36);
             var s = style.Apply("X");
             Assert.Equal("\u001b[1;36mX\u001b[0m", s);
         }

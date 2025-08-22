@@ -9,10 +9,10 @@ namespace EasyCLI.Tests
         {
             var sw = new System.IO.StringWriter();
             var w = new EasyCLI.ConsoleWriter(enableColors: true, output: sw);
-            var theme = new EasyCLI.ConsoleTheme
+            var theme = new EasyCLI.Styling.ConsoleTheme
             {
-                Success = new EasyCLI.ConsoleStyle(92), // bright green
-                Heading = new EasyCLI.ConsoleStyle(95)  // bright magenta
+                Success = new EasyCLI.Styling.ConsoleStyle(92), // bright green
+                Heading = new EasyCLI.Styling.ConsoleStyle(95)  // bright magenta
             };
 
             w.WriteSuccessLine("ok", theme);

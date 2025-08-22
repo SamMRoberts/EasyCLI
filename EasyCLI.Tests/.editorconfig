@@ -1,0 +1,22 @@
+# Test project specific analyzer configuration
+# Not root so it augments solution-level settings (if any)
+root = false
+
+[*.cs]
+# Disable or lower-value style rules for tests to cut noise
+# Allow top-level using directives style
+dotnet_diagnostic.SA1200.severity = none
+# Don't force this. prefix in tests
+dotnet_diagnostic.SA1101.severity = none
+# Allow underscore-prefixed fields in test helpers/fakes
+dotnet_diagnostic.SA1309.severity = none
+# Excessive indentation nitpicks -> suggestion only
+dotnet_diagnostic.SA1137.severity = suggestion
+# Multiple statements per line still discouraged (keep default)
+# Performance-focused rules not important for test data setup
+dotnet_diagnostic.CA1861.severity = none
+# Regex source generation not needed in tests
+dotnet_diagnostic.SYSLIB1045.severity = none
+# Treat CA1822 (member can be static) as warning rather than error in tests
+# (Library project can keep higher severity.)
+dotnet_diagnostic.CA1822.severity = warning

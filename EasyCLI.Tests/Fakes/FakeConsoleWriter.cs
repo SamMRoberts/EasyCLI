@@ -1,4 +1,5 @@
 using System.Text;
+using EasyCLI.Styling;
 
 namespace EasyCLI.Tests.Fakes
 {

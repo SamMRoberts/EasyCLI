@@ -9,7 +9,7 @@ namespace EasyCLI.Tests
 {
     public class CmdletTests
     {
-        private PowerShell CreatePowerShell()
+    private static PowerShell CreatePowerShell()
         {
             // Load the EasyCLI assembly into a runspace so the cmdlet is available.
             var iss = InitialSessionState.CreateDefault();

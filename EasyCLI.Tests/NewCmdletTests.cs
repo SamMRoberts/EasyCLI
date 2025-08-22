@@ -7,7 +7,7 @@ namespace EasyCLI.Tests
 {
     public class NewCmdletTests
     {
-        private PowerShell CreatePowerShell()
+    private static PowerShell CreatePowerShell()
         {
             var iss = InitialSessionState.CreateDefault();
             iss.Commands.Add(new SessionStateCmdletEntry(
