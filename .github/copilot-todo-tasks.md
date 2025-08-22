@@ -3,14 +3,14 @@ High-level review done; here’s a focused, prioritized improvement roadmap.
 ## Priority 1 – polish current surface
 
 - [ ] Consistent cmdlet naming  
-  - [ ] You have `Show-Message` (Show-Message.cs), `Write-Rule` (Write-Rule.cs), `Write-TitledBox` (`Write-TitledBox.cs`), `Read-Choice` (and alias `Select-EasyChoice`). Consider standardizing on a single verb family: Write-* for render-only, Read-* for interactive selection, Remove Show-* (alias it for backward compatibility).  
-  - [ ] Add aliases to preserve current names during transition.
+  - [ ] You have `Show-Message` (alias to `Write-Message`), `Write-Rule`, `Write-TitledBox`, `Read-Choice` (alias `Select-EasyChoice`). Consider standardizing on a single verb family: Write-* for render-only, Read-* for interactive selection.  
+  - [x] Add aliases to preserve current names during transition (added `Show-Message`).
 
 - [ ] Module manifest (`EasyCLI.psd1`) improvements  
-  - [ ] Ensure `CmdletsToExport` explicitly lists all (avoid wildcard for predictable module load).  
-  - [ ] Add `AliasesToExport` entry for every alias (verify `Select-EasyChoice` present).  
-  - [ ] Populate `PrivateData = @{ PSData = @{ Tags = @(...); LicenseUri = ''; ProjectUri = ''; ReleaseNotes = '' } }` for PowerShell Gallery readiness.  
-  - [ ] Increment `ModuleVersion` on breaking/feature changes.
+  - [x] Ensure `CmdletsToExport` explicitly lists all.  
+  - [x] Add `AliasesToExport` entry for every alias (now includes `Select-EasyChoice`,`Show-Message`).  
+  - [x] Populate `PrivateData.PSData` with Tags, LicenseUri, ProjectUri, ReleaseNotes (basic ReleaseNotes added).  
+  - [ ] Increment `ModuleVersion` on breaking/feature changes (pending next release decision).
 
 - [x] Strong typing everywhere  
   - [x] You introduced `ChoiceSelection` (record). Mirror this pattern for rule output and titled box (e.g., `RuleInfo { string Text, int Width, string? Title }`). Provide `-PassThruObject` on `Write-Rule` / `Write-TitledBox` returning those records.
