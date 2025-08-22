@@ -150,7 +150,7 @@ public class ReadChoiceCommand : PSCmdlet
         }
     }
 
-    private (string? value, int index) ResolveSelection(string raw, string[] activeOptions)
+    private static (string? value, int index) ResolveSelection(string raw, string[] activeOptions)
     {
         if (int.TryParse(raw, out var idx))
         {

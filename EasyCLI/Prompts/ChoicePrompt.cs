@@ -73,7 +73,7 @@ namespace EasyCLI.Prompts
         }
 
         // TODO: Implement clearing of previous render
-        private void ClearPreviousRender() { /* no-op in new save/restore model */ }
+    private static void ClearPreviousRender() { /* no-op in new save/restore model */ }
 
         protected override bool TryConvert(string raw, out T value)
         {
