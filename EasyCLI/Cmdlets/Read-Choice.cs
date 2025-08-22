@@ -13,6 +13,7 @@ public class ReadChoiceCommand : PSCmdlet
     internal const string DefaultSet = "Default";
 
     [Parameter(Mandatory = true, Position = 0)]
+    [ValidateNotNullOrEmpty]
     public string[] Options { get; set; } = Array.Empty<string>();
 
     [Parameter]
