@@ -100,17 +100,17 @@ public class ReadChoiceCommand : PSCmdlet
     protected override void EndProcessing()
     {
         // If pipeline provided options, prefer those over explicit Options (unless none were gathered)
-    string[] activeOptions = _pipelineOptions.Count > 0 ? _pipelineOptions.ToArray() : Options;
+        string[] activeOptions = _pipelineOptions.Count > 0 ? _pipelineOptions.ToArray() : Options;
         if (activeOptions.Length == 0)
         {
             WriteError(new ErrorRecord(new InvalidOperationException("No options supplied."), "NoOptions", ErrorCategory.InvalidArgument, null));
             return;
         }
-        var w = _writer!;
+        ConsoleWriter w = _writer!;
         // Render menu
         for (int i = 0; i < activeOptions.Length; i++)
         {
-            var label = activeOptions[i] ?? string.Empty;
+            string label = activeOptions[i] ?? string.Empty;
             // number prefix styled as hint, value as info
             w.WriteHint($"{i + 1}) ");
             w.WriteInfoLine(label);
@@ -130,7 +130,7 @@ public class ReadChoiceCommand : PSCmdlet
             return;
         }
 
-    var (chosenValue, chosenIndex) = ResolveSelection(selection!, activeOptions);
+        (string? chosenValue, int chosenIndex) = ResolveSelection(selection!, activeOptions);
         if (chosenValue == null)
         {
             WriteError(new ErrorRecord(new ArgumentException($"Invalid selection: '{selection}'"), "InvalidSelection", ErrorCategory.InvalidArgument, selection));

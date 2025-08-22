@@ -12,7 +12,7 @@ namespace EasyCLI.Styling
             Error = ConsoleStyles.FgBrightRed,
             Heading = new ConsoleStyle(1, 36), // bold + cyan
             Info = ConsoleStyles.FgCyan,
-            Hint = ConsoleStyles.FgBrightBlack
+            Hint = ConsoleStyles.FgBrightBlack,
         };
 
         public static ConsoleTheme Light => new()
@@ -22,7 +22,7 @@ namespace EasyCLI.Styling
             Error = ConsoleStyles.FgRed,
             Heading = new ConsoleStyle(1, 35),   // bold + magenta
             Info = ConsoleStyles.FgBlue,
-            Hint = ConsoleStyles.FgBlack
+            Hint = ConsoleStyles.FgBlack,
         };
 
         public static ConsoleTheme HighContrast => new()
@@ -32,7 +32,7 @@ namespace EasyCLI.Styling
             Error = ConsoleStyles.FgBrightRed,
             Heading = new ConsoleStyle(1, 97),   // bold + bright white
             Info = ConsoleStyles.FgBrightCyan,
-            Hint = ConsoleStyles.FgBrightWhite
+            Hint = ConsoleStyles.FgBrightWhite,
         };
     }
 }

@@ -5,7 +5,7 @@ namespace EasyCLI.Styling
     /// </summary>
     public class ConsoleTheme
     {
-    public ConsoleStyle Success { get; set; } = ConsoleStyles.Success;
+        public ConsoleStyle Success { get; set; } = ConsoleStyles.Success;
         public ConsoleStyle Warning { get; set; } = ConsoleStyles.Warning;
         public ConsoleStyle Error { get; set; } = ConsoleStyles.Error;
         public ConsoleStyle Heading { get; set; } = ConsoleStyles.Heading;

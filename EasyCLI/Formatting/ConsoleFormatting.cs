@@ -32,9 +32,9 @@ namespace EasyCLI.Formatting
 
             // Use span-based concat (CA1845)
             return string.Concat(value.AsSpan(0, maxWithEllipsis), "…");
-    }
+        }
 
-    private static int GetConsoleWidthOr(int fallback)
+        private static int GetConsoleWidthOr(int fallback)
         {
             try
             {

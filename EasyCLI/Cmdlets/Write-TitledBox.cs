@@ -11,14 +11,14 @@ namespace EasyCLI.Cmdlets
         [Parameter(Mandatory = true, Position = 0, ValueFromPipeline = true, ValueFromRemainingArguments = true)]
         public string? Line { get; set; }
 
-    [Parameter]
-    public string Title { get; set; } = string.Empty;
+        [Parameter]
+        public string Title { get; set; } = string.Empty;
 
-    [Parameter]
-    public SwitchParameter NoColor { get; set; }
+        [Parameter]
+        public SwitchParameter NoColor { get; set; }
 
-    [Parameter]
-    public SwitchParameter PassThruObject { get; set; }
+        [Parameter]
+        public SwitchParameter PassThruObject { get; set; }
 
         private readonly List<string> _lines = new();
         private ConsoleWriter? _writer;
@@ -31,7 +31,9 @@ namespace EasyCLI.Cmdlets
         protected override void ProcessRecord()
         {
             if (Line != null)
+            {
                 _lines.Add(Line);
+            }
         }
 
         protected override void EndProcessing()
@@ -77,7 +79,9 @@ namespace EasyCLI.Cmdlets
             else
             {
                 foreach (var l in boxLines)
+                {
                     WriteObject(l);
+                }
             }
         }
     }

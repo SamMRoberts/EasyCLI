@@ -5,28 +5,28 @@ namespace EasyCLI.Cmdlets
     {
         internal const string DefaultSet = "Default";
 
-    [Parameter]
-    [ValidateRange(0, int.MaxValue)]
-    public int Width { get; set; } = 0; // 0 => auto console width logic
+        [Parameter]
+        [ValidateRange(0, int.MaxValue)]
+        public int Width { get; set; } = 0; // 0 => auto console width logic
 
-    [Parameter]
-    public char Char { get; set; } = '─';
+        [Parameter]
+        public char Char { get; set; } = '─';
 
         [Parameter]
         public SwitchParameter NoColor { get; set; }
 
-    [Parameter]
-    public SwitchParameter Center { get; set; }
+        [Parameter]
+        public SwitchParameter Center { get; set; }
 
-    [Parameter]
-    public string? Title { get; set; }
+        [Parameter]
+        public string? Title { get; set; }
 
-    [Parameter]
-    [ValidateRange(0, 20)]
-    public int Gap { get; set; } = 1;
+        [Parameter]
+        [ValidateRange(0, 20)]
+        public int Gap { get; set; } = 1;
 
-    [Parameter]
-    public SwitchParameter PassThruObject { get; set; }
+        [Parameter]
+        public SwitchParameter PassThruObject { get; set; }
 
         private ConsoleWriter? _writer;
 

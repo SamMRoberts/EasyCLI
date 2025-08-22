@@ -61,7 +61,7 @@ namespace EasyCLI.Styling
         {
             return new ConsoleStyle(48, 2, r, g, b);
         }
-        
+
         public static ConsoleStyle Indexed256(int index)
         {
             if (index is < 0 or > 255)
