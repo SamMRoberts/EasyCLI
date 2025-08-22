@@ -13,6 +13,6 @@ namespace EasyCLI.Prompts
         /// <summary>Optional default value rendered when the user presses enter with no input.</summary>
         T? Default { get; }
         /// <summary>Execute the prompt and return a value.</summary>
-        T Get();
+        T GetValue();
     }
 }

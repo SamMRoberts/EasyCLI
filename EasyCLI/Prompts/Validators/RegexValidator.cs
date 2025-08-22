@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 
 namespace EasyCLI.Prompts.Validators
 {
-
     /// <summary>
     /// Validates string input against a regular expression.
     /// </summary>

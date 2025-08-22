@@ -19,7 +19,10 @@ namespace EasyCLI.Prompts
             : base(prompt, writer, reader, options, @default)
         {
             _choices = choices.ToList();
-            if (_choices.Count == 0) throw new ArgumentException("Choices cannot be empty", nameof(choices));
+            if (_choices.Count == 0)
+        {
+            throw new ArgumentException("Choices cannot be empty", nameof(choices));
+        }
             _keyReader = keyReader;
         }
 
@@ -29,7 +32,7 @@ namespace EasyCLI.Prompts
             {
                 if (_options.EnablePaging && _choices.Count > _options.PageSize)
                 {
-                    RenderPageFiltered("");
+                    RenderPageFiltered(string.Empty);
                 }
                 else
                 {
@@ -58,7 +61,7 @@ namespace EasyCLI.Prompts
             StringComparison comparison = StringComparison.OrdinalIgnoreCase;
             return _options.FilterMatchStartsWith
                 ? _choices.Where(c => c.Label.StartsWith(filter, comparison)).ToList()
-                : _choices.Where(c => c.Label.IndexOf(filter, comparison) >= 0).ToList();
+                : _choices.Where(c => c.Label.Contains(filter, comparison)).ToList();
         }
 
         private void RenderPageFiltered(string filter)
@@ -107,7 +110,7 @@ namespace EasyCLI.Prompts
             return false;
         }
 
-        public new T Get()
+        public new T GetValue()
         {
             if (_keyReader != null)
             {

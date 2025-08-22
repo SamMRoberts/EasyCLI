@@ -35,7 +35,7 @@ namespace EasyCLI.Tests
         {
             var hidden = new CapturingHidden("secret");
             var prompt = new HiddenInputPrompt("Password", new DummyWriter(), new DummyReader(), hiddenSource: hidden, mask: '*');
-            var v = prompt.Get();
+            var v = prompt.GetValue();
             Assert.Equal("secret", v);
             Assert.Equal('*', hidden.LastMask);
         }
@@ -45,7 +45,7 @@ namespace EasyCLI.Tests
         {
             var hidden = new CapturingHidden("token");
             var prompt = new HiddenInputPrompt("Token", new DummyWriter(), new DummyReader(), hiddenSource: hidden, mask: '#');
-            var v = prompt.Get();
+            var v = prompt.GetValue();
             Assert.Equal("token", v);
             Assert.Equal('#', hidden.LastMask);
         }
@@ -55,7 +55,7 @@ namespace EasyCLI.Tests
         {
             var hidden = new CapturingHidden("");
             var prompt = new HiddenInputPrompt("Password", new DummyWriter(), new DummyReader(), hiddenSource: hidden, @default: "fallback", mask: '*');
-            var v = prompt.Get();
+            var v = prompt.GetValue();
             Assert.Equal("fallback", v);
             Assert.Equal('*', hidden.LastMask);
         }
@@ -69,7 +69,7 @@ namespace EasyCLI.Tests
         public void HiddenInputPrompt_Cancel_ReturnsDefault()
         {
             var prompt = new HiddenInputPrompt("Password", new DummyWriter(), new DummyReader(), hiddenSource: new EscHidden(), @default: "fallback", mask: '*');
-            var v = prompt.Get();
+            var v = prompt.GetValue();
             Assert.Equal("fallback", v);
         }
     }

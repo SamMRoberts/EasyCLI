@@ -192,7 +192,7 @@ namespace EasyCLI.Formatting
             }
         }
 
-        public static IEnumerable<string> BuildKeyValues(IEnumerable<(string key, string value)> items, int indent = 0, int gap = 2, string sep = ":")
+        public static IEnumerable<string> BuildKeyValues(IEnumerable<(string Key, string Value)> items, int indent = 0, int gap = 2, string sep = ":")
         {
             if (items == null)
             {
@@ -200,11 +200,11 @@ namespace EasyCLI.Formatting
             }
 
             int keyWidth = 0;
-            List<(string key, string value)> snapshot = new List<(string key, string value)>();
-            foreach ((string key, string value) in items)
+            List<(string Key, string Value)> snapshot = new List<(string Key, string Value)>();
+            foreach ((string Key, string Value) in items)
             {
-                string kk = key ?? string.Empty;
-                string vv = value ?? string.Empty;
+                string kk = Key ?? string.Empty;
+                string vv = Value ?? string.Empty;
                 snapshot.Add((kk, vv));
                 if (kk.Length > keyWidth)
                 {
@@ -214,9 +214,9 @@ namespace EasyCLI.Formatting
 
             string pad = indent > 0 ? new string(' ', indent) : string.Empty;
             string gapSpaces = new string(' ', gap < 0 ? 0 : gap);
-            foreach ((string key, string value) in snapshot)
+            foreach ((string Key, string Value) in snapshot)
             {
-                yield return pad + key.PadRight(keyWidth) + " " + sep + gapSpaces + value;
+                yield return pad + Key.PadRight(keyWidth) + " " + sep + gapSpaces + Value;
             }
         }
 
@@ -284,7 +284,7 @@ namespace EasyCLI.Formatting
             int avail = maxWidth > 0 ? maxWidth : GetConsoleWidthOr(0);
             if (avail > 0)
             {
-                int borderWidth = (cols + 1);
+                int borderWidth = cols + 1;
                 for (int c = 0; c < cols; c++)
                 {
                     borderWidth += widths[c];
@@ -292,7 +292,7 @@ namespace EasyCLI.Formatting
                 if (borderWidth > avail)
                 {
                     int reduce = borderWidth - avail;
-                    int minCol = Math.Max(3, padding * 2 + 1);
+                    int minCol = Math.Max(3, (padding * 2) + 1);
                     bool reduced;
                     int guard = 10000;
                     do
@@ -395,7 +395,6 @@ namespace EasyCLI.Formatting
                     parts[c] = PadCell(cell, widths[c], GetAlign(c));
                 }
                 return "|" + string.Join("|", parts) + "|";
-
             }
 
             string top = MakeSep();

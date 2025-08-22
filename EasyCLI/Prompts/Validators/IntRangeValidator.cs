@@ -2,7 +2,6 @@ using System;
 
 namespace EasyCLI.Prompts.Validators
 {
-
     /// <summary>
     /// Validates that an integer is within an inclusive range.
     /// </summary>

@@ -12,7 +12,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "hello" });
             var writer = new FakeConsoleWriter();
             var p = new StringPrompt("Name", writer, reader);
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.Equal("hello", val);
             Assert.Contains("Name", writer.Output);
         }
@@ -23,7 +23,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "" });
             var writer = new FakeConsoleWriter();
             var p = new StringPrompt("Project", writer, reader, @default: "EasyCLI");
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.Equal("EasyCLI", val);
             Assert.Contains("[EasyCLI]", writer.Output);
         }
@@ -34,7 +34,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "abc", "42" });
             var writer = new FakeConsoleWriter();
             var p = new IntPrompt("Age", writer, reader);
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.Equal(42, val);
             // Should show an error line for invalid attempt
             Assert.Contains("Invalid value", writer.Output);
@@ -46,7 +46,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "y" });
             var writer = new FakeConsoleWriter();
             var p = new YesNoPrompt("Proceed", writer, reader);
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.True(val);
         }
 
@@ -72,7 +72,7 @@ namespace EasyCLI.Tests
             var writer = new FakeConsoleWriter();
             var validator = new RangeValidator(1, 100);
             var p = new IntPrompt("Percent", writer, reader, validator: validator);
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.Equal(50, val);
             Assert.Contains("between 1 and 100", writer.Output);
         }
@@ -84,7 +84,7 @@ namespace EasyCLI.Tests
             var writer = new FakeConsoleWriter();
             var opts = new PromptOptions { EnableEscapeCancel = true, CancelBehavior = PromptCancelBehavior.ReturnDefault };
             var p = new StringPrompt("Name", writer, reader, options: opts, @default: "Fallback");
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.Equal("Fallback", val);
         }
 
@@ -95,7 +95,7 @@ namespace EasyCLI.Tests
             var writer = new FakeConsoleWriter();
             var opts = new PromptOptions { EnableEscapeCancel = true, CancelBehavior = PromptCancelBehavior.ReturnDefault };
             var p = new StringPrompt("Name", writer, reader, options: opts);
-            var val = p.Get();
+            var val = p.GetValue();
             Assert.Null(val);
         }
 
@@ -106,7 +106,7 @@ namespace EasyCLI.Tests
             var writer = new FakeConsoleWriter();
             var opts = new PromptOptions { EnableEscapeCancel = true, CancelBehavior = PromptCancelBehavior.Throw };
             var p = new StringPrompt("Name", writer, reader, options: opts);
-            Assert.Throws<PromptCanceledException>(() => p.Get());
+            Assert.Throws<PromptCanceledException>(() => p.GetValue());
         }
     }
 }

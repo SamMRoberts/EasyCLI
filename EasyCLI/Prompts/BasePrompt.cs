@@ -25,7 +25,7 @@ namespace EasyCLI.Prompts
         public string Prompt { get; }
         public T? Default { get; }
 
-        public T Get()
+        public T GetValue()
         {
             while (true)
             {
