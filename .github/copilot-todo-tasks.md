@@ -12,16 +12,21 @@ High-level review done; here’s a focused, prioritized improvement roadmap.
   - [ ] Populate `PrivateData = @{ PSData = @{ Tags = @(...); LicenseUri = ''; ProjectUri = ''; ReleaseNotes = '' } }` for PowerShell Gallery readiness.  
   - [ ] Increment `ModuleVersion` on breaking/feature changes.
 
-- [ ] Strong typing everywhere  
-  - [ ] You introduced `ChoiceSelection` (record). Mirror this pattern for rule output and titled box (e.g., `RuleInfo { string Text, int Width, string? Title }`). Provide `-PassThruObject` on `Write-Rule` / `Write-TitledBox` returning those records.
+- [x] Strong typing everywhere  
+  - [x] You introduced `ChoiceSelection` (record). Mirror this pattern for rule output and titled box (e.g., `RuleInfo { string Text, int Width, string? Title }`). Provide `-PassThruObject` on `Write-Rule` / `Write-TitledBox` returning those records.
 
 - [ ] Parameter validation & UX  
-  - [ ] Add `[ValidateNotNullOrEmpty]` to arrays like `-Options` in `Read-Choice`.  
-  - [ ] Add `[ValidateRange]` for width parameters on `Write-Rule` / `Write-TitledBox`.  
+  - [x] Add `[ValidateNotNullOrEmpty]` to arrays like `-Options` in `Read-Choice`.  
+  - [x] Add `[ValidateRange]` for width parameters on `Write-Rule`. (`Write-TitledBox` currently has no width parameter.)  
   - [ ] Support pipeline binding (ValueFromPipeline / ByPropertyName) for options objects with a `Name` property (detect via reflection or generic selector parameter).
 
 - [ ] Tests gap closure  
-  - [ ] Add tests for: rule width edge cases, titled box wrapping, default selection path, cancellation (`-CancelOnEscape`) success + no output, alias invocation for every alias (currently only one).  
+  - [ ] Add tests for: rule width edge cases  
+  - [ ] titled box wrapping  
+  - [ ] default selection path  
+  - [x] cancellation (`-CancelOnEscape`) success + no output  
+  - [x] alias invocation for existing alias (`Select-EasyChoice`)  
+  - [ ] alias invocation for any newly added aliases  
   - [ ] Verify `NoColor` output contains no ANSI sequences (grep for `\x1b`).
 
 ## Priority 2 – feature enhancements
@@ -101,8 +106,8 @@ High-level review done; here’s a focused, prioritized improvement roadmap.
 
 ## Quick wins you can do immediately
 
-- [ ] Add new record types for rule / titled box outputs.
-- [ ] Add validator attributes & tests (low risk, immediate clarity).
+- [x] Add new record types for rule / titled box outputs.
+- [x] Add validator attributes & tests (low risk, immediate clarity). (Added validation attributes; basic tests cover empty options.)
 - [ ] README: add a “PowerShell Usage” section with 3 examples.
 - [ ] Add analyzer package and baseline suppressions.
 - [ ] Add `-Theme` parameter (simple pass-through to `ConsoleWriter` construction).
