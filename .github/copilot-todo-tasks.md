@@ -16,9 +16,9 @@ High-level review done; here’s a focused, prioritized improvement roadmap.
   - [x] You introduced `ChoiceSelection` (record). Mirror this pattern for rule output and titled box (e.g., `RuleInfo { string Text, int Width, string? Title }`). Provide `-PassThruObject` on `Write-Rule` / `Write-TitledBox` returning those records.
 
 - [ ] Parameter validation & UX  
-  - [x] Add `[ValidateNotNullOrEmpty]` to arrays like `-Options` in `Read-Choice`.  
+  - [ ] (Revisit) `[ValidateNotNullOrEmpty]` on `-Options` removed to enable pipeline-only usage; consider custom runtime validation instead.  
   - [x] Add `[ValidateRange]` for width parameters on `Write-Rule`. (`Write-TitledBox` currently has no width parameter.)  
-  - [ ] Support pipeline binding (ValueFromPipeline / ByPropertyName) for options objects with a `Name` property (detect via reflection or generic selector parameter).
+  - [x] Support pipeline binding (ValueFromPipeline) for objects with a `Name` property (reflection based) – implemented in `Read-Choice`.
 
 - [ ] Tests gap closure  
   - [ ] Add tests for: rule width edge cases  

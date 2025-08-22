@@ -35,7 +35,7 @@ namespace EasyCLI.Tests
               .AddParameter("Select", "2");
             var results = ps.Invoke();
             Assert.Single(results);
-            Assert.Equal("Beta", results[0].BaseObject);
+            Assert.Equal("Beta", Assert.IsType<string>(results[0].BaseObject));
             Assert.False(ps.HadErrors);
         }
 
@@ -103,17 +103,16 @@ namespace EasyCLI.Tests
             Assert.True(ps.HadErrors);
         }
 
-        [Fact]
-        public void ReadChoice_EmptyOptions_Throws()
+  [Fact]
+  public void ReadChoice_EmptyOptions_ReportsError()
         {
             using var ps = CreatePowerShell();
             ps.AddCommand("Read-Choice")
               .AddParameter("Options", Array.Empty<string>())
               .AddParameter("Select", "1");
-            var ex = Record.Exception(() => ps.Invoke());
-            Assert.NotNull(ex);
-            var pbe = Assert.IsAssignableFrom<ParameterBindingException>(ex);
-            Assert.Contains("Options", pbe.Message, StringComparison.OrdinalIgnoreCase);
+            var results = ps.Invoke();
+            Assert.Empty(results);
+            Assert.True(ps.HadErrors);
         }
 
         [Fact]
@@ -171,6 +170,41 @@ namespace EasyCLI.Tests
             Assert.Single(results);
             var text = capture.GetOutput();
             Assert.DoesNotContain("\u001b[", text); // No ANSI escapes
+        }
+
+        private class NamedThing { public string Name { get; set; } = string.Empty; }
+
+    [Fact]
+	public void ReadChoice_PipelineObjects_UsesNameProperty()
+        {
+            using var ps = CreatePowerShell();
+            // Pipeline supplies objects with Name property; no explicit -Options needed.
+      ps.AddScript(@"[PsCustomObject]@{ Name='Alpha' }, [PsCustomObject]@{ Name='Beta' } | Read-Choice -Select 2");
+            var results = ps.Invoke();
+            Assert.Single(results);
+      Assert.Equal("Beta", Assert.IsType<string>(results[0].BaseObject));
+        }
+
+    [Fact]
+    public void ReadChoice_PipelineObjects_PassThruIndex()
+    {
+      using var ps = CreatePowerShell();
+      ps.AddScript(@"[PsCustomObject]@{ Name='First' }, [PsCustomObject]@{ Name='Second' } | Read-Choice -Select Second -PassThruIndex");
+      var results = ps.Invoke();
+      Assert.Single(results);
+      Assert.Equal(1, Assert.IsType<int>(results[0].BaseObject));
+    }
+
+        [Fact]
+        public void ReadChoice_AmbiguousPrefix_PicksFirstMatch()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Start", "Status", "Stop" })
+              .AddParameter("Select", "Sta");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Start", results[0].BaseObject);
         }
     }
 }
