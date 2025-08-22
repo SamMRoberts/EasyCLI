@@ -1,6 +1,5 @@
-using System.Collections.Generic;
-using System.Management.Automation;
-using System.Linq;
+using System.Collections.Generic; // specific for List<>
+using System.Linq; // used for ToList()
 
 namespace EasyCLI.Cmdlets
 {
@@ -65,7 +64,7 @@ namespace EasyCLI.Cmdlets
                 {
                     w.WriteLine(line, theme.Hint);
                 }
-
+            }
             foreach (var l in boxLines)
                 WriteObject(l);
         }

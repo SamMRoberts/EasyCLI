@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System; // needed for Console & Environment calls
 
 namespace EasyCLI
 {
