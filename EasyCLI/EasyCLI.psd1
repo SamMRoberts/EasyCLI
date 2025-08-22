@@ -9,7 +9,7 @@
     PowerShellVersion = '7.0'
     FunctionsToExport = @()
     # Exported cmdlets (keep in sync with implemented PSCmdlet classes)
-    CmdletsToExport = @('Write-EasyMessage','Write-EasyRule','Write-EasyTitledBox')
+    CmdletsToExport = @('Write-Message','Write-Rule','Write-TitledBox')
     AliasesToExport = @()
     FormatsToProcess = @()
     PrivateData = @{
@@ -19,4 +19,5 @@
             ProjectUri = 'https://github.com/SamMRoberts/EasyCLI'
         }
     }
+    DefaultCommandPrefix = 'Easy'
 }

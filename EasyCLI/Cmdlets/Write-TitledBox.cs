@@ -4,8 +4,8 @@ using System.Linq;
 
 namespace EasyCLI.Cmdlets
 {
-    [Cmdlet(VerbsCommunications.Write, "EasyTitledBox", DefaultParameterSetName = DefaultSet)]
-    public class WriteEasyTitledBoxCommand : PSCmdlet
+    [Cmdlet(VerbsCommunications.Write, "TitledBox", DefaultParameterSetName = DefaultSet)]
+    public class WriteTitledBoxCommand : PSCmdlet
     {
         internal const string DefaultSet = "Default";
 

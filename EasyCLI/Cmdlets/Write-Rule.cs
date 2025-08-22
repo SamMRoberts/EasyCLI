@@ -2,8 +2,8 @@ using System.Management.Automation;
 
 namespace EasyCLI.Cmdlets
 {
-    [Cmdlet(VerbsCommunications.Write, "EasyRule", DefaultParameterSetName = DefaultSet)]
-    public class WriteEasyRuleCommand : PSCmdlet
+    [Cmdlet(VerbsCommunications.Write, "Rule", DefaultParameterSetName = DefaultSet)]
+    public class WriteRuleCommand : PSCmdlet
     {
         internal const string DefaultSet = "Default";
 
