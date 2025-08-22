@@ -66,8 +66,9 @@ namespace EasyCLI.Cmdlets
                     w.WriteLine(line, theme.Hint);
                 }
 
-            foreach (var l in boxLines)
-                WriteObject(l);
+                foreach (var l in boxLines)
+                    WriteObject(l);
+            }
         }
     }
 }
