@@ -192,7 +192,7 @@ namespace EasyCLI.Formatting
             }
         }
 
-        public static IEnumerable<string> BuildKeyValues(IEnumerable<(string Key, string Value)> items, int indent = 0, int gap = 2, string sep = ":")
+        public static IEnumerable<string> BuildKeyValues(IEnumerable<(string key, string value)> items, int indent = 0, int gap = 2, string sep = ":")
         {
             if (items == null)
             {
@@ -200,11 +200,11 @@ namespace EasyCLI.Formatting
             }
 
             int keyWidth = 0;
-            List<(string Key, string Value)> snapshot = new List<(string Key, string Value)>();
-            foreach ((string Key, string Value) in items)
+            List<(string key, string value)> snapshot = new List<(string key, string value)>();
+            foreach ((string key, string value) in items)
             {
-                string kk = Key ?? string.Empty;
-                string vv = Value ?? string.Empty;
+                string kk = key ?? string.Empty;
+                string vv = value ?? string.Empty;
                 snapshot.Add((kk, vv));
                 if (kk.Length > keyWidth)
                 {
@@ -214,9 +214,9 @@ namespace EasyCLI.Formatting
 
             string pad = indent > 0 ? new string(' ', indent) : string.Empty;
             string gapSpaces = new string(' ', gap < 0 ? 0 : gap);
-            foreach ((string Key, string Value) in snapshot)
+            foreach ((string key, string value) in snapshot)
             {
-                yield return pad + Key.PadRight(keyWidth) + " " + sep + gapSpaces + Value;
+                yield return pad + key.PadRight(keyWidth) + " " + sep + gapSpaces + value;
             }
         }
 
