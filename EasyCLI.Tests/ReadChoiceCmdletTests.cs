@@ -68,9 +68,9 @@ namespace EasyCLI.Tests
               .AddParameter("PassThruObject");
             var results = ps.Invoke();
             Assert.Single(results);
-            dynamic obj = results[0].BaseObject;
-            Assert.Equal(2, (int)obj.Index);
-            Assert.Equal("Three", (string)obj.Value);
+            var obj = Assert.IsType<EasyCLI.Cmdlets.ChoiceSelection>(results[0].BaseObject);
+            Assert.Equal(2, obj.Index);
+            Assert.Equal("Three", obj.Value);
         }
 
         [Fact]
@@ -83,6 +83,34 @@ namespace EasyCLI.Tests
             var results = ps.Invoke();
             Assert.Empty(results);
             Assert.True(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_Alias_Works()
+        {
+            using var ps = CreatePowerShell();
+            // Alias should behave the same; we add the command by canonical name, alias metadata resolves.
+            ps.AddCommand("Select-EasyChoice")
+              .AddParameter("Options", new[] { "Alpha", "Beta" })
+              .AddParameter("Select", "Beta");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Beta", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_Cancel_On_Escape_Simulated()
+        {
+            using var ps = CreatePowerShell();
+            // Simulate ESC then Enter (so user cancels before finalizing)
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "A", "B" })
+              .AddParameter("CancelOnEscape")
+              .AddParameter("SimulateKeys", "\u001b\n");
+            var results = ps.Invoke();
+            Assert.Empty(results); // cancelled => no output
+            // PowerShell treats cancellation as no error (we didn't write one), ensure no errors flagged.
+            Assert.False(ps.HadErrors);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace EasyCLI.Cmdlets;
 [Cmdlet(VerbsCommunications.Read, "Choice", DefaultParameterSetName = DefaultSet)]
 [OutputType(typeof(string))]
 [OutputType(typeof(int))]
-[OutputType(typeof(object))]
+[OutputType(typeof(EasyCLI.Cmdlets.ChoiceSelection))]
 public class ReadChoiceCommand : PSCmdlet
 {
     internal const string DefaultSet = "Default";
@@ -35,6 +35,12 @@ public class ReadChoiceCommand : PSCmdlet
     /// </summary>
     [Parameter]
     public SwitchParameter CancelOnEscape { get; set; }
+
+    /// <summary>
+    /// Test-only: simulated key sequence. Use \u001b for ESC, \n for Enter. Not shown in help.
+    /// </summary>
+    [Parameter(DontShow = true)]
+    public string? SimulateKeys { get; set; }
 
     /// <summary>
     /// When set, emit the zero-based index (int) of the selection instead of the value.
@@ -97,7 +103,7 @@ public class ReadChoiceCommand : PSCmdlet
         }
         if (PassThruObject)
         {
-            WriteObject(new { Index = chosenIndex, Value = chosenValue });
+            WriteObject(new ChoiceSelection(chosenIndex, chosenValue));
         }
         else if (PassThruIndex)
         {
@@ -134,6 +140,42 @@ public class ReadChoiceCommand : PSCmdlet
         var promptText = Prompt + (Default != null ? $" [{Default}]" : string.Empty) + ": ";
         w.WriteHeading(promptText);
         var buffer = new StringBuilder();
+        if (!string.IsNullOrEmpty(SimulateKeys))
+        {
+            for (int i = 0; i < SimulateKeys.Length; i++)
+            {
+                var ch = SimulateKeys[i];
+                if (ch == '\u001b')
+                {
+                    if (CancelOnEscape)
+                    {
+                        w.WriteWarningLine("<cancelled>");
+                        return null;
+                    }
+                    continue; // ignore if not canceling
+                }
+                if (ch == '\n' || ch == '\r')
+                {
+                    w.WriteLine("");
+                    if (buffer.Length == 0 && Default != null)
+                        return Default;
+                    return buffer.ToString();
+                }
+                if (ch == '\b')
+                {
+                    if (buffer.Length > 0) buffer.Length--;
+                    continue;
+                }
+                if (!char.IsControl(ch))
+                {
+                    buffer.Append(ch);
+                }
+            }
+            // If simulate ended without explicit enter, treat as enter
+            if (buffer.Length == 0 && Default != null)
+                return Default;
+            return buffer.ToString();
+        }
         while (true)
         {
             var key = Console.ReadKey(intercept: true);
@@ -158,7 +200,6 @@ public class ReadChoiceCommand : PSCmdlet
                 if (buffer.Length > 0)
                 {
                     buffer.Length--;
-                    // Erase last char visually
                     Console.Write("\b \b");
                 }
                 continue;
