@@ -3,6 +3,7 @@ namespace EasyCLI.Cmdlets;
 /// <summary>
 /// Displays a numbered menu of options and returns the selected value. Supports non-interactive selection via -Select.
 /// </summary>
+[Alias("Select-EasyChoice")]
 [Cmdlet(VerbsCommunications.Read, "Choice", DefaultParameterSetName = DefaultSet)]
 [OutputType(typeof(string))]
 public class ReadChoiceCommand : PSCmdlet
