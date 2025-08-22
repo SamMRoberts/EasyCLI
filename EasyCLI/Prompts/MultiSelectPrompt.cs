@@ -11,8 +11,8 @@ namespace EasyCLI.Prompts
     public sealed class MultiSelectPrompt<T> : BasePrompt<IReadOnlyList<T>>
     {
         private readonly IReadOnlyList<Choice<T>> _choices;
-    private bool _renderedChoices = false;
-    private int _page = 0;
+        private bool _renderedChoices = false;
+        private int _page = 0;
         public MultiSelectPrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null)
             : base(prompt, writer, reader, options, @default: null)
         {

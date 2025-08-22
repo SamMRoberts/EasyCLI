@@ -12,7 +12,7 @@ namespace EasyCLI.Prompts
         protected readonly PromptOptions _options;
         protected readonly IPromptValidator<T>? _validator;
 
-    protected BasePrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IPromptValidator<T>? validator = null)
+        protected BasePrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IPromptValidator<T>? validator = null)
         {
             Prompt = prompt;
             _writer = writer;
@@ -23,7 +23,7 @@ namespace EasyCLI.Prompts
         }
 
         public string Prompt { get; }
-    public T? Default { get; }
+        public T? Default { get; }
 
         public T Get()
         {
