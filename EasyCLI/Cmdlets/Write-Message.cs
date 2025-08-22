@@ -1,6 +1,7 @@
 namespace EasyCLI.Cmdlets
 {
     [Cmdlet(VerbsCommunications.Write, "Message", DefaultParameterSetName = DefaultSet)]
+    [Alias("Show-Message")] // Backward compatibility alias
     [OutputType(typeof(string))]
     public class WriteMessageCommand : PSCmdlet
     {
@@ -10,7 +11,7 @@ namespace EasyCLI.Cmdlets
         public string? Message { get; set; }
 
         [Parameter]
-        public SwitchParameter Success { get; set; }
+    public SwitchParameter Success { get; set; }
 
         [Parameter]
         public SwitchParameter Warning { get; set; }
@@ -25,7 +26,7 @@ namespace EasyCLI.Cmdlets
         public SwitchParameter Hint { get; set; }
 
         [Parameter]
-        public SwitchParameter NoColor { get; set; }
+    public SwitchParameter NoColor { get; set; }
 
         private ConsoleWriter? _writer;
 
