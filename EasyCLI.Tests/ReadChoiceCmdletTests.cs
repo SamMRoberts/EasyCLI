@@ -86,6 +86,29 @@ namespace EasyCLI.Tests
         }
 
         [Fact]
+        public void ReadChoice_InvalidLabel_ReportsError()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Apple", "Banana" })
+              .AddParameter("Select", "Cherry");
+            var results = ps.Invoke();
+            Assert.Empty(results);
+            Assert.True(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_EmptyOptions_Throws()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", Array.Empty<string>())
+              .AddParameter("Select", "1");
+            var ex = Assert.Throws<ParameterBindingException>(() => ps.Invoke());
+            Assert.Contains("cannot be empty", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void ReadChoice_Alias_Works()
         {
             using var ps = CreatePowerShell();
