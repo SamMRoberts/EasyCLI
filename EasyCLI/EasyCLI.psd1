@@ -5,10 +5,11 @@
     Author = 'SamMRoberts'
     CompanyName = 'SamMRoberts'
     Copyright = '(c) 2025 Sam'
-    Description = 'EasyCLI PowerShell module exposing ANSI styling helpers and Show-EasyMessage cmdlet.'
+    Description = 'EasyCLI PowerShell module exposing ANSI styling helpers and cmdlets (Write-EasyMessage, Write-EasyRule, Write-EasyTitledBox).'
     PowerShellVersion = '7.0'
     FunctionsToExport = @()
-    CmdletsToExport = @('Show-EasyMessage')
+    # Exported cmdlets (keep in sync with implemented PSCmdlet classes)
+    CmdletsToExport = @('Show-Message','Write-Rule','Write-TitledBox')
     AliasesToExport = @()
     FormatsToProcess = @()
     PrivateData = @{
@@ -18,4 +19,5 @@
             ProjectUri = 'https://github.com/SamMRoberts/EasyCLI'
         }
     }
+    DefaultCommandPrefix = 'Easy'
 }

@@ -2,9 +2,9 @@ using System.Management.Automation;
 
 namespace EasyCLI.Cmdlets
 {
-    [Cmdlet(VerbsCommunications.Write, "EasyMessage", DefaultParameterSetName = DefaultSet)]
+    [Cmdlet(VerbsCommunications.Write, "Message", DefaultParameterSetName = DefaultSet)]
     [OutputType(typeof(string))]
-    public class ShowEasyMessageCommand : PSCmdlet
+    public class ShowMessageCommand : PSCmdlet
     {
         internal const string DefaultSet = "Default";
 
