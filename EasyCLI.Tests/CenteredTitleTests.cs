@@ -7,7 +7,7 @@ namespace EasyCLI.Tests
         [Fact]
         public void CenterTitleRule_ProducesCenteredTitle()
         {
-            var s = EasyCLI.ConsoleFormatting.CenterTitleRule("Center", width: 40);
+            var s = EasyCLI.Formatting.ConsoleFormatting.CenterTitleRule("Center", width: 40);
             Assert.Equal(40, s.Length);
             Assert.Contains(" Center ", s);
         }

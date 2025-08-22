@@ -1,4 +1,4 @@
-namespace EasyCLI
+namespace EasyCLI.Styling
 {
     /// <summary>
     /// Built-in theme presets. You can clone and tweak as needed.

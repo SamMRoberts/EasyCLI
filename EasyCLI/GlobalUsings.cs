@@ -14,3 +14,8 @@ global using System.Management.Automation;
 // Future-proofing (async, annotations)
 global using System.Threading;
 global using System.Diagnostics.CodeAnalysis;
+
+// Project namespaces
+global using EasyCLI.Styling;
+global using EasyCLI.Extensions;
+global using EasyCLI.Formatting;

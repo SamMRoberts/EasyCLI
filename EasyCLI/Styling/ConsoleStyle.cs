@@ -1,4 +1,4 @@
-namespace EasyCLI
+namespace EasyCLI.Styling
 {
     /// <summary>
     /// Represents an ANSI SGR style (e.g., bold, colors). Immutable.

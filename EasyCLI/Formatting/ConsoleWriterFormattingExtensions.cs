@@ -357,5 +357,4 @@ public static class ConsoleWriterFormattingExtensions
                 }
             }
         }
-    }
 }
