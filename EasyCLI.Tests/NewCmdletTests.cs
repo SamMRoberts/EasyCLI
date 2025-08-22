@@ -12,11 +12,11 @@ namespace EasyCLI.Tests
             var iss = InitialSessionState.CreateDefault();
             iss.Commands.Add(new SessionStateCmdletEntry(
                 "Write-EasyRule",
-                typeof(EasyCLI.Cmdlets.WriteEasyRuleCommand),
+                typeof(EasyCLI.Cmdlets.WriteRuleCommand),
                 null));
             iss.Commands.Add(new SessionStateCmdletEntry(
                 "Write-EasyTitledBox",
-                typeof(EasyCLI.Cmdlets.WriteEasyTitledBoxCommand),
+                typeof(EasyCLI.Cmdlets.WriteTitledBoxCommand),
                 null));
             var rs = RunspaceFactory.CreateRunspace(iss);
             rs.Open();
