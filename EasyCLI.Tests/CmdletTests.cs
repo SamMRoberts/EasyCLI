@@ -15,7 +15,7 @@ namespace EasyCLI.Tests
             var iss = InitialSessionState.CreateDefault();
             iss.Commands.Add(new SessionStateCmdletEntry(
                 "Write-EasyMessage",
-                typeof(EasyCLI.Cmdlets.ShowEasyMessageCommand),
+                typeof(EasyCLI.Cmdlets.WriteMessageCommand),
                 null));
 
             var rs = RunspaceFactory.CreateRunspace(iss);

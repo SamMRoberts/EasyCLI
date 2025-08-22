@@ -103,6 +103,27 @@ namespace EasyCLI.Prompts
                 RenderPrompt();
                 var raw = _reader.ReadLine();
                 if (_options.EnableEscapeCancel && raw == "\u001b") return HandleCancel();
+                // Simple line-based paging navigation (legacy behavior for tests)
+                if (_options.EnablePaging && _choices.Count > _options.PageSize && !string.IsNullOrEmpty(raw))
+                {
+                    var list = _choices; // original list for page calculations
+                    var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+                    if (totalPages > 1)
+                    {
+                        if (string.Equals(raw, "n", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _page = (_page + 1) % totalPages;
+                            _renderedChoices = false; // force re-render of new page
+                            continue; // reprompt
+                        }
+                        if (string.Equals(raw, "p", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _page = (_page - 1 + totalPages) % totalPages;
+                            _renderedChoices = false;
+                            continue;
+                        }
+                    }
+                }
                 if (string.IsNullOrEmpty(raw) && Default is not null) return Default!;
                 if (TryConvert(raw, out var converted)) return converted;
                 WriteError($"Invalid value: '{raw}'");
