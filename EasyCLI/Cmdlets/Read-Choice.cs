@@ -6,6 +6,8 @@ namespace EasyCLI.Cmdlets;
 [Alias("Select-EasyChoice")]
 [Cmdlet(VerbsCommunications.Read, "Choice", DefaultParameterSetName = DefaultSet)]
 [OutputType(typeof(string))]
+[OutputType(typeof(int))]
+[OutputType(typeof(object))]
 public class ReadChoiceCommand : PSCmdlet
 {
     internal const string DefaultSet = "Default";
@@ -27,6 +29,18 @@ public class ReadChoiceCommand : PSCmdlet
 
     [Parameter]
     public SwitchParameter NoColor { get; set; }
+
+    /// <summary>
+    /// When set, emit the zero-based index (int) of the selection instead of the value.
+    /// </summary>
+    [Parameter]
+    public SwitchParameter PassThruIndex { get; set; }
+
+    /// <summary>
+    /// When set, emit an object with Index (int) and Value (string). Overrides PassThruIndex if both provided.
+    /// </summary>
+    [Parameter]
+    public SwitchParameter PassThruObject { get; set; }
 
     private ConsoleWriter? _writer;
     private ConsoleTheme _theme = new();
@@ -70,24 +84,43 @@ public class ReadChoiceCommand : PSCmdlet
             return;
         }
 
-        var chosen = ResolveSelection(selection!);
-        if (chosen == null)
+        var (chosenValue, chosenIndex) = ResolveSelection(selection!);
+        if (chosenValue == null)
         {
             WriteError(new ErrorRecord(new ArgumentException($"Invalid selection: '{selection}'"), "InvalidSelection", ErrorCategory.InvalidArgument, selection));
             return;
         }
-        WriteObject(chosen);
+        if (PassThruObject)
+        {
+            WriteObject(new { Index = chosenIndex, Value = chosenValue });
+        }
+        else if (PassThruIndex)
+        {
+            WriteObject(chosenIndex);
+        }
+        else
+        {
+            WriteObject(chosenValue);
+        }
     }
 
-    private string? ResolveSelection(string raw)
+    private (string? value, int index) ResolveSelection(string raw)
     {
         if (int.TryParse(raw, out var idx))
         {
-            if (idx >= 1 && idx <= Options.Length) return Options[idx - 1];
+            if (idx >= 1 && idx <= Options.Length) return (Options[idx - 1], idx - 1);
         }
         // match exact (case-insensitive) then startswith
-        var match = Options.FirstOrDefault(o => string.Equals(o, raw, StringComparison.OrdinalIgnoreCase))
-                   ?? Options.FirstOrDefault(o => o.StartsWith(raw, StringComparison.OrdinalIgnoreCase));
-        return match;
+        for (int i = 0; i < Options.Length; i++)
+        {
+            if (string.Equals(Options[i], raw, StringComparison.OrdinalIgnoreCase))
+                return (Options[i], i);
+        }
+        for (int i = 0; i < Options.Length; i++)
+        {
+            if (Options[i].StartsWith(raw, StringComparison.OrdinalIgnoreCase))
+                return (Options[i], i);
+        }
+        return (null, -1);
     }
 }
