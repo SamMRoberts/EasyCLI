@@ -17,7 +17,10 @@ namespace EasyCLI.Prompts
             : base(prompt, writer, reader, options, @default: null)
         {
             _choices = choices.ToList();
-            if (_choices.Count == 0) throw new ArgumentException("Choices cannot be empty", nameof(choices));
+            if (_choices.Count == 0)
+            {
+                throw new ArgumentException("Choices cannot be empty", nameof(choices));
+            }
         }
 
         protected override void RenderPrompt()
@@ -31,7 +34,9 @@ namespace EasyCLI.Prompts
                 else
                 {
                     for (int i = 0; i < _choices.Count; i++)
+                    {
                         _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+                    }
                     _renderedChoices = true;
                 }
             }
@@ -40,9 +45,9 @@ namespace EasyCLI.Prompts
 
         private void RenderPage()
         {
-            var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
-            var start = _page * _options.PageSize;
-            var endExclusive = Math.Min(start + _options.PageSize, _choices.Count);
+            int totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+            int start = _page * _options.PageSize;
+            int endExclusive = Math.Min(start + _options.PageSize, _choices.Count);
             for (int i = start; i < endExclusive; i++)
             {
                 _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
@@ -57,47 +62,71 @@ namespace EasyCLI.Prompts
             {
                 if (raw.Equals("n", StringComparison.OrdinalIgnoreCase) || raw.Equals("next", StringComparison.OrdinalIgnoreCase))
                 {
-                    var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+                    int totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
                     _page = (_page + 1) % totalPages;
                     RenderPage();
-                    value = default!; return false;
+                    value = default!;
+                    return false;
                 }
+
                 if (raw.Equals("p", StringComparison.OrdinalIgnoreCase) || raw.Equals("prev", StringComparison.OrdinalIgnoreCase))
                 {
-                    var totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+                    int totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
                     _page = (_page - 1 + totalPages) % totalPages;
                     RenderPage();
-                    value = default!; return false;
+                    value = default!;
+                    return false;
                 }
             }
 
-            var results = new List<T>();
-            var tokens = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            foreach (var token in tokens)
+            List<T> results = new List<T>();
+            string[] tokens = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (string token in tokens)
             {
                 if (token.Contains('-'))
                 {
-                    var parts = token.Split('-', 2);
-                    if (int.TryParse(parts[0], out var start) && int.TryParse(parts[1], out var end))
+                    string[] parts = token.Split('-', 2);
+                    if (int.TryParse(parts[0], out int startRange) && int.TryParse(parts[1], out int endRange))
                     {
-                        if (start > end) (start, end) = (end, start);
-                        for (int i = start; i <= end; i++)
+                        if (startRange > endRange)
+                        {
+                            (startRange, endRange) = (endRange, startRange);
+                        }
+
+                        for (int i = startRange; i <= endRange; i++)
                         {
                             if (i >= 1 && i <= _choices.Count)
+                            {
                                 results.Add(_choices[i - 1].Value);
-                            else { value = default!; return false; }
+                            }
+                            else
+                            {
+                                value = default!;
+                                return false;
+                            }
                         }
                         continue;
                     }
-                    value = default!; return false;
+                    value = default!;
+                    return false;
                 }
-                if (int.TryParse(token, out var idx))
+                if (int.TryParse(token, out int idx))
                 {
                     if (idx >= 1 && idx <= _choices.Count)
+                    {
                         results.Add(_choices[idx - 1].Value);
-                    else { value = default!; return false; }
+                    }
+                    else
+                    {
+                        value = default!;
+                        return false;
+                    }
                 }
-                else { value = default!; return false; }
+                else
+                {
+                    value = default!;
+                    return false;
+                }
             }
             value = results;
             return results.Count > 0;

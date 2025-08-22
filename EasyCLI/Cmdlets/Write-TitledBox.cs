@@ -17,6 +17,9 @@ namespace EasyCLI.Cmdlets
         [Parameter]
         public SwitchParameter NoColor { get; set; }
 
+        [Parameter]
+        public SwitchParameter PassThruObject { get; set; }
+
         private readonly List<string> _lines = new();
         private ConsoleWriter? _writer;
 
@@ -28,7 +31,9 @@ namespace EasyCLI.Cmdlets
         protected override void ProcessRecord()
         {
             if (Line != null)
+            {
                 _lines.Add(Line);
+            }
         }
 
         protected override void EndProcessing()
@@ -67,8 +72,17 @@ namespace EasyCLI.Cmdlets
                     w.WriteLine(line, theme.Hint);
                 }
             }
-            foreach (var l in boxLines)
-                WriteObject(l);
+            if (PassThruObject.IsPresent)
+            {
+                WriteObject(new TitledBoxInfo(Title, _lines.AsReadOnly(), boxLines));
+            }
+            else
+            {
+                foreach (var l in boxLines)
+                {
+                    WriteObject(l);
+                }
+            }
         }
     }
 }

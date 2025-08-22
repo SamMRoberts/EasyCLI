@@ -7,13 +7,19 @@ namespace EasyCLI.Tests
 {
     public class ReadChoiceCmdletTests
     {
-        private PowerShell CreatePowerShell()
+  private static PowerShell CreatePowerShell()
         {
             var iss = InitialSessionState.CreateDefault();
             iss.Commands.Add(new SessionStateCmdletEntry(
                 "Read-Choice",
                 typeof(EasyCLI.Cmdlets.ReadChoiceCommand),
                 null));
+      // Add alias explicitly since module manifest metadata isn't auto-loaded in this isolated runspace.
+      iss.Commands.Add(new SessionStateAliasEntry(
+        "Select-EasyChoice",
+        "Read-Choice",
+        string.Empty,
+        ScopedItemOptions.None));
             // Alias test also relies on metadata but we add explicit entry for primary name.
             var rs = RunspaceFactory.CreateRunspace(iss);
             rs.Open();
@@ -29,7 +35,7 @@ namespace EasyCLI.Tests
               .AddParameter("Select", "2");
             var results = ps.Invoke();
             Assert.Single(results);
-            Assert.Equal("Beta", results[0].BaseObject);
+            Assert.Equal("Beta", Assert.IsType<string>(results[0].BaseObject));
             Assert.False(ps.HadErrors);
         }
 
@@ -97,15 +103,16 @@ namespace EasyCLI.Tests
             Assert.True(ps.HadErrors);
         }
 
-        [Fact]
-        public void ReadChoice_EmptyOptions_Throws()
+  [Fact]
+  public void ReadChoice_EmptyOptions_ReportsError()
         {
             using var ps = CreatePowerShell();
             ps.AddCommand("Read-Choice")
               .AddParameter("Options", Array.Empty<string>())
               .AddParameter("Select", "1");
-            var ex = Assert.Throws<ParameterBindingException>(() => ps.Invoke());
-            Assert.Contains("cannot be empty", ex.Message, StringComparison.OrdinalIgnoreCase);
+            var results = ps.Invoke();
+            Assert.Empty(results);
+            Assert.True(ps.HadErrors);
         }
 
         [Fact]
@@ -134,6 +141,82 @@ namespace EasyCLI.Tests
             Assert.Empty(results); // cancelled => no output
             // PowerShell treats cancellation as no error (we didn't write one), ensure no errors flagged.
             Assert.False(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_DefaultSelection_Path()
+        {
+            using var ps = CreatePowerShell();
+            // Simulate just Enter; Default should be returned
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "One", "Two" })
+              .AddParameter("Default", "Two")
+              .AddParameter("SimulateKeys", "\n");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Two", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_NoColor_HasNoAnsi()
+        {
+            using var capture = new ConsoleCapture();
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Alpha" })
+              .AddParameter("Select", "1")
+              .AddParameter("NoColor");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            var text = capture.GetOutput();
+            Assert.DoesNotContain("\u001b[", text); // No ANSI escapes
+        }
+
+        private class NamedThing { public string Name { get; set; } = string.Empty; }
+
+  [Fact]
+	public void ReadChoice_PipelineObjects_UsesNameProperty()
+        {
+            using var ps = CreatePowerShell();
+            // Pipeline supplies objects with Name property; no explicit -Options needed.
+      ps.AddScript(@"[PsCustomObject]@{ Name='Alpha' }, [PsCustomObject]@{ Name='Beta' } | Read-Choice -Select 2");
+            var results = ps.Invoke();
+            Assert.Single(results);
+      Assert.Equal("Beta", Assert.IsType<string>(results[0].BaseObject));
+        }
+
+  [Fact]
+  public void ReadChoice_PipelineObjects_PassThruObject()
+  {
+      using var ps = CreatePowerShell();
+      ps.AddScript(@"[PsCustomObject]@{ Name='Zero' }, [PsCustomObject]@{ Name='One' } | Read-Choice -Select 2 -PassThruObject");
+      var results = ps.Invoke();
+      Assert.Single(results);
+      var obj = Assert.IsType<EasyCLI.Cmdlets.ChoiceSelection>(results[0].BaseObject);
+      Assert.Equal(1, obj.Index);
+      Assert.Equal("One", obj.Value);
+  }
+
+    [Fact]
+    public void ReadChoice_PipelineObjects_PassThruIndex()
+    {
+      using var ps = CreatePowerShell();
+      ps.AddScript(@"[PsCustomObject]@{ Name='First' }, [PsCustomObject]@{ Name='Second' } | Read-Choice -Select Second -PassThruIndex");
+      var results = ps.Invoke();
+      Assert.Single(results);
+      Assert.Equal(1, Assert.IsType<int>(results[0].BaseObject));
+    }
+
+        [Fact]
+        public void ReadChoice_AmbiguousPrefix_PicksFirstMatch()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Start", "Status", "Stop" })
+              .AddParameter("Select", "Sta");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Start", results[0].BaseObject);
         }
     }
 }

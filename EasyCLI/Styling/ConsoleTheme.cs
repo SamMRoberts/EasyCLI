@@ -1,4 +1,4 @@
-namespace EasyCLI
+namespace EasyCLI.Styling
 {
     /// <summary>
     /// Theme map for semantic styles with easy overrides.

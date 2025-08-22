@@ -12,8 +12,15 @@ public class ReadChoiceCommand : PSCmdlet
 {
     internal const string DefaultSet = "Default";
 
-    [Parameter(Mandatory = true, Position = 0)]
+    [Parameter(Position = 0)]
     public string[] Options { get; set; } = Array.Empty<string>();
+
+    /// <summary>
+    /// Accept objects from the pipeline; if they have a Name (string) property that is used as the option label, else ToString().
+    /// If both pipeline objects and -Options are supplied, pipeline objects take precedence.
+    /// </summary>
+    [Parameter(ValueFromPipeline = true)]
+    public object? InputObject { get; set; }
 
     [Parameter]
     public string Prompt { get; set; } = "Select an option";
@@ -59,23 +66,51 @@ public class ReadChoiceCommand : PSCmdlet
 
     protected override void BeginProcessing()
     {
-        if (Options is null || Options.Length == 0)
-            throw new ParameterBindingException("Options parameter cannot be empty.");
         _writer = new ConsoleWriter(enableColors: !NoColor.IsPresent);
     }
 
+    private readonly List<string> _pipelineOptions = new();
+
     protected override void ProcessRecord()
     {
-        // Single execution only; ignore additional pipeline calls (no pipeline input expected)
+        if (InputObject != null)
+        {
+            string? label = null;
+            // Handle PSObject properties dynamically (avoid strong PowerShell dependency for reflection only scenario)
+            if (InputObject is System.Management.Automation.PSObject pso)
+            {
+                var nameProp = pso.Properties["Name"];
+                if (nameProp != null && nameProp.Value is string s) label = s;
+            }
+            if (label == null)
+            {
+                var type = InputObject.GetType();
+                var nameProp = type.GetProperty("Name");
+                if (nameProp != null && nameProp.PropertyType == typeof(string))
+                {
+                    label = nameProp.GetValue(InputObject) as string;
+                }
+            }
+            label ??= InputObject.ToString();
+            if (!string.IsNullOrEmpty(label))
+                _pipelineOptions.Add(label!);
+        }
     }
 
     protected override void EndProcessing()
     {
-        var w = _writer!;
-        // Render menu
-        for (int i = 0; i < Options.Length; i++)
+        // If pipeline provided options, prefer those over explicit Options (unless none were gathered)
+        string[] activeOptions = _pipelineOptions.Count > 0 ? _pipelineOptions.ToArray() : Options;
+        if (activeOptions.Length == 0)
         {
-            var label = Options[i] ?? string.Empty;
+            WriteError(new ErrorRecord(new InvalidOperationException("No options supplied."), "NoOptions", ErrorCategory.InvalidArgument, null));
+            return;
+        }
+        ConsoleWriter w = _writer!;
+        // Render menu
+        for (int i = 0; i < activeOptions.Length; i++)
+        {
+            string label = activeOptions[i] ?? string.Empty;
             // number prefix styled as hint, value as info
             w.WriteHint($"{i + 1}) ");
             w.WriteInfoLine(label);
@@ -95,7 +130,7 @@ public class ReadChoiceCommand : PSCmdlet
             return;
         }
 
-        var (chosenValue, chosenIndex) = ResolveSelection(selection!);
+        (string? chosenValue, int chosenIndex) = ResolveSelection(selection!, activeOptions);
         if (chosenValue == null)
         {
             WriteError(new ErrorRecord(new ArgumentException($"Invalid selection: '{selection}'"), "InvalidSelection", ErrorCategory.InvalidArgument, selection));
@@ -115,22 +150,22 @@ public class ReadChoiceCommand : PSCmdlet
         }
     }
 
-    private (string? value, int index) ResolveSelection(string raw)
+    private static (string? value, int index) ResolveSelection(string raw, string[] activeOptions)
     {
         if (int.TryParse(raw, out var idx))
         {
-            if (idx >= 1 && idx <= Options.Length) return (Options[idx - 1], idx - 1);
+            if (idx >= 1 && idx <= activeOptions.Length) return (activeOptions[idx - 1], idx - 1);
         }
         // match exact (case-insensitive) then startswith
-        for (int i = 0; i < Options.Length; i++)
+        for (int i = 0; i < activeOptions.Length; i++)
         {
-            if (string.Equals(Options[i], raw, StringComparison.OrdinalIgnoreCase))
-                return (Options[i], i);
+            if (string.Equals(activeOptions[i], raw, StringComparison.OrdinalIgnoreCase))
+                return (activeOptions[i], i);
         }
-        for (int i = 0; i < Options.Length; i++)
+        for (int i = 0; i < activeOptions.Length; i++)
         {
-            if (Options[i].StartsWith(raw, StringComparison.OrdinalIgnoreCase))
-                return (Options[i], i);
+            if (activeOptions[i].StartsWith(raw, StringComparison.OrdinalIgnoreCase))
+                return (activeOptions[i], i);
         }
         return (null, -1);
     }

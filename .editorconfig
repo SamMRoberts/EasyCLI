@@ -1,0 +1,38 @@
+root = true
+
+# Global analyzer defaults
+[*.cs]
+dotnet_analyzer_diagnostic.severity = warning
+
+# Promote selected important rules
+# Null argument checks
+dotnet_diagnostic.CA1062.severity = error
+# Method can be static
+dotnet_diagnostic.CA1822.severity = error
+# Use const
+dotnet_diagnostic.CA1802.severity = warning
+# Unused private members
+dotnet_diagnostic.IDE0051.severity = warning
+# Unused parameters
+dotnet_diagnostic.IDE0060.severity = warning
+# Prefer file-scoped namespaces (optional; keep as suggestion)
+dotnet_diagnostic.IDE0161.severity = suggestion
+
+# StyleCop: disable headers & documentation until adopted
+# (Only active when StyleCop.Analyzers package present)
+dotnet_diagnostic.SA1633.severity = none
+dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1200.severity = none
+dotnet_diagnostic.SA1101.severity = none
+dotnet_diagnostic.SA1309.severity = none
+dotnet_diagnostic.SA1413.severity = warning
+
+# Allow test method underscores / naming
+dotnet_diagnostic.CA1707.severity = none
+
+# Formatting preferences
+csharp_prefer_braces = true:suggestion
+csharp_style_var_for_locals = true:suggestion
+
+# End of file newline
+insert_final_newline = true

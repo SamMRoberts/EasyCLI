@@ -9,7 +9,7 @@ namespace EasyCLI.Tests
         {
             var sw = new System.IO.StringWriter();
             var w = new EasyCLI.ConsoleWriter(enableColors: true, output: sw);
-            var theme = EasyCLI.ConsoleThemes.Dark;
+            var theme = EasyCLI.Styling.ConsoleThemes.Dark;
 
             w.WriteErrorLine("boom", theme);     // bright red = 91
             w.WriteHeadingLine("head", theme);   // bold + cyan = 1;36
@@ -24,7 +24,7 @@ namespace EasyCLI.Tests
         {
             var sw = new System.IO.StringWriter();
             var w = new EasyCLI.ConsoleWriter(enableColors: true, output: sw);
-            var theme = EasyCLI.ConsoleThemes.Light;
+            var theme = EasyCLI.Styling.ConsoleThemes.Light;
 
             w.WriteWarningLine("careful", theme); // blue = 34
             w.WriteErrorLine("err", theme);       // red = 31
@@ -39,7 +39,7 @@ namespace EasyCLI.Tests
         {
             var sw = new System.IO.StringWriter();
             var w = new EasyCLI.ConsoleWriter(enableColors: true, output: sw);
-            var theme = EasyCLI.ConsoleThemes.HighContrast;
+            var theme = EasyCLI.Styling.ConsoleThemes.HighContrast;
 
             w.WriteSuccessLine("ok", theme);      // bright green = 92
             w.WriteHeadingLine("head", theme);    // bold + bright white = 1;97

@@ -60,6 +60,61 @@ Environment controls:
 
 EasyCLI provides a lightweight prompting framework.
 
+## PowerShell Cmdlets
+
+EasyCLI ships a PowerShell module (see `EasyCLI.psd1`) exposing high-level cmdlets:
+
+### Write-Message
+
+Styled message output (supports alias `Show-Message`).
+
+```powershell
+Write-Message "Hello world" -Info
+Show-Message "Legacy alias still works" -Success
+```
+
+### Write-Rule
+
+Render a divider rule with optional title (centered with `-Center`). Use `-PassThruObject` to get a structured `RuleInfo` object.
+
+```powershell
+Write-Rule -Title "Section" -Center
+$rule = Write-Rule -Title Build -PassThruObject
+$rule | Format-List *
+```
+
+### Write-TitledBox
+
+Render a framed titled box from pipeline input. Use `-PassThruObject` for a `TitledBoxInfo` object.
+
+```powershell
+@('Line one','Line two') | Write-TitledBox -Title Demo
+@('Alpha','Beta') | Write-TitledBox -Title Data -PassThruObject | Format-List *
+```
+
+### Read-Choice (alias `Select-EasyChoice`)
+
+Display a numbered menu and return the selected value. Supports non-interactive `-Select` and new pipeline-driven options.
+
+```powershell
+# Basic (explicit options)
+Read-Choice -Options Alpha,Beta,Gamma -Select 2   # returns 'Beta'
+
+# Pipeline options (objects with a Name property)
+[pscustomobject]@{Name='One'},[pscustomobject]@{Name='Two'} | Read-Choice -Select 2   # returns 'Two'
+
+# Get index instead of value
+Read-Choice -Options Red,Green,Blue -Select Green -PassThruIndex   # returns 1
+
+# Structured output
+Read-Choice -Options A,B,C -Select C -PassThruObject | Format-List *
+
+# Suppress color
+Read-Choice -Options X -Select 1 -NoColor
+```
+
+Environment variable `NO_COLOR=1` disables color; `FORCE_COLOR=1` (planned) will force-enable.
+
 ### Basic string / int / yes-no
 
 ```csharp

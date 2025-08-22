@@ -1,5 +1,5 @@
 ﻿using EasyCLI;
-using static EasyCLI.ConsoleFormatting;
+using EasyCLI.Formatting;
 using EasyCLI.Prompts;
 using EasyCLI.Prompts.Validators;
 

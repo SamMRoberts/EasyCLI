@@ -1,4 +1,4 @@
-namespace EasyCLI
+namespace EasyCLI.Styling
 {
     /// <summary>
     /// Predefined ANSI SGR styles for convenience.
@@ -41,47 +41,67 @@ namespace EasyCLI
         public static readonly ConsoleStyle Hint = new(90);           // bright black
 
         // Helper functions mirroring examples in the checklist
-        public static string Red(string s) => new ConsoleStyle(31).Apply(s);
-        public static string BoldText(string s) => new ConsoleStyle(1).Apply(s);
+        public static string Red(string s)
+        {
+            return new ConsoleStyle(31).Apply(s);
+        }
+
+        public static string BoldText(string s)
+        {
+            return new ConsoleStyle(1).Apply(s);
+        }
 
         // Truecolor helpers
-        public static ConsoleStyle TrueColor(int r, int g, int b) => new(38, 2, r, g, b);
-        public static ConsoleStyle TrueBg(int r, int g, int b) => new(48, 2, r, g, b);
+        public static ConsoleStyle TrueColor(int r, int g, int b)
+        {
+            return new ConsoleStyle(38, 2, r, g, b);
+        }
+
+        public static ConsoleStyle TrueBg(int r, int g, int b)
+        {
+            return new ConsoleStyle(48, 2, r, g, b);
+        }
+
         public static ConsoleStyle Indexed256(int index)
         {
-            if (index < 0 || index > 255) throw new System.ArgumentOutOfRangeException(nameof(index));
+            if (index is < 0 or > 255)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
             return new ConsoleStyle(38, 5, index);
         }
 
 #if DEBUG
         public static void PrintPalette(IConsoleWriter w)
         {
+            ArgumentNullException.ThrowIfNull(w);
             w.WriteLine("ANSI Palette:");
             w.WriteLine("Normal colors:");
-            w.WriteLine(ConsoleStyles.FgBlack.Apply(" black ") + " " +
-                ConsoleStyles.FgRed.Apply(" red ") + " " +
-                ConsoleStyles.FgGreen.Apply(" green ") + " " +
-                ConsoleStyles.FgYellow.Apply(" yellow ") + " " +
-                ConsoleStyles.FgBlue.Apply(" blue ") + " " +
-                ConsoleStyles.FgMagenta.Apply(" magenta ") + " " +
-                ConsoleStyles.FgCyan.Apply(" cyan ") + " " +
-                ConsoleStyles.FgWhite.Apply(" white "));
+            w.WriteLine(FgBlack.Apply(" black ") + " " +
+                FgRed.Apply(" red ") + " " +
+                FgGreen.Apply(" green ") + " " +
+                FgYellow.Apply(" yellow ") + " " +
+                FgBlue.Apply(" blue ") + " " +
+                FgMagenta.Apply(" magenta ") + " " +
+                FgCyan.Apply(" cyan ") + " " +
+                FgWhite.Apply(" white "));
 
             w.WriteLine("Bright colors:");
-            w.WriteLine(ConsoleStyles.FgBrightBlack.Apply(" bright black ") + " " +
-                ConsoleStyles.FgBrightRed.Apply(" bright red ") + " " +
-                ConsoleStyles.FgBrightGreen.Apply(" bright green ") + " " +
-                ConsoleStyles.FgBrightYellow.Apply(" bright yellow ") + " " +
-                ConsoleStyles.FgBrightBlue.Apply(" bright blue ") + " " +
-                ConsoleStyles.FgBrightMagenta.Apply(" bright magenta ") + " " +
-                ConsoleStyles.FgBrightCyan.Apply(" bright cyan ") + " " +
-                ConsoleStyles.FgBrightWhite.Apply(" bright white "));
+            w.WriteLine(FgBrightBlack.Apply(" bright black ") + " " +
+                FgBrightRed.Apply(" bright red ") + " " +
+                FgBrightGreen.Apply(" bright green ") + " " +
+                FgBrightYellow.Apply(" bright yellow ") + " " +
+                FgBrightBlue.Apply(" bright blue ") + " " +
+                FgBrightMagenta.Apply(" bright magenta ") + " " +
+                FgBrightCyan.Apply(" bright cyan ") + " " +
+                FgBrightWhite.Apply(" bright white "));
 
             w.WriteLine("Effects:");
-            w.WriteLine(ConsoleStyles.Bold.Apply(" bold ") + " " +
-                ConsoleStyles.Dim.Apply(" dim ") + " " +
-                ConsoleStyles.Italic.Apply(" italic ") + " " +
-                ConsoleStyles.Underline.Apply(" underline "));
+            w.WriteLine(Bold.Apply(" bold ") + " " +
+                Dim.Apply(" dim ") + " " +
+                Italic.Apply(" italic ") + " " +
+                Underline.Apply(" underline "));
         }
 #endif
     }

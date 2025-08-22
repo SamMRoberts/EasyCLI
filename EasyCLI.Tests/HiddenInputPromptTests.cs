@@ -1,5 +1,5 @@
 using EasyCLI.Prompts;
-using Xunit;
+using EasyCLI.Styling;
 
 namespace EasyCLI.Tests
 {

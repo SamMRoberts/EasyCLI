@@ -1,6 +1,7 @@
 namespace EasyCLI.Cmdlets
 {
     [Cmdlet(VerbsCommunications.Write, "Message", DefaultParameterSetName = DefaultSet)]
+    [Alias("Show-Message")] // Backward compatibility alias
     [OutputType(typeof(string))]
     public class WriteMessageCommand : PSCmdlet
     {
@@ -38,21 +39,35 @@ namespace EasyCLI.Cmdlets
         protected override void ProcessRecord()
         {
             if (Message is null)
+            {
                 return;
+            }
 
             var w = _writer!;
             if (Success)
+            {
                 w.WriteSuccessLine(Message);
+            }
             else if (Warning)
+            {
                 w.WriteWarningLine(Message);
+            }
             else if (Error)
+            {
                 w.WriteErrorLine(Message);
+            }
             else if (Info)
+            {
                 w.WriteInfoLine(Message);
+            }
             else if (Hint)
+            {
                 w.WriteHintLine(Message);
+            }
             else
+            {
                 w.WriteLine(Message);
+            }
 
             WriteObject(Message);
         }

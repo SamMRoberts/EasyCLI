@@ -9,7 +9,7 @@ namespace EasyCLI.Tests
 {
     public class CmdletTests
     {
-        private PowerShell CreatePowerShell()
+    private static PowerShell CreatePowerShell()
         {
             // Load the EasyCLI assembly into a runspace so the cmdlet is available.
             var iss = InitialSessionState.CreateDefault();
@@ -17,6 +17,17 @@ namespace EasyCLI.Tests
                 "Write-EasyMessage",
                 typeof(EasyCLI.Cmdlets.WriteMessageCommand),
                 null));
+            // Add modern name without 'Easy' prefix
+            iss.Commands.Add(new SessionStateCmdletEntry(
+                "Write-Message",
+                typeof(EasyCLI.Cmdlets.WriteMessageCommand),
+                null));
+            // Explicit alias for backward compatibility Show-Message
+            iss.Commands.Add(new SessionStateAliasEntry(
+                "Show-Message",
+                "Write-Message",
+                string.Empty,
+                ScopedItemOptions.None));
 
             var rs = RunspaceFactory.CreateRunspace(iss);
             rs.Open();
@@ -109,6 +120,28 @@ namespace EasyCLI.Tests
             // Invocation should throw ParameterBindingException due to missing mandatory Message
             var ex = Assert.Throws<System.Management.Automation.ParameterBindingException>(() => ps.Invoke());
             Assert.Contains("missing mandatory parameters", ex.Message, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void WriteMessage_Alias_ShowMessage_Works()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Show-Message").AddParameter("Message", "Hello");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Hello", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void WriteMessage_NoColor_HasNoAnsi()
+        {
+            using var capture = new ConsoleCapture();
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Write-Message").AddParameter("Message", "Plain").AddParameter("NoColor");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            var text = capture.GetOutput();
+            Assert.DoesNotContain("\u001b[", text);
         }
     }
 }
