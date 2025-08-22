@@ -1,14 +1,14 @@
+namespace EasyCLI.Formatting;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace EasyCLI
+/// <summary>
+/// IConsoleWriter extensions for formatted output using formatting helpers and ANSI styles.
+/// </summary>
+public static class ConsoleWriterFormattingExtensions
 {
-    /// <summary>
-    /// IConsoleWriter extensions for formatted output using formatting helpers and ANSI styles.
-    /// </summary>
-    public static class ConsoleWriterFormattingExtensions
-    {
         public static void WriteRule(this IConsoleWriter writer, int width = 80, char ch = '─', ConsoleStyle? style = null)
         {
             ArgumentNullException.ThrowIfNull(writer);
