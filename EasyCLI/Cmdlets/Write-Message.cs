@@ -2,7 +2,7 @@ namespace EasyCLI.Cmdlets
 {
     [Cmdlet(VerbsCommunications.Write, "Message", DefaultParameterSetName = DefaultSet)]
     [OutputType(typeof(string))]
-    public class ShowMessageCommand : PSCmdlet
+    public class WriteMessageCommand : PSCmdlet
     {
         internal const string DefaultSet = "Default";
 

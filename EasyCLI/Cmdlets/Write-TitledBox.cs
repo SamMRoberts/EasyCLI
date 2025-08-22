@@ -37,9 +37,11 @@ namespace EasyCLI.Cmdlets
             var theme = new ConsoleTheme();
             var boxLines = ConsoleFormatting.BuildTitledBox(_lines, Title).ToList();
             // Write with styles similar to WriteTitledBox extension
+            // Define border characters for box drawing
+            char[] borderChars = { '┌', '└', '│', '┐', '┘' };
             foreach (var line in boxLines)
             {
-                bool isBorder = line.StartsWith("┌") || line.StartsWith("└") || line.StartsWith("│") || line.StartsWith("┐") || line.StartsWith("┘");
+                bool isBorder = line.Length > 0 && borderChars.Contains(line[0]);
                 if (isBorder)
                 {
                     if (line.Contains(" " + Title + " "))
