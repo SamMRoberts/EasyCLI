@@ -143,5 +143,34 @@ namespace EasyCLI.Tests
             // PowerShell treats cancellation as no error (we didn't write one), ensure no errors flagged.
             Assert.False(ps.HadErrors);
         }
+
+        [Fact]
+        public void ReadChoice_DefaultSelection_Path()
+        {
+            using var ps = CreatePowerShell();
+            // Simulate just Enter; Default should be returned
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "One", "Two" })
+              .AddParameter("Default", "Two")
+              .AddParameter("SimulateKeys", "\n");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Two", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_NoColor_HasNoAnsi()
+        {
+            using var capture = new ConsoleCapture();
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Alpha" })
+              .AddParameter("Select", "1")
+              .AddParameter("NoColor");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            var text = capture.GetOutput();
+            Assert.DoesNotContain("\u001b[", text); // No ANSI escapes
+        }
     }
 }
