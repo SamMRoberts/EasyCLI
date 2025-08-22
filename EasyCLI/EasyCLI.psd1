@@ -1,6 +1,6 @@
 @{
     RootModule = 'EasyCLI.dll'
-    ModuleVersion = '0.1.0'
+    ModuleVersion = '0.2.0'
     GUID = '00000000-0000-4000-8000-000000000001'
     Author = 'SamMRoberts'
     CompanyName = 'SamMRoberts'
@@ -17,7 +17,7 @@
             Tags = @('cli','ansi','formatting','EasyCLI')
             LicenseUri = 'https://opensource.org/licenses/MIT'
             ProjectUri = 'https://github.com/SamMRoberts/EasyCLI'
-            ReleaseNotes = 'Added PassThruObject outputs (RuleInfo, TitledBoxInfo), validation attributes, and legacy Show-Message alias.'
+            ReleaseNotes = '0.2.0: Added pipeline binding for Read-Choice (objects with Name property), PassThruObject outputs (RuleInfo, TitledBoxInfo), validation adjustments enabling pipeline-only options, and Show-Message alias.'
         }
     }
     DefaultCommandPrefix = 'Easy'

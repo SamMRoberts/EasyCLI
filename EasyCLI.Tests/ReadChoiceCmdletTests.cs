@@ -174,7 +174,7 @@ namespace EasyCLI.Tests
 
         private class NamedThing { public string Name { get; set; } = string.Empty; }
 
-    [Fact]
+  [Fact]
 	public void ReadChoice_PipelineObjects_UsesNameProperty()
         {
             using var ps = CreatePowerShell();
@@ -184,6 +184,18 @@ namespace EasyCLI.Tests
             Assert.Single(results);
       Assert.Equal("Beta", Assert.IsType<string>(results[0].BaseObject));
         }
+
+  [Fact]
+  public void ReadChoice_PipelineObjects_PassThruObject()
+  {
+      using var ps = CreatePowerShell();
+      ps.AddScript(@"[PsCustomObject]@{ Name='Zero' }, [PsCustomObject]@{ Name='One' } | Read-Choice -Select 2 -PassThruObject");
+      var results = ps.Invoke();
+      Assert.Single(results);
+      var obj = Assert.IsType<EasyCLI.Cmdlets.ChoiceSelection>(results[0].BaseObject);
+      Assert.Equal(1, obj.Index);
+      Assert.Equal("One", obj.Value);
+  }
 
     [Fact]
     public void ReadChoice_PipelineObjects_PassThruIndex()
