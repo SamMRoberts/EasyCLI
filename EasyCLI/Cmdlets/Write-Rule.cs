@@ -1,5 +1,3 @@
-using System.Management.Automation;
-
 namespace EasyCLI.Cmdlets
 {
     [Cmdlet(VerbsCommunications.Write, "Rule", DefaultParameterSetName = DefaultSet)]

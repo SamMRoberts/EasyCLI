@@ -11,11 +11,11 @@ namespace EasyCLI.Tests
         {
             var iss = InitialSessionState.CreateDefault();
             iss.Commands.Add(new SessionStateCmdletEntry(
-                "Write-EasyRule",
+                "Write-Rule",
                 typeof(EasyCLI.Cmdlets.WriteRuleCommand),
                 null));
             iss.Commands.Add(new SessionStateCmdletEntry(
-                "Write-EasyTitledBox",
+                "Write-TitledBox",
                 typeof(EasyCLI.Cmdlets.WriteTitledBoxCommand),
                 null));
             var rs = RunspaceFactory.CreateRunspace(iss);
@@ -28,7 +28,7 @@ namespace EasyCLI.Tests
         {
             using var capture = new ConsoleCapture();
             using var ps = CreatePowerShell();
-            ps.AddCommand("Write-EasyRule");
+            ps.AddCommand("Write-Rule");
             var results = ps.Invoke();
             var text = capture.GetOutput();
             Assert.Contains("─", text);
@@ -41,7 +41,7 @@ namespace EasyCLI.Tests
         {
             using var capture = new ConsoleCapture();
             using var ps = CreatePowerShell();
-            ps.AddCommand("Write-EasyRule").AddParameter("Title", "TITLE");
+            ps.AddCommand("Write-Rule").AddParameter("Title", "TITLE");
             ps.Invoke();
             var text = capture.GetOutput();
             Assert.Contains("TITLE", text);
@@ -52,7 +52,7 @@ namespace EasyCLI.Tests
         {
             using var capture = new ConsoleCapture();
             using var ps = CreatePowerShell();
-            ps.AddScript("'a','b' | Write-EasyTitledBox -Title MyBox");
+            ps.AddScript("'a','b' | Write-TitledBox -Title MyBox");
             var results = ps.Invoke();
             // Box returns multiple lines (top,border lines,content,bottom)
             Assert.True(results.Count >= 4);

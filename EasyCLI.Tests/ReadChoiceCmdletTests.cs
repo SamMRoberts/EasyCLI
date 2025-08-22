@@ -1,0 +1,139 @@
+using System;
+using System.Management.Automation;
+using System.Management.Automation.Runspaces;
+using Xunit;
+
+namespace EasyCLI.Tests
+{
+    public class ReadChoiceCmdletTests
+    {
+        private PowerShell CreatePowerShell()
+        {
+            var iss = InitialSessionState.CreateDefault();
+            iss.Commands.Add(new SessionStateCmdletEntry(
+                "Read-Choice",
+                typeof(EasyCLI.Cmdlets.ReadChoiceCommand),
+                null));
+            // Alias test also relies on metadata but we add explicit entry for primary name.
+            var rs = RunspaceFactory.CreateRunspace(iss);
+            rs.Open();
+            return PowerShell.Create(rs);
+        }
+
+        [Fact]
+        public void ReadChoice_Select_By_Number()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Alpha", "Beta", "Gamma" })
+              .AddParameter("Select", "2");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Beta", results[0].BaseObject);
+            Assert.False(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_Select_By_Label_Prefix()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Start", "Status", "Stop" })
+              .AddParameter("Select", "Sta"); // ambiguous prefix resolves to first exact or prefix (Start)
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Start", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_PassThruIndex()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Red", "Green", "Blue" })
+              .AddParameter("Select", "Blue")
+              .AddParameter("PassThruIndex");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal(2, (int)results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_PassThruObject()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "One", "Two", "Three" })
+              .AddParameter("Select", "3")
+              .AddParameter("PassThruObject");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            var obj = Assert.IsType<EasyCLI.Cmdlets.ChoiceSelection>(results[0].BaseObject);
+            Assert.Equal(2, obj.Index);
+            Assert.Equal("Three", obj.Value);
+        }
+
+        [Fact]
+        public void ReadChoice_InvalidSelection_ReportsError()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "One", "Two" })
+              .AddParameter("Select", "99");
+            var results = ps.Invoke();
+            Assert.Empty(results);
+            Assert.True(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_InvalidLabel_ReportsError()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "Apple", "Banana" })
+              .AddParameter("Select", "Cherry");
+            var results = ps.Invoke();
+            Assert.Empty(results);
+            Assert.True(ps.HadErrors);
+        }
+
+        [Fact]
+        public void ReadChoice_EmptyOptions_Throws()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", Array.Empty<string>())
+              .AddParameter("Select", "1");
+            var ex = Assert.Throws<ParameterBindingException>(() => ps.Invoke());
+            Assert.Contains("cannot be empty", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void ReadChoice_Alias_Works()
+        {
+            using var ps = CreatePowerShell();
+            // Alias should behave the same; we add the command by canonical name, alias metadata resolves.
+            ps.AddCommand("Select-EasyChoice")
+              .AddParameter("Options", new[] { "Alpha", "Beta" })
+              .AddParameter("Select", "Beta");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            Assert.Equal("Beta", results[0].BaseObject);
+        }
+
+        [Fact]
+        public void ReadChoice_Cancel_On_Escape_Simulated()
+        {
+            using var ps = CreatePowerShell();
+            // Simulate ESC then Enter (so user cancels before finalizing)
+            ps.AddCommand("Read-Choice")
+              .AddParameter("Options", new[] { "A", "B" })
+              .AddParameter("CancelOnEscape")
+              .AddParameter("SimulateKeys", "\u001b\n");
+            var results = ps.Invoke();
+            Assert.Empty(results); // cancelled => no output
+            // PowerShell treats cancellation as no error (we didn't write one), ensure no errors flagged.
+            Assert.False(ps.HadErrors);
+        }
+    }
+}

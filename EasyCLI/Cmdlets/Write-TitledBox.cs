@@ -1,6 +1,5 @@
-using System.Collections.Generic;
-using System.Management.Automation;
-using System.Linq;
+using System.Collections.Generic; // specific for List<>
+using System.Linq; // used for ToList()
 
 namespace EasyCLI.Cmdlets
 {
@@ -38,9 +37,11 @@ namespace EasyCLI.Cmdlets
             var theme = new ConsoleTheme();
             var boxLines = ConsoleFormatting.BuildTitledBox(_lines, Title).ToList();
             // Write with styles similar to WriteTitledBox extension
+            // Define border characters for box drawing
+            char[] borderChars = { '┌', '└', '│', '┐', '┘' };
             foreach (var line in boxLines)
             {
-                bool isBorder = line.StartsWith("┌") || line.StartsWith("└") || line.StartsWith("│") || line.StartsWith("┐") || line.StartsWith("┘");
+                bool isBorder = line.Length > 0 && borderChars.Contains(line[0]);
                 if (isBorder)
                 {
                     if (line.Contains(" " + Title + " "))
@@ -65,10 +66,9 @@ namespace EasyCLI.Cmdlets
                 {
                     w.WriteLine(line, theme.Hint);
                 }
-
-                foreach (var l in boxLines)
-                    WriteObject(l);
             }
+            foreach (var l in boxLines)
+                WriteObject(l);
         }
     }
 }
