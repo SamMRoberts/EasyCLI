@@ -22,6 +22,7 @@ dotnet_diagnostic.IDE0161.severity = suggestion
 # (Only active when StyleCop.Analyzers package present)
 dotnet_diagnostic.SA1633.severity = none
 dotnet_diagnostic.SA1600.severity = none
+dotnet_diagnostic.SA1200.severity = none
 
 # Allow test method underscores / naming
 dotnet_diagnostic.CA1707.severity = none

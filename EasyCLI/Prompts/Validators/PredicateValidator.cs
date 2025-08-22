@@ -1,6 +1,7 @@
+using System;
+
 namespace EasyCLI.Prompts.Validators
 {
-    using System;
 
     /// <summary>
     /// Wraps a predicate for simple custom validation logic.
