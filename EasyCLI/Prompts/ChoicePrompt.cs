@@ -7,6 +7,7 @@ namespace EasyCLI.Prompts
     /// <summary>
     /// Single-choice selection via numeric index or label match.
     /// </summary>
+    /// <typeparam name="T">The type of the value associated with each choice.</typeparam>
     public sealed class ChoicePrompt<T> : BasePrompt<T>
     {
         private readonly List<Choice<T>> _choices;

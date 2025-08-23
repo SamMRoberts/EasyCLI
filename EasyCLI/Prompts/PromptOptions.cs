@@ -1,7 +1,7 @@
 namespace EasyCLI.Prompts
 {
     /// <summary>
-    /// Common options controlling prompt rendering & behavior.
+    /// Common options controlling prompt rendering &amp; behavior.
     /// </summary>
     public sealed class PromptOptions
     {

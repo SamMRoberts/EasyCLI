@@ -4,6 +4,7 @@ namespace EasyCLI.Prompts
     /// Multi-choice selection prompt returning a list of values.
     /// Accepts comma separated indices (e.g. 1,3,4) or ranges (1-3).
     /// </summary>
+    /// <typeparam name="T">The type of the selectable values.</typeparam>
     public sealed class MultiSelectPrompt<T> : BasePrompt<IReadOnlyList<T>>
     {
         private readonly List<Choice<T>> _choices;
