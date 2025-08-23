@@ -5,6 +5,11 @@ namespace EasyCLI.Prompts
     /// </summary>
     public interface IHiddenInputSource
     {
+        /// <summary>
+        /// Reads hidden input from the user (password-style input).
+        /// </summary>
+        /// <param name="mask">Optional character to display instead of the typed characters. If null, nothing is displayed.</param>
+        /// <returns>The input string provided by the user, or a sentinel value for cancellation.</returns>
         string ReadHidden(char? mask = null);
     }
 
@@ -13,6 +18,11 @@ namespace EasyCLI.Prompts
     /// </summary>
     public sealed class ConsoleHiddenInputSource : IHiddenInputSource
     {
+        /// <summary>
+        /// Reads hidden input from the console using individual key presses.
+        /// </summary>
+        /// <param name="mask">Optional character to display instead of the typed characters. If null, nothing is displayed.</param>
+        /// <returns>The input string provided by the user, or a sentinel value for cancellation.</returns>
         public string ReadHidden(char? mask = null)
         {
             StringBuilder sb = new();
