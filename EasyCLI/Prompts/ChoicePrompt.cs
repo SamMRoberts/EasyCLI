@@ -43,7 +43,7 @@ namespace EasyCLI.Prompts
             base.RenderPrompt();
         }
 
-        private void RenderList(IReadOnlyList<Choice<T>> list, int offset = 0)
+        private void RenderList(List<Choice<T>> list, int offset = 0)
         {
             foreach (var (item, idx) in list.Select((c, i) => (c, i)))
             {
