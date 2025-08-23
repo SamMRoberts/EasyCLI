@@ -1,0 +1,71 @@
+name: Publish NuGet Package
+
+on:
+  push:
+    branches:
+      - main
+
+# Prevent overlapping publish runs on rapid successive pushes
+concurrency:
+  group: publish-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & Publish EasyCLI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: 1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore (locked)
+        run: |
+          dotnet restore EasyCLI/EasyCLI.csproj --locked-mode
+
+      - name: Build (Release)
+        run: |
+          dotnet build EasyCLI/EasyCLI.csproj --configuration Release --no-restore
+
+      - name: Pack
+        run: |
+          dotnet pack EasyCLI/EasyCLI.csproj --configuration Release --no-build -p:ContinuousIntegrationBuild=true -o dist
+
+      - name: Show produced packages
+        run: ls -1 dist
+
+      - name: Publish to NuGet.org
+        if: success()
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "${NUGET_API_KEY}" ]; then
+            echo "NUGET_API_KEY secret not set; skipping publish." >&2
+            exit 0
+          fi
+          # Push all nupkg (non-symbol) files; skip duplicates to allow idempotent main pushes
+          for pkg in dist/*.nupkg; do
+            echo "Pushing $pkg"
+            dotnet nuget push "$pkg" \
+              --api-key "$NUGET_API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done
+
+      - name: Summary
+        run: |
+          echo "## Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Packages in dist/:" >> $GITHUB_STEP_SUMMARY
+          ls -1 dist >> $GITHUB_STEP_SUMMARY
+          echo "\nDuplicate packages (if any) were skipped." >> $GITHUB_STEP_SUMMARY
