@@ -6,7 +6,7 @@ using EasyCLI.Prompts;
 using EasyCLI.Prompts.Validators;
 using EasyCLI.Styling;
 
-var w = new ConsoleWriter();
+var w = new EasyCLI.Console.ConsoleWriter();
 
 w.WriteCenterTitleRule("EasyCLI Demo", width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
 
