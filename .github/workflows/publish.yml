@@ -56,8 +56,9 @@ jobs:
           fi
           # Push all nupkg (non-symbol) files; skip duplicates to allow idempotent main pushes
           for pkg in dist/*.nupkg; do
-            echo "Pushing $pkg"
-            dotnet nuget push "$pkg" \
+            new_pkg="${pkg%.nupkg}-Alpha.nupkg"
+            echo "Pushing $new_pkg"
+            dotnet nuget push "$new_pkg" \
               --api-key "$NUGET_API_KEY" \
               --source https://api.nuget.org/v3/index.json \
               --skip-duplicate
