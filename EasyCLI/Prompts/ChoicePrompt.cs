@@ -10,9 +10,9 @@ namespace EasyCLI.Prompts
     public sealed class ChoicePrompt<T> : BasePrompt<T>
     {
         private readonly IReadOnlyList<Choice<T>> _choices;
+        private readonly IKeyReader? _keyReader;
         private bool _renderedChoices = false;
         private int _page = 0;
-        private readonly IKeyReader? _keyReader;
         private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
         private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
@@ -30,7 +30,7 @@ namespace EasyCLI.Prompts
         {
             if (!_renderedChoices)
             {
-                if (_options.EnablePaging && _choices.Count > _options.PageSize)
+                if (Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
                     RenderPageFiltered(string.Empty);
                 }
@@ -47,19 +47,19 @@ namespace EasyCLI.Prompts
         {
             foreach (var (item, idx) in list.Select((c, i) => (c, i)))
             {
-                _writer.WriteLine($"  {offset + idx + 1}) {item.Label}");
+                Writer.WriteLine($"  {offset + idx + 1}) {item.Label}");
             }
             _lastRenderLines = list.Count; // update count (no footer)
         }
 
         private IReadOnlyList<Choice<T>> ApplyFilter(string filter)
         {
-            if (!_options.EnableFiltering || string.IsNullOrEmpty(filter))
+            if (!Options.EnableFiltering || string.IsNullOrEmpty(filter))
             {
                 return _choices;
             }
             StringComparison comparison = StringComparison.OrdinalIgnoreCase;
-            return _options.FilterMatchStartsWith
+            return Options.FilterMatchStartsWith
                 ? _choices.Where(c => c.Label.StartsWith(filter, comparison)).ToList()
                 : _choices.Where(c => c.Label.Contains(filter, comparison)).ToList();
         }
@@ -67,28 +67,24 @@ namespace EasyCLI.Prompts
         private void RenderPageFiltered(string filter)
         {
             var list = ApplyFilter(filter);
-            var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+            int totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
             if (_page >= totalPages && totalPages > 0)
             {
                 _page = 0;
             }
-            int start = _page * _options.PageSize;
-            List<Choice<T>> slice = list.Skip(start).Take(_options.PageSize).ToList();
+            int start = _page * Options.PageSize;
+            List<Choice<T>> slice = [.. list.Skip(start).Take(Options.PageSize)];
             RenderList(slice, start);
-            if (_options.EnablePaging && totalPages > 1)
+            if (Options.EnablePaging && totalPages > 1)
             {
-                _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
+                Writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
                 _lastRenderLines += 1; // include footer line
             }
             _renderedChoices = true;
         }
 
         // TODO: Implement clearing of previous render
-        private static void ClearPreviousRender()
-        {
-            /* no-op in new save/restore model */
-        }
-
+        // (no-op in new save/restore model)
         protected override bool TryConvert(string raw, out T value)
         {
             if (int.TryParse(raw, out int idx))
@@ -120,16 +116,16 @@ namespace EasyCLI.Prompts
             while (true)
             {
                 RenderPrompt();
-                var raw = _reader.ReadLine();
-                if (_options.EnableEscapeCancel && raw == "\u001b")
+                string? raw = Reader.ReadLine();
+                if (Options.EnableEscapeCancel && raw == "\u001b")
                 {
                     return HandleCancel();
                 }
                 // Simple line-based paging navigation (legacy behavior for tests)
-                if (_options.EnablePaging && _choices.Count > _options.PageSize && !string.IsNullOrEmpty(raw))
+                if (Options.EnablePaging && _choices.Count > Options.PageSize && !string.IsNullOrEmpty(raw))
                 {
                     var list = _choices; // original list for page calculations
-                    var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+                    var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
                     if (totalPages > 1)
                     {
                         if (string.Equals(raw, "n", StringComparison.OrdinalIgnoreCase))
@@ -207,7 +203,7 @@ namespace EasyCLI.Prompts
                 if (key.Key == ConsoleKey.N && _options.EnablePaging && _choices.Count > _options.PageSize)
                 {
                     var list = ApplyFilter(filter);
-                    var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+                    var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
                     if (totalPages > 1)
                     {
                         _page = (_page + 1) % totalPages;
@@ -217,7 +213,7 @@ namespace EasyCLI.Prompts
                 if (key.Key == ConsoleKey.P && _options.EnablePaging && _choices.Count > _options.PageSize)
                 {
                     var list = ApplyFilter(filter);
-                    var totalPages = (list.Count + _options.PageSize - 1) / _options.PageSize;
+                    var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
                     if (totalPages > 1)
                     {
                         _page = (_page - 1 + totalPages) % totalPages;
