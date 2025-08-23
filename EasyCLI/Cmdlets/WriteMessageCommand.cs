@@ -32,7 +32,7 @@ namespace EasyCLI.Cmdlets
 
         protected override void BeginProcessing()
         {
-            var enableColors = !NoColor.IsPresent;
+            bool enableColors = !NoColor.IsPresent;
             _writer = new ConsoleWriter(enableColors: enableColors);
         }
 
@@ -43,7 +43,7 @@ namespace EasyCLI.Cmdlets
                 return;
             }
 
-            var w = _writer!;
+            ConsoleWriter w = _writer!;
             if (Success)
             {
                 w.WriteSuccessLine(Message);

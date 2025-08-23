@@ -1,6 +1,3 @@
-using System.Collections.Generic; // specific for List<>
-using System.Linq; // used for ToList()
-
 namespace EasyCLI.Cmdlets
 {
     [Cmdlet(VerbsCommunications.Write, "TitledBox", DefaultParameterSetName = DefaultSet)]
@@ -38,13 +35,13 @@ namespace EasyCLI.Cmdlets
 
         protected override void EndProcessing()
         {
-            var w = _writer!;
-            var theme = new ConsoleTheme();
-            var boxLines = ConsoleFormatting.BuildTitledBox(_lines, Title).ToList();
+            ConsoleWriter w = _writer!;
+            ConsoleTheme theme = new();
+            List<string> boxLines = ConsoleFormatting.BuildTitledBox(_lines, Title).ToList();
             // Write with styles similar to WriteTitledBox extension
             // Define border characters for box drawing
             char[] borderChars = { '┌', '└', '│', '┐', '┘' };
-            foreach (var line in boxLines)
+            foreach (string? line in boxLines)
             {
                 bool isBorder = line.Length > 0 && borderChars.Contains(line[0]);
                 if (isBorder)
@@ -56,9 +53,9 @@ namespace EasyCLI.Cmdlets
                         int end = line.LastIndexOf(' ');
                         if (start >= 0 && end > start)
                         {
-                            var left = line.Substring(0, start);
-                            var mid = line.Substring(start, end - start);
-                            var right = line.Substring(end);
+                            string left = line[..start];
+                            string mid = line[start..end];
+                            string right = line[end..];
                             w.Write(left, theme.Heading);
                             w.Write(mid, theme.Success);
                             w.WriteLine(right, theme.Heading);
@@ -78,7 +75,7 @@ namespace EasyCLI.Cmdlets
             }
             else
             {
-                foreach (var l in boxLines)
+                foreach (string? l in boxLines)
                 {
                     WriteObject(l);
                 }
