@@ -12,7 +12,7 @@ namespace EasyCLI.Tests
             var rows = new List<IReadOnlyList<string>>
             {
                 new[] { "a", "b", "c" },
-                new[] { "longtext", "middle", "end" }
+                new[] { "longtext", "middle", "end" },
             };
 
             var lines = new List<string>(EasyCLI.Formatting.ConsoleFormatting.BuildSimpleTable(

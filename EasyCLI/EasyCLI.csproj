@@ -17,11 +17,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.0" />
-  <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0" PrivateAssets="all" />
+  <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.0" />
   <!-- StyleCop optional: start with minimal rules disabled in .editorconfig -->
   <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" />
-  <!-- Removed explicit NetAnalyzers v8 package to use SDK v9 analyzers -->
+  <!-- Explicitly reference NetAnalyzers to ensure consistent analyzer version across environments -->
+  <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0" PrivateAssets="all" />
     <None Include="EasyCLI.psd1" Pack="true" PackagePath="" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

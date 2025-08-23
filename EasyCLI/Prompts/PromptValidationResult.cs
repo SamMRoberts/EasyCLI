@@ -1,15 +1,17 @@
 namespace EasyCLI.Prompts
 {
-    public readonly struct PromptValidationResult
+    public readonly struct PromptValidationResult(bool isValid, string? error = null)
     {
-        public PromptValidationResult(bool isValid, string? error = null)
+        public bool IsValid { get; } = isValid;
+        public string? Error { get; } = error;
+        public static PromptValidationResult Success()
         {
-            IsValid = isValid;
-            Error = error;
+            return new(true);
         }
-        public bool IsValid { get; }
-        public string? Error { get; }
-        public static PromptValidationResult Success() => new(true);
-        public static PromptValidationResult Fail(string message) => new(false, message);
+
+        public static PromptValidationResult Fail(string message)
+        {
+            return new(false, message);
+        }
     }
 }

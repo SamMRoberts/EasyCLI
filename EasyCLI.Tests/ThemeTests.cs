@@ -12,7 +12,7 @@ namespace EasyCLI.Tests
             var theme = new EasyCLI.Styling.ConsoleTheme
             {
                 Success = new EasyCLI.Styling.ConsoleStyle(92), // bright green
-                Heading = new EasyCLI.Styling.ConsoleStyle(95)  // bright magenta
+                Heading = new EasyCLI.Styling.ConsoleStyle(95),  // bright magenta
             };
 
             w.WriteSuccessLine("ok", theme);
