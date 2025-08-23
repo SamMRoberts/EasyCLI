@@ -9,7 +9,7 @@ namespace EasyCLI.Prompts
     /// </summary>
     public sealed class ChoicePrompt<T> : BasePrompt<T>
     {
-        private readonly IReadOnlyList<Choice<T>> _choices;
+        private readonly List<Choice<T>> _choices;
         private readonly IKeyReader? _keyReader;
         private bool _renderedChoices = false;
         private int _page = 0;
@@ -18,12 +18,12 @@ namespace EasyCLI.Prompts
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
         {
-            _choices = choices.ToList();
-            if (_choices.Count == 0)
+        _choices = choices.ToList();
+        if (_choices.Count == 0)
         {
             throw new ArgumentException("Choices cannot be empty", nameof(choices));
         }
-            _keyReader = keyReader;
+        _keyReader = keyReader;
         }
 
         protected override void RenderPrompt()

@@ -23,7 +23,7 @@ namespace EasyCLI.Prompts
         {
             if (!_renderedChoices)
             {
-                if (_options.EnablePaging && _choices.Count > _options.PageSize)
+                if (Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
                     RenderPage();
                 }
@@ -31,7 +31,7 @@ namespace EasyCLI.Prompts
                 {
                     for (int i = 0; i < _choices.Count; i++)
                     {
-                        _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+                        Writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
                     }
                     _renderedChoices = true;
                 }
@@ -41,24 +41,24 @@ namespace EasyCLI.Prompts
 
         private void RenderPage()
         {
-            int totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
-            int start = _page * _options.PageSize;
-            int endExclusive = Math.Min(start + _options.PageSize, _choices.Count);
+            int totalPages = (_choices.Count + Options.PageSize - 1) / Options.PageSize;
+            int start = _page * Options.PageSize;
+            int endExclusive = Math.Min(start + Options.PageSize, _choices.Count);
             for (int i = start; i < endExclusive; i++)
             {
-                _writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
+                Writer.WriteLine($"  {i + 1}) {_choices[i].Label}");
             }
-            _writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
+            Writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
         }
 
         protected override bool TryConvert(string raw, out IReadOnlyList<T> value)
         {
             // paging navigation (does not select values directly)
-            if (_options.EnablePaging && _choices.Count > _options.PageSize)
+            if (Options.EnablePaging && _choices.Count > Options.PageSize)
             {
                 if (raw.Equals("n", StringComparison.OrdinalIgnoreCase) || raw.Equals("next", StringComparison.OrdinalIgnoreCase))
                 {
-                    int totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+                    int totalPages = (_choices.Count + Options.PageSize - 1) / Options.PageSize;
                     _page = (_page + 1) % totalPages;
                     RenderPage();
                     value = default!;
@@ -67,7 +67,7 @@ namespace EasyCLI.Prompts
 
                 if (raw.Equals("p", StringComparison.OrdinalIgnoreCase) || raw.Equals("prev", StringComparison.OrdinalIgnoreCase))
                 {
-                    int totalPages = (_choices.Count + _options.PageSize - 1) / _options.PageSize;
+                    int totalPages = (_choices.Count + Options.PageSize - 1) / Options.PageSize;
                     _page = (_page - 1 + totalPages) % totalPages;
                     RenderPage();
                     value = default!;
