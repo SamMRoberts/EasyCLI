@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using EasyCLI.Console;
 
 namespace EasyCLI.Prompts
 {
@@ -163,12 +164,12 @@ namespace EasyCLI.Prompts
                 // Save cursor position once; thereafter restore + clear region.
                 if (!_savedCursor)
                 {
-                    Console.Write("\u001b[s"); // save cursor
+                    System.Console.Write("\u001b[s"); // save cursor
                     _savedCursor = true;
                 }
                 else
                 {
-                    Console.Write("\u001b[u\u001b[J"); // restore & clear to end of screen
+                    System.Console.Write("\u001b[u\u001b[J"); // restore & clear to end of screen
                 }
 
                 // Re-render list (always fresh block)
@@ -187,7 +188,7 @@ namespace EasyCLI.Prompts
                 RenderPrompt();
                 if (Options.EnableFiltering)
                 {
-                    Console.Write($"Filter: {filter}");
+                    System.Console.Write($"Filter: {filter}");
                 }
 
                 var key = _keyReader!.ReadKey(true);

@@ -1,6 +1,7 @@
 namespace EasyCLI.Prompts
 {
     using System.Globalization;
+    using EasyCLI.Console;
 
     public sealed class IntPrompt : BasePrompt<int>
     {

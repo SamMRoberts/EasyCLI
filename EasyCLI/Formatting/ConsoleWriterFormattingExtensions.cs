@@ -3,6 +3,7 @@ namespace EasyCLI.Formatting;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using EasyCLI.Console;
 
 /// <summary>
 /// IConsoleWriter extensions for formatted output using formatting helpers and ANSI styles.

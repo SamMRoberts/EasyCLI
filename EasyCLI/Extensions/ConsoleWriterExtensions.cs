@@ -1,3 +1,5 @@
+using EasyCLI.Console;
+
 namespace EasyCLI.Extensions;
 
 /// <summary>

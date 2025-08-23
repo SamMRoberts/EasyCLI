@@ -18,14 +18,14 @@ namespace EasyCLI.Prompts
             StringBuilder sb = new();
             while (true)
             {
-                ConsoleKeyInfo key = Console.ReadKey(intercept: true);
+                ConsoleKeyInfo key = System.Console.ReadKey(intercept: true);
                 if (key.Key == ConsoleKey.Escape)
                 {
                     return "\u001b"; // sentinel for cancel
                 }
                 if (key.Key == ConsoleKey.Enter)
                 {
-                    Console.WriteLine();
+                    System.Console.WriteLine();
                     break;
                 }
                 if (key.Key == ConsoleKey.Backspace)
@@ -35,9 +35,9 @@ namespace EasyCLI.Prompts
                         sb.Length--;
                         if (mask.HasValue)
                         {
-                            Console.Write('\b');
-                            Console.Write(' ');
-                            Console.Write('\b');
+                            System.Console.Write('\b');
+                            System.Console.Write(' ');
+                            System.Console.Write('\b');
                         }
                     }
                     continue;
@@ -45,7 +45,7 @@ namespace EasyCLI.Prompts
                 _ = sb.Append(key.KeyChar);
                 if (mask.HasValue)
                 {
-                    Console.Write(mask.Value);
+                    System.Console.Write(mask.Value);
                 }
             }
             return sb.ToString();
