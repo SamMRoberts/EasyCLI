@@ -1,4 +1,5 @@
-using System.IO; // explicit for TextWriter
+using System.IO;
+using EasyCLI.Console; // explicit for TextWriter
 
 namespace EasyCLI
 {
@@ -9,7 +10,7 @@ namespace EasyCLI
     {
         public ConsoleWriter(bool? enableColors = null, TextWriter? output = null)
         {
-            Output = output ?? Console.Out;
+            Output = output ?? System.Console.Out;
             ColorEnabled = DecideColorEnabled(enableColors);
             ColorLevel = ColorEnabled ? DetectColorLevel() : ColorSupportLevel.None;
         }
@@ -71,7 +72,7 @@ namespace EasyCLI
                 return true;
             }
 
-            if (Console.IsOutputRedirected)
+            if (System.Console.IsOutputRedirected)
             {
                 return false;
             }
