@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace EasyCLI
+namespace EasyCLI.Console
 {
     /// <summary>
     /// Reads from the console. Honors input redirection for testability.
@@ -10,7 +10,7 @@ namespace EasyCLI
     {
         public ConsoleReader(TextReader? input = null)
         {
-            Input = input ?? Console.In;
+            Input = input ?? System.Console.In;
         }
 
         public TextReader Input { get; }

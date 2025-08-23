@@ -1,3 +1,5 @@
+using EasyCLI.Console;
+
 namespace EasyCLI.Prompts
 {
     public sealed class YesNoPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, bool? @default = null) : BasePrompt<bool>(prompt + " (y/n)", writer, reader, options, @default ?? default)
