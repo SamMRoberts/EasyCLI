@@ -12,6 +12,14 @@ namespace EasyCLI.Prompts
         private readonly List<Choice<T>> _choices;
         private bool _renderedChoices = false;
         private int _page = 0;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MultiSelectPrompt{T}"/> class.
+        /// </summary>
+        /// <param name="prompt">The prompt text to display to the user.</param>
+        /// <param name="choices">The available choices for the user to select from.</param>
+        /// <param name="writer">The console writer to use for output.</param>
+        /// <param name="reader">The console reader to use for input.</param>
+        /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
         public MultiSelectPrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null)
             : base(prompt, writer, reader, options, @default: null)
         {
@@ -22,6 +30,9 @@ namespace EasyCLI.Prompts
             }
         }
 
+        /// <summary>
+        /// Renders the prompt and available choices to the console.
+        /// </summary>
         protected override void RenderPrompt()
         {
             if (!_renderedChoices)
@@ -54,6 +65,12 @@ namespace EasyCLI.Prompts
             Writer.WriteLine($"  -- Page {_page + 1}/{totalPages} (n=next, p=prev) --");
         }
 
+        /// <summary>
+        /// Attempts to convert the raw user input to a list of selected choice values.
+        /// </summary>
+        /// <param name="raw">The raw input string from the user.</param>
+        /// <param name="value">When successful, contains the list of selected choice values.</param>
+        /// <returns><c>true</c> if the conversion was successful; otherwise, <c>false</c>.</returns>
         protected override bool TryConvert(string raw, out IReadOnlyList<T> value)
         {
             // paging navigation (does not select values directly)
