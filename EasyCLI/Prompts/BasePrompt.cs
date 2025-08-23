@@ -1,7 +1,7 @@
 namespace EasyCLI.Prompts
 {
     /// <summary>
-    /// Base class implementing shared prompt loop & validation.
+    /// Base class implementing shared prompt loop &amp; validation.
     /// </summary>
     /// <typeparam name="T">The type of value returned by the prompt.</typeparam>
     public abstract class BasePrompt<T> : IUserPrompt<T>
