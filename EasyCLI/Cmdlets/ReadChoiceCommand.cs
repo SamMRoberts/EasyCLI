@@ -12,6 +12,9 @@ namespace EasyCLI.Cmdlets
     {
         internal const string DefaultSet = "Default";
 
+        /// <summary>
+        /// Gets or sets the array of option strings to present to the user.
+        /// </summary>
         [Parameter(Position = 0)]
         public string[] Options { get; set; } = Array.Empty<string>();
 
@@ -22,9 +25,15 @@ namespace EasyCLI.Cmdlets
         [Parameter(ValueFromPipeline = true)]
         public object? InputObject { get; set; }
 
+        /// <summary>
+        /// Gets or sets the prompt text to display to the user.
+        /// </summary>
         [Parameter]
         public string Prompt { get; set; } = "Select an option";
 
+        /// <summary>
+        /// Gets or sets the default selection value.
+        /// </summary>
         [Parameter]
         public string? Default { get; set; }
 
@@ -34,6 +43,9 @@ namespace EasyCLI.Cmdlets
         [Parameter]
         public string? Select { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to disable color output.
+        /// </summary>
         [Parameter]
         public SwitchParameter NoColor { get; set; }
 
@@ -64,6 +76,9 @@ namespace EasyCLI.Cmdlets
         private ConsoleWriter? _writer;
         private ConsoleTheme _theme = new();
 
+        /// <summary>
+        /// Initializes the cmdlet for processing.
+        /// </summary>
         protected override void BeginProcessing()
         {
             _writer = new ConsoleWriter(enableColors: !NoColor.IsPresent);
@@ -71,6 +86,9 @@ namespace EasyCLI.Cmdlets
 
         private readonly List<string> _pipelineOptions = new();
 
+        /// <summary>
+        /// Processes each input record from the pipeline and adds it to the options.
+        /// </summary>
         protected override void ProcessRecord()
         {
             if (InputObject != null)
@@ -102,6 +120,9 @@ namespace EasyCLI.Cmdlets
             }
         }
 
+        /// <summary>
+        /// Finalizes processing and displays the choice menu to the user.
+        /// </summary>
         protected override void EndProcessing()
         {
             // If pipeline provided options, prefer those over explicit Options (unless none were gathered)

@@ -10,6 +10,13 @@ using EasyCLI.Console;
 /// </summary>
 public static class ConsoleWriterFormattingExtensions
 {
+    /// <summary>
+    /// Writes a horizontal rule line to the console.
+    /// </summary>
+    /// <param name="writer">The console writer to write to.</param>
+    /// <param name="width">The width of the rule. If 0 or negative, uses console width.</param>
+    /// <param name="ch">The character to use for the rule.</param>
+    /// <param name="style">The style to apply to the rule. If null, no styling is applied.</param>
     public static void WriteRule(this IConsoleWriter writer, int width = 80, char ch = '─', ConsoleStyle? style = null)
     {
         ArgumentNullException.ThrowIfNull(writer);
@@ -24,6 +31,16 @@ public static class ConsoleWriterFormattingExtensions
         }
     }
 
+    /// <summary>
+    /// Writes a horizontal rule line with a title on the left side to the console.
+    /// </summary>
+    /// <param name="writer">The console writer to write to.</param>
+    /// <param name="title">The title text to display.</param>
+    /// <param name="width">The total width of the rule. If 0 or negative, uses console width.</param>
+    /// <param name="filler">The character to use for the rule portion.</param>
+    /// <param name="gap">The number of spaces between the title and the rule.</param>
+    /// <param name="titleStyle">The style to apply to the title. If null, no styling is applied.</param>
+    /// <param name="fillerStyle">The style to apply to the filler. If null, no styling is applied.</param>
     public static void WriteTitleRule(this IConsoleWriter writer, string title, int width = 0, char filler = '─', int gap = 1, ConsoleStyle? titleStyle = null, ConsoleStyle? fillerStyle = null)
     {
         ArgumentNullException.ThrowIfNull(writer);
