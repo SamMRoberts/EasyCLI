@@ -1,0 +1,165 @@
+name: Version, Tag & Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release type (auto, patch, minor, major, pre)'
+        required: true
+        default: 'patch'
+      preid:
+        description: 'Prerelease identifier (e.g. alpha, beta, rc) if release=pre'
+        required: false
+      skip-publish:
+        description: 'Skip NuGet push (true/false)'
+        required: false
+        default: 'false'
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      - name: Derive current version
+        id: cur
+        run: |
+          csproj='EasyCLI/EasyCLI.csproj'
+          cur=$(grep -oE '<Version>[^<]+' "$csproj" | sed 's/<Version>//' || echo '0.2.0')
+          echo "current=$cur" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: bump
+        run: |
+          rel='${{ github.event.inputs.release }}'
+          pre='${{ github.event.inputs.preid }}'
+          csproj='EasyCLI/EasyCLI.csproj'
+          cur='${{ steps.cur.outputs.current }}'
+          # Auto mode derives bump from Conventional Commit messages since last tag
+          if [ "$rel" = 'auto' ]; then
+            last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
+            if [ -n "$last_tag" ]; then range="$last_tag..HEAD"; else range="HEAD"; fi
+            commits=$(git log --format=%s $range)
+            if echo "$commits" | grep -E 'BREAKING CHANGE|!: ' -q; then rel=major
+            elif echo "$commits" | grep -E '^feat(\(|:)' -q; then rel=minor
+            elif echo "$commits" | grep -E '^fix(\(|:)|^perf(\(|:)|^refactor(\(|:)' -q; then rel=patch
+            else rel=patch; fi
+          fi
+          IFS='.' read -r MAJOR MINOR PATCH <<<"$cur"
+          case "$rel" in
+            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH+1)) ;;
+            pre) ;; 
+            *) echo "Unknown release type: $rel"; exit 1 ;;
+          esac
+          base="$MAJOR.$MINOR.$PATCH"
+          if [ "$rel" = 'pre' ]; then
+            if [ -z "$pre" ]; then echo 'preid required for prerelease'; exit 1; fi
+            count=$(git tag -l "v$base-$pre.*" | wc -l | tr -d ' ')
+            next=$((count+1))
+            new="$base-$pre.$next"
+          else
+            new="$base"
+          fi
+          if grep -q '<Version>' "$csproj"; then
+            sed -i.bak -E "s#<Version>[^<]+#<Version>$new#g" "$csproj"
+          else
+            sed -i.bak -E "s#</PropertyGroup>#  <Version>$new</Version>\n  </PropertyGroup>#" "$csproj"
+          fi
+          rm "$csproj.bak"
+          echo "version=$new" >> $GITHUB_OUTPUT
+          echo "New version: $new (mode: ${rel})"
+
+      - name: Commit version bump
+        run: |
+          new='${{ steps.bump.outputs.version }}'
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git add EasyCLI/EasyCLI.csproj
+          git commit -m "chore: bump version to $new" || echo 'No changes'
+
+      - name: Create tag
+        run: |
+          new='${{ steps.bump.outputs.version }}'
+          git tag "v$new"
+          git push origin HEAD --tags
+          git push
+
+  publish:
+    needs: [prepare]
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && needs.prepare.outputs.new_version != '')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Use tag version
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: tagver
+        run: |
+          ref='${GITHUB_REF#refs/tags/v}'
+          echo "tag_version=$ref" >> $GITHUB_OUTPUT
+          sed -i.bak -E "s#<Version>[^<]+#<Version>$ref#" EasyCLI/EasyCLI.csproj
+          rm EasyCLI/EasyCLI.csproj.bak
+
+      - name: Restore
+        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+
+      - name: Build
+        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
+
+      - name: Publish to NuGet
+        if: github.event.inputs.skip-publish != 'true'
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then echo 'Missing NUGET_API_KEY' >&2; exit 1; fi
+          for pkg in dist/*.nupkg; do
+            echo "Pushing $pkg";
+            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate;
+          done
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: EasyCLI ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: dist/*.nupkg
+
+      - name: Summary
+        run: |
+          echo "## Publish" >> $GITHUB_STEP_SUMMARY
+          ls -1 dist >> $GITHUB_STEP_SUMMARY
