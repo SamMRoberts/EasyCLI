@@ -21,7 +21,7 @@ namespace EasyCLI.Prompts
             {
                 RenderPrompt();
                 string captured = _hiddenSource.ReadHidden(_mask);
-                if (_options.EnableEscapeCancel && captured == "\u001b")
+                if (Options.EnableEscapeCancel && captured == "\u001b")
                 {
                     return HandleCancel();
                 }
