@@ -3,7 +3,6 @@ name: Publish NuGet Package
 on:
   push:
     branches:
-      - main
 
 # Prevent overlapping publish runs on rapid successive pushes
 concurrency:
