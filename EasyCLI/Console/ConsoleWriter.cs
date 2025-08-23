@@ -1,7 +1,7 @@
 using System.IO;
-using EasyCLI.Console; // explicit for TextWriter
+using EasyCLI.Console;
 
-namespace EasyCLI
+namespace EasyCLI.Console
 {
     /// <summary>
     /// Writes to the console with optional ANSI styling. Honors NO_COLOR/FORCE_COLOR and output redirection.

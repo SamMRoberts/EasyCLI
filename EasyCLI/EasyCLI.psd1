@@ -14,7 +14,7 @@
     FormatsToProcess = @()
     PrivateData = @{
         PSData = @{
-            Tags = @('cli','ansi','formatting','EasyCLI')
+            Tags = @('cli','ansi','formatting','EasyCLI','SamMRoberts.EasyCLI')
             LicenseUri = 'https://opensource.org/licenses/MIT'
             ProjectUri = 'https://github.com/SamMRoberts/EasyCLI'
             ReleaseNotes = '0.2.0: Added pipeline binding for Read-Choice (objects with Name property), PassThruObject outputs (RuleInfo, TitledBoxInfo), validation adjustments enabling pipeline-only options, and Show-Message alias.'

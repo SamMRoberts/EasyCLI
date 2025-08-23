@@ -101,8 +101,8 @@ jobs:
         run: |
           new='${{ steps.bump.outputs.version }}'
           git tag "v$new"
-          git push origin HEAD --tags
           git push
+          git push origin HEAD --tags
 
   publish:
     needs: [prepare]

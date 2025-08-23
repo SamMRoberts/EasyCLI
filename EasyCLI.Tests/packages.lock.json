@@ -808,7 +808,7 @@
           "xunit.extensibility.core": "[2.9.2]"
         }
       },
-      "easycli": {
+      "SamMRoberts.EasyCLI": {
         "type": "Project",
         "dependencies": {
           "Microsoft.PowerShell.SDK": "[7.4.0, )"

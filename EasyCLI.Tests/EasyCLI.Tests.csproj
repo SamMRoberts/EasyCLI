@@ -19,8 +19,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EasyCLI\EasyCLI.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\EasyCLI\EasyCLI.csproj" />
+    </ItemGroup>
 
 </Project>
