@@ -52,8 +52,13 @@ namespace EasyCLI.Tests
 
         private sealed class RangeValidator : IPromptValidator<int>
         {
-            private readonly int _min,_max;
-            public RangeValidator(int min,int max){_min=min;_max=max;}
+            private readonly int _min;
+            private readonly int _max;
+            public RangeValidator(int min, int max)
+            {
+                _min = min;
+                _max = max;
+            }
             public PromptValidationResult Validate(string raw, out int value)
             {
                 value = default;
@@ -61,7 +66,8 @@ namespace EasyCLI.Tests
                     return PromptValidationResult.Fail("Not a number");
                 if (num < _min || num > _max)
                     return PromptValidationResult.Fail($"Value must be between {_min} and {_max}");
-                value = num; return PromptValidationResult.Success();
+                value = num;
+                return PromptValidationResult.Success();
             }
         }
 

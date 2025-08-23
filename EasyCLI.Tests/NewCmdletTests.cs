@@ -7,7 +7,7 @@ namespace EasyCLI.Tests
 {
     public class NewCmdletTests
     {
-    private static PowerShell CreatePowerShell()
+        private static PowerShell CreatePowerShell()
         {
             var iss = InitialSessionState.CreateDefault();
             iss.Commands.Add(new SessionStateCmdletEntry(
@@ -38,21 +38,21 @@ namespace EasyCLI.Tests
             Assert.Contains("─", lineObj!);
         }
 
-            [Fact]
-            public void WriteEasyRule_PassThruObject()
-            {
-                using var ps = CreatePowerShell();
-                ps.AddCommand("Write-Rule")
-                    .AddParameter("Title", "MyTitle")
-                    .AddParameter("Center")
-                    .AddParameter("PassThruObject");
-                var results = ps.Invoke();
-                Assert.Single(results);
-                var obj = Assert.IsType<EasyCLI.Cmdlets.RuleInfo>(results[0].BaseObject);
-                Assert.Equal("MyTitle", obj.Title);
-                Assert.True(obj.Center);
-                Assert.Contains("MyTitle", obj.Line);
-            }
+        [Fact]
+        public void WriteEasyRule_PassThruObject()
+        {
+            using var ps = CreatePowerShell();
+            ps.AddCommand("Write-Rule")
+                .AddParameter("Title", "MyTitle")
+                .AddParameter("Center")
+                .AddParameter("PassThruObject");
+            var results = ps.Invoke();
+            Assert.Single(results);
+            var obj = Assert.IsType<EasyCLI.Cmdlets.RuleInfo>(results[0].BaseObject);
+            Assert.Equal("MyTitle", obj.Title);
+            Assert.True(obj.Center);
+            Assert.Contains("MyTitle", obj.Line);
+        }
 
         [Fact]
         public void WriteEasyRule_Title()

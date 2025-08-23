@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace EasyCLI.Prompts
 {
     /// <summary>
@@ -10,13 +6,13 @@ namespace EasyCLI.Prompts
     /// </summary>
     public sealed class MultiSelectPrompt<T> : BasePrompt<IReadOnlyList<T>>
     {
-        private readonly IReadOnlyList<Choice<T>> _choices;
+        private readonly List<Choice<T>> _choices;
         private bool _renderedChoices = false;
         private int _page = 0;
         public MultiSelectPrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null)
             : base(prompt, writer, reader, options, @default: null)
         {
-            _choices = choices.ToList();
+            _choices = [.. choices];
             if (_choices.Count == 0)
             {
                 throw new ArgumentException("Choices cannot be empty", nameof(choices));

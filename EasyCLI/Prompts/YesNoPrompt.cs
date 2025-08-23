@@ -1,12 +1,7 @@
 namespace EasyCLI.Prompts
 {
-    public sealed class YesNoPrompt : BasePrompt<bool>
+    public sealed class YesNoPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, bool? @default = null) : BasePrompt<bool>(prompt + " (y/n)", writer, reader, options, @default ?? default)
     {
-        public YesNoPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, bool? @default = null)
-            : base(prompt + " (y/n)", writer, reader, options, @default ?? default)
-        {
-        }
-
         protected override bool TryConvert(string raw, out bool value)
         {
             value = false;
