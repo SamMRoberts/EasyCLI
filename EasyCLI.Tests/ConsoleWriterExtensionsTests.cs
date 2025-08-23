@@ -1,4 +1,5 @@
 using System.IO;
+using EasyCLI.Console;
 using Xunit;
 
 namespace EasyCLI.Tests

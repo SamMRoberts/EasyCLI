@@ -15,7 +15,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteSuccess(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteSuccess(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.Write(message, (theme ?? DefaultTheme).Success);
@@ -27,7 +27,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteWarning(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteWarning(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.Write(message, (theme ?? DefaultTheme).Warning);
@@ -39,7 +39,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteError(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteError(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.Write(message, (theme ?? DefaultTheme).Error);
@@ -51,7 +51,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteHeading(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteHeading(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.Write(message, (theme ?? DefaultTheme).Heading);
@@ -63,7 +63,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteInfo(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteInfo(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.Write(message, (theme ?? DefaultTheme).Info);
@@ -75,7 +75,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteHint(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteHint(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.Write(message, (theme ?? DefaultTheme).Hint);
@@ -87,7 +87,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteSuccessLine(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteSuccessLine(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.WriteLine(message, (theme ?? DefaultTheme).Success);
@@ -99,7 +99,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteWarningLine(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteWarningLine(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.WriteLine(message, (theme ?? DefaultTheme).Warning);
@@ -111,7 +111,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteErrorLine(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteErrorLine(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.WriteLine(message, (theme ?? DefaultTheme).Error);
@@ -123,7 +123,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteHeadingLine(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteHeadingLine(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.WriteLine(message, (theme ?? DefaultTheme).Heading);
@@ -135,7 +135,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteInfoLine(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteInfoLine(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.WriteLine(message, (theme ?? DefaultTheme).Info);
@@ -147,7 +147,7 @@ public static class ConsoleWriterExtensions
     /// <param name="w">The console writer to write to.</param>
     /// <param name="message">The message to write.</param>
     /// <param name="theme">The theme to use for styling. If null, uses the default theme.</param>
-    public static void WriteHintLine(this IConsoleWriter w, string message, ConsoleTheme? theme = null)
+    public static void WriteHintLine(this EasyCLI.Console.IConsoleWriter w, string message, ConsoleTheme? theme = null)
     {
         ArgumentNullException.ThrowIfNull(w);
         w.WriteLine(message, (theme ?? DefaultTheme).Hint);
