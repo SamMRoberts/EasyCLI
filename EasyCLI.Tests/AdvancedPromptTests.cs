@@ -21,7 +21,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new string[0]);
             var hidden = new FakeHidden("secret");
             var p = new HiddenInputPrompt("Password", writer, reader, hiddenSource: hidden, @default: null);
-            var v = p.Get();
+            var v = p.GetValue();
             Assert.Equal("secret", v);
         }
 
@@ -32,7 +32,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "2" });
             var choices = new[] { new Choice<string>("Apple","A"), new Choice<string>("Banana","B") };
             var p = new ChoicePrompt<string>("Pick fruit", choices, writer, reader);
-            var v = p.Get();
+            var v = p.GetValue();
             Assert.Equal("B", v);
         }
 
@@ -43,7 +43,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "Ban" });
             var choices = new[] { new Choice<string>("Apple","A"), new Choice<string>("Banana","B") };
             var p = new ChoicePrompt<string>("Pick fruit", choices, writer, reader);
-            var v = p.Get();
+            var v = p.GetValue();
             Assert.Equal("B", v);
         }
 
@@ -54,7 +54,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "1,3-4" });
             var choices = new[] { new Choice<int>("One",1), new Choice<int>("Two",2), new Choice<int>("Three",3), new Choice<int>("Four",4) };
             var p = new MultiSelectPrompt<int>("Pick numbers", choices, writer, reader);
-            var v = p.Get();
+            var v = p.GetValue();
             Assert.Equal(new List<int>{1,3,4}, v);
         }
 
@@ -68,7 +68,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "n", "12" });
             var opts = new PromptOptions { PageSize = 10, EnablePaging = true };
             var p = new ChoicePrompt<int>("Pick", choices, writer, reader, options: opts);
-            var v = p.Get();
+            var v = p.GetValue();
             Assert.Equal(12, v);
             Assert.Contains("Page 2/2", writer.Output);
         }
@@ -82,7 +82,7 @@ namespace EasyCLI.Tests
             var reader = new FakeConsoleReader(new[] { "n", "1,12-13" }); // first page navigation, then select numbers including ones across pages allowed by indexes
             var opts = new PromptOptions { PageSize = 10, EnablePaging = true };
             var p = new MultiSelectPrompt<int>("Pick many", choices, writer, reader, options: opts);
-            var v = p.Get();
+            var v = p.GetValue();
             Assert.Equal(new List<int>{1,12,13}, v);
             Assert.Contains("Page 2/3", writer.Output);
         }

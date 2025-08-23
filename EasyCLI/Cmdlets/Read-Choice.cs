@@ -80,7 +80,10 @@ public class ReadChoiceCommand : PSCmdlet
             if (InputObject is System.Management.Automation.PSObject pso)
             {
                 var nameProp = pso.Properties["Name"];
-                if (nameProp != null && nameProp.Value is string s) label = s;
+                if (nameProp != null && nameProp.Value is string s)
+                {
+                    label = s;
+                }
             }
             if (label == null)
             {
@@ -93,7 +96,9 @@ public class ReadChoiceCommand : PSCmdlet
             }
             label ??= InputObject.ToString();
             if (!string.IsNullOrEmpty(label))
+            {
                 _pipelineOptions.Add(label!);
+            }
         }
     }
 
@@ -120,8 +125,11 @@ public class ReadChoiceCommand : PSCmdlet
         if (string.IsNullOrEmpty(selection))
         {
             selection = ReadInteractiveSelection(w);
-            if (selection == null) // cancelled
+            // cancelled
+            if (selection == null)
+            {
                 return;
+            }
         }
 
         if (string.IsNullOrEmpty(selection))
@@ -150,22 +158,29 @@ public class ReadChoiceCommand : PSCmdlet
         }
     }
 
-    private static (string? value, int index) ResolveSelection(string raw, string[] activeOptions)
+    private static (string? Value, int Index) ResolveSelection(string raw, string[] activeOptions)
     {
         if (int.TryParse(raw, out var idx))
         {
-            if (idx >= 1 && idx <= activeOptions.Length) return (activeOptions[idx - 1], idx - 1);
+            if (idx >= 1 && idx <= activeOptions.Length)
+            {
+                return (activeOptions[idx - 1], idx - 1);
+            }
         }
         // match exact (case-insensitive) then startswith
         for (int i = 0; i < activeOptions.Length; i++)
         {
             if (string.Equals(activeOptions[i], raw, StringComparison.OrdinalIgnoreCase))
+            {
                 return (activeOptions[i], i);
+            }
         }
         for (int i = 0; i < activeOptions.Length; i++)
         {
             if (activeOptions[i].StartsWith(raw, StringComparison.OrdinalIgnoreCase))
+            {
                 return (activeOptions[i], i);
+            }
         }
         return (null, -1);
     }
@@ -191,14 +206,19 @@ public class ReadChoiceCommand : PSCmdlet
                 }
                 if (ch == '\n' || ch == '\r')
                 {
-                    w.WriteLine("");
-                    if (buffer.Length == 0 && Default != null)
+                    w.WriteLine(string.Empty);
+                    if (Default != null)
+                    {
                         return Default;
+                    }
                     return buffer.ToString();
                 }
                 if (ch == '\b')
                 {
-                    if (buffer.Length > 0) buffer.Length--;
+                    if (buffer.Length > 0)
+                    {
+                        buffer.Length--;
+                    }
                     continue;
                 }
                 if (!char.IsControl(ch))
@@ -208,7 +228,9 @@ public class ReadChoiceCommand : PSCmdlet
             }
             // If simulate ended without explicit enter, treat as enter
             if (buffer.Length == 0 && Default != null)
+            {
                 return Default;
+            }
             return buffer.ToString();
         }
         while (true)
@@ -225,9 +247,11 @@ public class ReadChoiceCommand : PSCmdlet
             }
             if (key.Key == ConsoleKey.Enter)
             {
-                w.WriteLine("");
+                w.WriteLine(string.Empty);
                 if (buffer.Length == 0 && Default != null)
+                {
                     return Default;
+                }
                 return buffer.ToString();
             }
             if (key.Key == ConsoleKey.Backspace)

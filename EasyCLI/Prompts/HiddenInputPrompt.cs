@@ -22,7 +22,7 @@ namespace EasyCLI.Prompts
             return true;
         }
 
-        public new string Get()
+        public new string GetValue()
         {
             // If we have a hidden source, override the base loop with single capture + optional default handling & no validation
             if (_hiddenSource != null)
@@ -34,10 +34,12 @@ namespace EasyCLI.Prompts
                     return HandleCancel();
                 }
                 if (string.IsNullOrEmpty(captured) && Default is not null)
+                {
                     return Default;
+                }
                 return captured;
             }
-            return base.Get();
+            return base.GetValue();
         }
     }
 }

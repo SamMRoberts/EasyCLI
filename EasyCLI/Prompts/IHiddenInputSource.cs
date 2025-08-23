@@ -47,7 +47,9 @@ namespace EasyCLI.Prompts
                 }
                 sb.Append(key.KeyChar);
                 if (mask.HasValue)
+                {
                     Console.Write(mask.Value);
+                }
             }
             return sb.ToString();
         }

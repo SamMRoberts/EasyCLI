@@ -284,7 +284,7 @@ namespace EasyCLI.Formatting
             int avail = maxWidth > 0 ? maxWidth : GetConsoleWidthOr(0);
             if (avail > 0)
             {
-                int borderWidth = (cols + 1);
+                int borderWidth = cols + 1;
                 for (int c = 0; c < cols; c++)
                 {
                     borderWidth += widths[c];
@@ -292,7 +292,7 @@ namespace EasyCLI.Formatting
                 if (borderWidth > avail)
                 {
                     int reduce = borderWidth - avail;
-                    int minCol = Math.Max(3, padding * 2 + 1);
+                    int minCol = Math.Max(3, (padding * 2) + 1);
                     bool reduced;
                     int guard = 10000;
                     do
@@ -395,7 +395,6 @@ namespace EasyCLI.Formatting
                     parts[c] = PadCell(cell, widths[c], GetAlign(c));
                 }
                 return "|" + string.Join("|", parts) + "|";
-
             }
 
             string top = MakeSep();

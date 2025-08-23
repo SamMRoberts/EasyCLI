@@ -1,7 +1,9 @@
 ﻿using EasyCLI;
+using EasyCLI.Extensions;
 using EasyCLI.Formatting;
 using EasyCLI.Prompts;
 using EasyCLI.Prompts.Validators;
+using EasyCLI.Styling;
 
 var w = new ConsoleWriter();
 
@@ -23,7 +25,7 @@ w.WriteTableSimple(
 	},
 	padding: 1,
 	maxWidth: 0,
-	alignments: new[] { CellAlign.Left, CellAlign.Center, CellAlign.Right },
+	alignments: new[] { ConsoleFormatting.CellAlign.Left, ConsoleFormatting.CellAlign.Center, ConsoleFormatting.CellAlign.Right },
 	borderStyle: ConsoleStyles.Hint,
 	headerStyle: ConsoleStyles.Bold,
 	cellStyle: null);
@@ -67,11 +69,11 @@ if (!Console.IsInputRedirected)
 	var multiNumbers = new [] { new Choice<int>("One",1), new Choice<int>("Two",2), new Choice<int>("Three",3), new Choice<int>("Four",4) };
 	var multiPrompt = new MultiSelectPrompt<int>("Select numbers", multiNumbers, w, reader, options: new PromptOptions { EnablePaging = false });
 
-	string name = namePrompt.Get();
-	int age = agePrompt.Get();
-	bool proceed = confirmPrompt.Get();
-	string secret = hidden.Get();
-	string fruit = fruitPrompt.Get();
-	var nums = multiPrompt.Get();
+	string name = namePrompt.GetValue();
+	int age = agePrompt.GetValue();
+	bool proceed = confirmPrompt.GetValue();
+	string secret = hidden.GetValue();
+	string fruit = fruitPrompt.GetValue();
+	var nums = multiPrompt.GetValue();
 	w.WriteInfoLine($"Hello {name}, age {age}, proceed={proceed}, fruit={fruit}, secret={secret}, nums=[{string.Join(',', nums)}]");
 }

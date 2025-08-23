@@ -15,7 +15,9 @@ namespace EasyCLI.Styling
         public string Apply(string message)
         {
             if (string.IsNullOrEmpty(message) || Codes.Length == 0)
+            {
                 return message ?? string.Empty;
+            }
             return $"\u001b[{string.Join(';', Codes)}m{message}\u001b[0m";
         }
     }
