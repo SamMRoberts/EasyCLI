@@ -9,6 +9,6 @@ namespace EasyCLI.Prompts
 
     public sealed class ConsoleKeyReader : IKeyReader
     {
-        public ConsoleKeyInfo ReadKey(bool intercept = true) => Console.ReadKey(intercept);
+        public ConsoleKeyInfo ReadKey(bool intercept = true) => System.Console.ReadKey(intercept);
     }
 }
