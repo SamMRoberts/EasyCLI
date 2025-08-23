@@ -28,21 +28,22 @@ namespace EasyCLI.Prompts
         }
 
         // Exposed to derived prompts as protected read-only properties (preferred over protected fields per analyzers CA1051/SA1401)
+
         /// <summary>
         /// Gets the console writer used for output.
         /// </summary>
         protected IConsoleWriter Writer { get; }
-        
+
         /// <summary>
         /// Gets the console reader used for input.
         /// </summary>
         protected IConsoleReader Reader { get; }
-        
+
         /// <summary>
         /// Gets the options controlling prompt behavior.
         /// </summary>
         protected PromptOptions Options { get; }
-        
+
         /// <summary>
         /// Gets the validator used for validating user input.
         /// </summary>
@@ -52,7 +53,7 @@ namespace EasyCLI.Prompts
         /// Gets the prompt text displayed to the user.
         /// </summary>
         public string Prompt { get; }
-        
+
         /// <summary>
         /// Gets the default value used when the user provides no input.
         /// </summary>

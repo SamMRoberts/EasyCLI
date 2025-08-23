@@ -11,7 +11,7 @@ namespace EasyCLI.Console
         /// <summary>
         /// Initializes a new instance of the <see cref="ConsoleReader"/> class.
         /// </summary>
-        /// <param name="input">The text reader to use for input. If null, uses <see cref="Console.In"/>.</param>
+        /// <param name="input">The text reader to use for input. If null, uses <see cref="System.Console.In"/>.</param>
         public ConsoleReader(TextReader? input = null)
         {
             Input = input ?? System.Console.In;
