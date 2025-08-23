@@ -172,7 +172,7 @@ namespace EasyCLI.Prompts
 
                 // Re-render list (always fresh block)
                 _renderedChoices = false;
-                if (_options.EnablePaging && _choices.Count > _options.PageSize)
+                if (Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
                     RenderPageFiltered(filter);
                 }
@@ -184,7 +184,7 @@ namespace EasyCLI.Prompts
                 }
                 // Prompt line
                 RenderPrompt();
-                if (_options.EnableFiltering)
+                if (Options.EnableFiltering)
                 {
                     Console.Write($"Filter: {filter}");
                 }
@@ -192,7 +192,7 @@ namespace EasyCLI.Prompts
                 var key = _keyReader!.ReadKey(true);
                 if (key.Key == ConsoleKey.Escape)
                 {
-                    if (_options.EnableEscapeCancel)
+                    if (Options.EnableEscapeCancel)
                     {
                         return HandleCancel();
                     }
@@ -200,7 +200,7 @@ namespace EasyCLI.Prompts
                     _page = 0;
                     continue;
                 }
-                if (key.Key == ConsoleKey.N && _options.EnablePaging && _choices.Count > _options.PageSize)
+                if (key.Key == ConsoleKey.N && Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
                     var list = ApplyFilter(filter);
                     var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
@@ -210,7 +210,7 @@ namespace EasyCLI.Prompts
                     }
                     continue;
                 }
-                if (key.Key == ConsoleKey.P && _options.EnablePaging && _choices.Count > _options.PageSize)
+                if (key.Key == ConsoleKey.P && Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
                     var list = ApplyFilter(filter);
                     var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
@@ -257,7 +257,7 @@ namespace EasyCLI.Prompts
                 }
                 if (!char.IsControl(key.KeyChar))
                 {
-                    if (_options.EnableFiltering)
+                    if (Options.EnableFiltering)
                     {
                         filter += key.KeyChar;
                         _page = 0;

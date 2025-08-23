@@ -76,7 +76,7 @@ namespace EasyCLI.Prompts
             }
         }
 
-    protected T HandleCancel()
+        protected T HandleCancel()
         {
             if (Options.CancelBehavior == PromptCancelBehavior.ReturnDefault)
             {
@@ -93,7 +93,7 @@ namespace EasyCLI.Prompts
             throw new PromptCanceledException(Prompt);
         }
 
-    protected virtual void RenderPrompt()
+        protected virtual void RenderPrompt()
         {
             if (Options.LabelStyle != null)
             {
@@ -120,7 +120,7 @@ namespace EasyCLI.Prompts
             Writer.Write(Options.Suffix ?? ": ");
         }
 
-    protected virtual void WriteError(string message)
+        protected virtual void WriteError(string message)
         {
             if (Options.ErrorStyle != null)
             {
@@ -132,6 +132,6 @@ namespace EasyCLI.Prompts
             }
         }
 
-    protected abstract bool TryConvert(string raw, out T value);
+        protected abstract bool TryConvert(string raw, out T value);
     }
 }
