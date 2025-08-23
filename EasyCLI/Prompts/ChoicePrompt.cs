@@ -17,6 +17,7 @@ namespace EasyCLI.Prompts
         private int _page = 0;
         private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
         private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ChoicePrompt{T}"/> class.
         /// </summary>
@@ -30,12 +31,12 @@ namespace EasyCLI.Prompts
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
         {
-        _choices = choices.ToList();
-        if (_choices.Count == 0)
-        {
-            throw new ArgumentException("Choices cannot be empty", nameof(choices));
-        }
-        _keyReader = keyReader;
+            _choices = choices.ToList();
+            if (_choices.Count == 0)
+            {
+                throw new ArgumentException("Choices cannot be empty", nameof(choices));
+            }
+            _keyReader = keyReader;
         }
 
         /// <summary>
@@ -100,6 +101,7 @@ namespace EasyCLI.Prompts
 
         // TODO: Implement clearing of previous render
         // (no-op in new save/restore model)
+
         /// <summary>
         /// Attempts to convert the raw user input to a choice value by number or label matching.
         /// </summary>

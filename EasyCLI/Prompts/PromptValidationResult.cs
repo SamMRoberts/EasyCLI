@@ -9,12 +9,12 @@ namespace EasyCLI.Prompts
         /// Gets a value indicating whether the validation was successful.
         /// </summary>
         public bool IsValid { get; } = isValid;
-        
+
         /// <summary>
         /// Gets the error message if validation failed, or null if validation succeeded.
         /// </summary>
         public string? Error { get; } = error;
-        
+
         /// <summary>
         /// Creates a successful validation result.
         /// </summary>

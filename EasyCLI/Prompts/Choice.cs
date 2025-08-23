@@ -16,17 +16,17 @@ namespace EasyCLI.Prompts
             Label = label;
             Value = value;
         }
-        
+
         /// <summary>
         /// Gets the display label for this choice.
         /// </summary>
         public string Label { get; }
-        
+
         /// <summary>
         /// Gets the value associated with this choice.
         /// </summary>
         public T Value { get; }
-        
+
         /// <summary>
         /// Returns the display label for this choice.
         /// </summary>

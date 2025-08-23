@@ -12,7 +12,7 @@ namespace EasyCLI
         /// Initializes a new instance of the <see cref="ConsoleWriter"/> class.
         /// </summary>
         /// <param name="enableColors">Explicit override for color support. If null, auto-detects based on environment.</param>
-        /// <param name="output">The text writer to use for output. If null, uses <see cref="Console.Out"/>.</param>
+        /// <param name="output">The text writer to use for output. If null, uses <see cref="System.Console.Out"/>.</param>
         public ConsoleWriter(bool? enableColors = null, TextWriter? output = null)
         {
             Output = output ?? System.Console.Out;
@@ -24,12 +24,12 @@ namespace EasyCLI
         /// Gets a value indicating whether color output is enabled.
         /// </summary>
         public bool ColorEnabled { get; }
-        
+
         /// <summary>
         /// Gets the detected color support level of the terminal.
         /// </summary>
         public ColorSupportLevel ColorLevel { get; }
-        
+
         /// <summary>
         /// Gets the text writer used for output.
         /// </summary>

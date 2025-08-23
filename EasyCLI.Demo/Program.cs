@@ -1,4 +1,5 @@
 ﻿using EasyCLI;
+using EasyCLI.Console;
 using EasyCLI.Extensions;
 using EasyCLI.Formatting;
 using EasyCLI.Prompts;

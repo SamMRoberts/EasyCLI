@@ -12,6 +12,7 @@ namespace EasyCLI.Prompts
         private readonly List<Choice<T>> _choices;
         private bool _renderedChoices = false;
         private int _page = 0;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MultiSelectPrompt{T}"/> class.
         /// </summary>
