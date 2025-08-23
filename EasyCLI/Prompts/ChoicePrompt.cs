@@ -17,6 +17,16 @@ namespace EasyCLI.Prompts
         private int _page = 0;
         private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
         private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ChoicePrompt{T}"/> class.
+        /// </summary>
+        /// <param name="prompt">The prompt text to display to the user.</param>
+        /// <param name="choices">The available choices for the user to select from.</param>
+        /// <param name="writer">The console writer to use for output.</param>
+        /// <param name="reader">The console reader to use for input.</param>
+        /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
+        /// <param name="default">The default value to use if the user provides no input.</param>
+        /// <param name="keyReader">The key reader for interactive selection. If null, text-based selection is used.</param>
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
         {
@@ -28,6 +38,9 @@ namespace EasyCLI.Prompts
         _keyReader = keyReader;
         }
 
+        /// <summary>
+        /// Renders the prompt and available choices to the console.
+        /// </summary>
         protected override void RenderPrompt()
         {
             if (!_renderedChoices)
@@ -87,6 +100,12 @@ namespace EasyCLI.Prompts
 
         // TODO: Implement clearing of previous render
         // (no-op in new save/restore model)
+        /// <summary>
+        /// Attempts to convert the raw user input to a choice value by number or label matching.
+        /// </summary>
+        /// <param name="raw">The raw input string from the user.</param>
+        /// <param name="value">When successful, contains the selected choice value.</param>
+        /// <returns><c>true</c> if the conversion was successful; otherwise, <c>false</c>.</returns>
         protected override bool TryConvert(string raw, out T value)
         {
             if (int.TryParse(raw, out int idx))
@@ -108,6 +127,10 @@ namespace EasyCLI.Prompts
             return false;
         }
 
+        /// <summary>
+        /// Prompts the user to select from the available choices and returns the selected value.
+        /// </summary>
+        /// <returns>The value of the selected choice.</returns>
         public new T GetValue()
         {
             if (_keyReader != null)

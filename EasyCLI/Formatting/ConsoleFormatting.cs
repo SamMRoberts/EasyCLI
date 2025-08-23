@@ -47,6 +47,12 @@ namespace EasyCLI.Formatting
             }
         }
 
+        /// <summary>
+        /// Creates a horizontal rule line using the specified character and width.
+        /// </summary>
+        /// <param name="ch">The character to use for the rule.</param>
+        /// <param name="width">The width of the rule. If 0 or negative, uses console width.</param>
+        /// <returns>A string containing the rule line.</returns>
         public static string Rule(char ch = '─', int width = 80)
         {
             if (width <= 0)
@@ -57,6 +63,14 @@ namespace EasyCLI.Formatting
             return new string(ch, width);
         }
 
+        /// <summary>
+        /// Creates a horizontal rule line with a title on the left side.
+        /// </summary>
+        /// <param name="title">The title text to display.</param>
+        /// <param name="filler">The character to use for the rule portion.</param>
+        /// <param name="width">The total width of the rule. If 0 or negative, uses console width.</param>
+        /// <param name="gap">The number of spaces between the title and the rule.</param>
+        /// <returns>A string containing the titled rule line.</returns>
         public static string TitleRule(string title, char filler = '─', int width = 0, int gap = 1)
         {
             title ??= string.Empty;
@@ -71,6 +85,14 @@ namespace EasyCLI.Formatting
             return prefix + new string(filler, remaining);
         }
 
+        /// <summary>
+        /// Creates a horizontal rule line with a title centered within it.
+        /// </summary>
+        /// <param name="title">The title text to display.</param>
+        /// <param name="filler">The character to use for the rule portions.</param>
+        /// <param name="width">The total width of the rule. If 0 or negative, uses console width.</param>
+        /// <param name="gap">The number of spaces around the title.</param>
+        /// <returns>A string containing the centered titled rule line.</returns>
         public static string CenterTitleRule(string title, char filler = '─', int width = 0, int gap = 1)
         {
             title ??= string.Empty;
@@ -108,12 +130,25 @@ namespace EasyCLI.Formatting
             return new string(filler, left) + titleBlock + new string(filler, right);
         }
 
+        /// <summary>
+        /// Creates an underline string that matches the length of the specified text.
+        /// </summary>
+        /// <param name="text">The text to create an underline for.</param>
+        /// <param name="underlineChar">The character to use for the underline.</param>
+        /// <returns>A string containing the underline characters.</returns>
         public static string HeadingUnderline(string text, char underlineChar = '─')
         {
             text ??= string.Empty;
             return new string(underlineChar, text.Length);
         }
 
+        /// <summary>
+        /// Indents all lines of the specified text by the given level and size.
+        /// </summary>
+        /// <param name="text">The text to indent.</param>
+        /// <param name="level">The indentation level (multiplier).</param>
+        /// <param name="size">The number of spaces per indentation level.</param>
+        /// <returns>The indented text.</returns>
         public static string Indent(string text, int level, int size = 2)
         {
             if (string.IsNullOrEmpty(text))
@@ -136,6 +171,12 @@ namespace EasyCLI.Formatting
             return string.Join(Environment.NewLine, lines);
         }
 
+        /// <summary>
+        /// Wraps text to fit within the specified width, breaking at word boundaries.
+        /// </summary>
+        /// <param name="text">The text to wrap.</param>
+        /// <param name="width">The maximum width per line. If 0 or negative, uses console width.</param>
+        /// <returns>An enumerable of strings representing the wrapped lines.</returns>
         public static IEnumerable<string> Wrap(string text, int width)
         {
             if (string.IsNullOrEmpty(text))
@@ -192,6 +233,14 @@ namespace EasyCLI.Formatting
             }
         }
 
+        /// <summary>
+        /// Builds formatted key-value pairs with aligned values.
+        /// </summary>
+        /// <param name="items">The key-value pairs to format.</param>
+        /// <param name="indent">The number of spaces to indent each line.</param>
+        /// <param name="gap">The minimum number of spaces between the key and value.</param>
+        /// <param name="sep">The separator character to place after the key.</param>
+        /// <returns>An enumerable of formatted key-value lines.</returns>
         public static IEnumerable<string> BuildKeyValues(IEnumerable<(string key, string value)> items, int indent = 0, int gap = 2, string sep = ":")
         {
             if (items == null)
@@ -235,6 +284,15 @@ namespace EasyCLI.Formatting
             Right,
         }
 
+        /// <summary>
+        /// Builds a simple text table with headers and rows.
+        /// </summary>
+        /// <param name="headers">The column headers.</param>
+        /// <param name="rows">The data rows.</param>
+        /// <param name="padding">The padding around cell content.</param>
+        /// <param name="maxWidth">The maximum table width. If 0, no width limit is applied.</param>
+        /// <param name="alignments">The alignment for each column. If null, all columns are left-aligned.</param>
+        /// <returns>An enumerable of strings representing the table lines.</returns>
         public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1, int maxWidth = 0, IReadOnlyList<CellAlign>? alignments = null)
         {
             headers ??= Array.Empty<string>();
@@ -411,6 +469,18 @@ namespace EasyCLI.Formatting
             yield return MakeSep();
         }
 
+        /// <summary>
+        /// Builds a text box around the specified content lines using Unicode box-drawing characters.
+        /// </summary>
+        /// <param name="contentLines">The lines of content to enclose in the box.</param>
+        /// <param name="padding">The padding inside the box around the content.</param>
+        /// <param name="h">The horizontal border character.</param>
+        /// <param name="v">The vertical border character.</param>
+        /// <param name="tl">The top-left corner character.</param>
+        /// <param name="tr">The top-right corner character.</param>
+        /// <param name="bl">The bottom-left corner character.</param>
+        /// <param name="br">The bottom-right corner character.</param>
+        /// <returns>An enumerable of strings representing the box lines.</returns>
         public static IEnumerable<string> BuildBox(
             IEnumerable<string> contentLines,
             int padding = 1,
@@ -450,6 +520,19 @@ namespace EasyCLI.Formatting
             yield return bottom;
         }
 
+        /// <summary>
+        /// Builds a text box with a title around the specified content lines using Unicode box-drawing characters.
+        /// </summary>
+        /// <param name="contentLines">The lines of content to enclose in the box.</param>
+        /// <param name="title">The title to display in the top border of the box.</param>
+        /// <param name="padding">The padding inside the box around the content.</param>
+        /// <param name="h">The horizontal border character.</param>
+        /// <param name="v">The vertical border character.</param>
+        /// <param name="tl">The top-left corner character.</param>
+        /// <param name="tr">The top-right corner character.</param>
+        /// <param name="bl">The bottom-left corner character.</param>
+        /// <param name="br">The bottom-right corner character.</param>
+        /// <returns>An enumerable of strings representing the titled box lines.</returns>
         public static IEnumerable<string> BuildTitledBox(
             IEnumerable<string> contentLines,
             string title,
