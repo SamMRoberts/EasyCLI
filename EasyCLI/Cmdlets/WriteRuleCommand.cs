@@ -37,21 +37,13 @@ namespace EasyCLI.Cmdlets
 
         protected override void ProcessRecord()
         {
-            var w = _writer!;
-            var title = Title ?? string.Empty;
-            string line;
-            if (Center)
-            {
-                line = ConsoleFormatting.CenterTitleRule(title, filler: Char, width: Width, gap: Gap);
-            }
-            else if (!string.IsNullOrEmpty(title))
-            {
-                line = ConsoleFormatting.TitleRule(title, filler: Char, width: Width, gap: Gap);
-            }
-            else
-            {
-                line = ConsoleFormatting.Rule(Char, Width);
-            }
+            ConsoleWriter w = _writer!;
+            string title = Title ?? string.Empty;
+            string line = Center
+                ? ConsoleFormatting.CenterTitleRule(title, filler: Char, width: Width, gap: Gap)
+                : !string.IsNullOrEmpty(title)
+                    ? ConsoleFormatting.TitleRule(title, filler: Char, width: Width, gap: Gap)
+                    : ConsoleFormatting.Rule(Char, Width);
             w.WriteLine(line);
             if (PassThruObject.IsPresent)
             {

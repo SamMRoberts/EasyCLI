@@ -5,25 +5,16 @@ namespace EasyCLI.Prompts
     /// <summary>
     /// Base class implementing shared prompt loop & validation.
     /// </summary>
-    public abstract class BasePrompt<T> : IUserPrompt<T>
+    /// <typeparam name="T">The type of value returned by the prompt.</typeparam>
+    public abstract class BasePrompt<T>(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IPromptValidator<T>? validator = null) : IUserPrompt<T>
     {
-        protected readonly IConsoleWriter _writer;
-        protected readonly IConsoleReader _reader;
-        protected readonly PromptOptions _options;
-        protected readonly IPromptValidator<T>? _validator;
+        protected readonly IConsoleWriter _writer = writer;
+        protected readonly IConsoleReader _reader = reader;
+        protected readonly PromptOptions _options = options ?? new PromptOptions();
+        protected readonly IPromptValidator<T>? _validator = validator;
 
-        protected BasePrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IPromptValidator<T>? validator = null)
-        {
-            Prompt = prompt;
-            _writer = writer;
-            _reader = reader;
-            _options = options ?? new PromptOptions();
-            Default = @default;
-            _validator = validator;
-        }
-
-        public string Prompt { get; }
-        public T? Default { get; }
+        public string Prompt { get; } = prompt;
+        public T? Default { get; } = @default;
 
         public T GetValue()
         {

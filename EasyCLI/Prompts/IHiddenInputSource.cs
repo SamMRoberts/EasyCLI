@@ -1,6 +1,3 @@
-using System.Text;
-using System;
-
 namespace EasyCLI.Prompts
 {
     /// <summary>
@@ -18,10 +15,10 @@ namespace EasyCLI.Prompts
     {
         public string ReadHidden(char? mask = null)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             while (true)
             {
-                var key = Console.ReadKey(intercept: true);
+                ConsoleKeyInfo key = Console.ReadKey(intercept: true);
                 if (key.Key == ConsoleKey.Escape)
                 {
                     return "\u001b"; // sentinel for cancel
@@ -45,7 +42,7 @@ namespace EasyCLI.Prompts
                     }
                     continue;
                 }
-                sb.Append(key.KeyChar);
+                _ = sb.Append(key.KeyChar);
                 if (mask.HasValue)
                 {
                     Console.Write(mask.Value);
