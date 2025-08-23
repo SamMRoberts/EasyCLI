@@ -52,7 +52,7 @@ namespace EasyCLI.Prompts
             _lastRenderLines = list.Count; // update count (no footer)
         }
 
-        private IReadOnlyList<Choice<T>> ApplyFilter(string filter)
+        private List<Choice<T>> ApplyFilter(string filter)
         {
             if (!Options.EnableFiltering || string.IsNullOrEmpty(filter))
             {
