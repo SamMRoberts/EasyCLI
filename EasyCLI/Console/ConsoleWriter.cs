@@ -8,6 +8,11 @@ namespace EasyCLI
     /// </summary>
     public class ConsoleWriter : IConsoleWriter
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ConsoleWriter"/> class.
+        /// </summary>
+        /// <param name="enableColors">Explicit override for color support. If null, auto-detects based on environment.</param>
+        /// <param name="output">The text writer to use for output. If null, uses <see cref="Console.Out"/>.</param>
         public ConsoleWriter(bool? enableColors = null, TextWriter? output = null)
         {
             Output = output ?? System.Console.Out;
@@ -15,20 +20,44 @@ namespace EasyCLI
             ColorLevel = ColorEnabled ? DetectColorLevel() : ColorSupportLevel.None;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether color output is enabled.
+        /// </summary>
         public bool ColorEnabled { get; }
+        
+        /// <summary>
+        /// Gets the detected color support level of the terminal.
+        /// </summary>
         public ColorSupportLevel ColorLevel { get; }
+        
+        /// <summary>
+        /// Gets the text writer used for output.
+        /// </summary>
         public TextWriter Output { get; }
 
+        /// <summary>
+        /// Writes the specified message to the console without a newline.
+        /// </summary>
+        /// <param name="message">The message to write to the console.</param>
         public void Write(string message)
         {
             Output.Write(message);
         }
 
+        /// <summary>
+        /// Writes the specified message to the console followed by a newline.
+        /// </summary>
+        /// <param name="message">The message to write to the console.</param>
         public void WriteLine(string message)
         {
             Output.WriteLine(message);
         }
 
+        /// <summary>
+        /// Writes the specified message to the console with ANSI styling applied.
+        /// </summary>
+        /// <param name="message">The message to write to the console.</param>
+        /// <param name="style">The style to apply to the message.</param>
         public void Write(string message, ConsoleStyle style)
         {
             if (ColorEnabled && style.Codes.Length > 0)
@@ -41,6 +70,11 @@ namespace EasyCLI
             }
         }
 
+        /// <summary>
+        /// Writes the specified message to the console with ANSI styling applied, followed by a newline.
+        /// </summary>
+        /// <param name="message">The message to write to the console.</param>
+        /// <param name="style">The style to apply to the message.</param>
         public void WriteLine(string message, ConsoleStyle style)
         {
             if (ColorEnabled && style.Codes.Length > 0)

@@ -5,6 +5,9 @@ namespace EasyCLI.Styling
     /// </summary>
     public static class ConsoleThemes
     {
+        /// <summary>
+        /// Gets a dark theme suitable for dark terminal backgrounds.
+        /// </summary>
         public static ConsoleTheme Dark => new()
         {
             Success = ConsoleStyles.FgGreen,
@@ -15,6 +18,9 @@ namespace EasyCLI.Styling
             Hint = ConsoleStyles.FgBrightBlack,
         };
 
+        /// <summary>
+        /// Gets a light theme suitable for light terminal backgrounds.
+        /// </summary>
         public static ConsoleTheme Light => new()
         {
             Success = ConsoleStyles.FgGreen,
@@ -25,6 +31,9 @@ namespace EasyCLI.Styling
             Hint = ConsoleStyles.FgBlack,
         };
 
+        /// <summary>
+        /// Gets a high contrast theme for maximum visibility.
+        /// </summary>
         public static ConsoleTheme HighContrast => new()
         {
             Success = ConsoleStyles.FgBrightGreen,
