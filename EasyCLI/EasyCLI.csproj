@@ -7,7 +7,9 @@
   <Description>EasyCLI - ANSI styling &amp; formatting helpers plus PowerShell cmdlet utilities.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>EasyCLI</PackageId>
+  <PackageId>SamMRoberts.EasyCLI</PackageId>
+  <AssemblyName>EasyCLI</AssemblyName>
+  <RootNamespace>EasyCLI</RootNamespace>
     <Authors>SamMRoberts</Authors>
     <Company>SamMRoberts</Company>
     <RepositoryUrl>https://github.com/SamMRoberts/EasyCLI</RepositoryUrl>
