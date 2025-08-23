@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
   <Description>EasyCLI - ANSI styling &amp; formatting helpers plus PowerShell cmdlet utilities.</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>EasyCLI</PackageId>
     <Authors>SamMRoberts</Authors>
     <Company>SamMRoberts</Company>
