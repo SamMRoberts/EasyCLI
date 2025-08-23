@@ -10,15 +10,15 @@ namespace EasyCLI.Tests
 
         public ConsoleCapture()
         {
-            _originalOut = Console.Out;
-            Console.SetOut(_stringWriter);
+            _originalOut = System.Console.Out;
+            System.Console.SetOut(_stringWriter);
         }
 
         public string GetOutput() => _stringWriter.ToString();
 
         public void Dispose()
         {
-            Console.SetOut(_originalOut);
+            System.Console.SetOut(_originalOut);
             _stringWriter.Dispose();
         }
     }
