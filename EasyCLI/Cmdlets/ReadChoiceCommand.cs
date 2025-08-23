@@ -235,7 +235,7 @@ namespace EasyCLI.Cmdlets
             }
             while (true)
             {
-                var key = Console.ReadKey(intercept: true);
+                var key = System.Console.ReadKey(intercept: true);
                 if (key.Key == ConsoleKey.Escape)
                 {
                     if (CancelOnEscape)
@@ -259,14 +259,14 @@ namespace EasyCLI.Cmdlets
                     if (buffer.Length > 0)
                     {
                         buffer.Length--;
-                        Console.Write("\b \b");
+                        System.Console.Write("\b \b");
                     }
                     continue;
                 }
                 if (!char.IsControl(key.KeyChar))
                 {
                     buffer.Append(key.KeyChar);
-                    Console.Write(key.KeyChar);
+                    System.Console.Write(key.KeyChar);
                 }
             }
         }
