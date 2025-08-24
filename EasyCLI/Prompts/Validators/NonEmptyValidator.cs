@@ -3,18 +3,13 @@ namespace EasyCLI.Prompts.Validators
     /// <summary>
     /// Ensures the input is not null/empty/whitespace.
     /// </summary>
-    public sealed class NonEmptyValidator : IPromptValidator<string>
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="NonEmptyValidator"/> class.
+    /// </remarks>
+    /// <param name="message">The error message to display when validation fails. If null, a default message is used.</param>
+    public sealed class NonEmptyValidator(string? message = null) : IPromptValidator<string>
     {
-        private readonly string message;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="NonEmptyValidator"/> class.
-        /// </summary>
-        /// <param name="message">The error message to display when validation fails. If null, a default message is used.</param>
-        public NonEmptyValidator(string? message = null)
-        {
-            this.message = message ?? "Value cannot be empty";
-        }
+        private readonly string message = message ?? "Value cannot be empty";
 
         /// <summary>
         /// Validates that the input is not null, empty, or whitespace.
@@ -26,12 +21,7 @@ namespace EasyCLI.Prompts.Validators
         {
             value = raw;
 
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                return PromptValidationResult.Fail(this.message);
-            }
-
-            return PromptValidationResult.Success();
+            return string.IsNullOrWhiteSpace(raw) ? PromptValidationResult.Fail(message) : PromptValidationResult.Success();
         }
     }
 }

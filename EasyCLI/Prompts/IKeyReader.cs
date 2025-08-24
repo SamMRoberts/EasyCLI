@@ -1,5 +1,3 @@
-using System;
-
 namespace EasyCLI.Prompts
 {
     /// <summary>
@@ -25,6 +23,9 @@ namespace EasyCLI.Prompts
         /// </summary>
         /// <param name="intercept">If true, the key is not displayed in the console window.</param>
         /// <returns>Information about the key that was pressed.</returns>
-        public ConsoleKeyInfo ReadKey(bool intercept = true) => System.Console.ReadKey(intercept);
+        public ConsoleKeyInfo ReadKey(bool intercept = true)
+        {
+            return System.Console.ReadKey(intercept);
+        }
     }
 }

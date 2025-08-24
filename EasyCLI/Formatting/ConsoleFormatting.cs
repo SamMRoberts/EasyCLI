@@ -1,16 +1,12 @@
 namespace EasyCLI.Formatting
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-
     /// <summary>
     /// Pure formatting helpers (no I/O). These build strings/enumerables; rendering is handled elsewhere.
     /// </summary>
     public static class ConsoleFormatting
     {
         // Reused split characters to avoid per-call allocations (CA1861)
-        private static readonly char[] WrapSplitChars = new[] { ' ', '\n' };
+        private static readonly char[] WrapSplitChars = [' ', '\n'];
 
         /// <summary>
         /// Truncates <paramref name="value"/> to the specified maximum length and appends an ellipsis if truncation occurs.
@@ -38,7 +34,7 @@ namespace EasyCLI.Formatting
         {
             try
             {
-                int w = Console.WindowWidth;
+                int w = System.Console.WindowWidth;
                 return w > 0 ? w : fallback;
             }
             catch
@@ -79,7 +75,7 @@ namespace EasyCLI.Formatting
                 width = GetConsoleWidthOr(80);
             }
 
-            string g = new string(' ', Math.Max(0, gap));
+            string g = new(' ', Math.Max(0, gap));
             string prefix = string.IsNullOrEmpty(title) ? string.Empty : title + g;
             int remaining = Math.Max(0, width - prefix.Length);
             return prefix + new string(filler, remaining);
@@ -161,7 +157,7 @@ namespace EasyCLI.Formatting
                 return text;
             }
 
-            string pad = new string(' ', level * size);
+            string pad = new(' ', level * size);
             string[] lines = text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
             for (int i = 0; i < lines.Length; i++)
             {
@@ -197,7 +193,7 @@ namespace EasyCLI.Formatting
 
             // Use cached array to avoid reallocation (CA1861)
             string[] words = text.Replace("\r\n", "\n").Replace('\r', '\n').Split(WrapSplitChars, StringSplitOptions.None);
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             foreach (string word in words)
             {
                 if (word == "\n")
@@ -205,7 +201,7 @@ namespace EasyCLI.Formatting
                     if (sb.Length > 0)
                     {
                         yield return sb.ToString();
-                        sb.Clear();
+                        _ = sb.Clear();
                     }
 
                     continue;
@@ -213,17 +209,17 @@ namespace EasyCLI.Formatting
 
                 if (sb.Length == 0)
                 {
-                    sb.Append(word);
+                    _ = sb.Append(word);
                 }
                 else if (sb.Length + 1 + word.Length <= width)
                 {
-                    sb.Append(' ').Append(word);
+                    _ = sb.Append(' ').Append(word);
                 }
                 else
                 {
                     yield return sb.ToString();
-                    sb.Clear();
-                    sb.Append(word);
+                    _ = sb.Clear();
+                    _ = sb.Append(word);
                 }
             }
 
@@ -249,7 +245,7 @@ namespace EasyCLI.Formatting
             }
 
             int keyWidth = 0;
-            List<(string key, string value)> snapshot = new List<(string key, string value)>();
+            List<(string key, string value)> snapshot = [];
             foreach ((string key, string value) in items)
             {
                 string kk = key ?? string.Empty;
@@ -262,7 +258,7 @@ namespace EasyCLI.Formatting
             }
 
             string pad = indent > 0 ? new string(' ', indent) : string.Empty;
-            string gapSpaces = new string(' ', gap < 0 ? 0 : gap);
+            string gapSpaces = new(' ', gap < 0 ? 0 : gap);
             foreach ((string key, string value) in snapshot)
             {
                 yield return pad + key.PadRight(keyWidth) + " " + sep + gapSpaces + value;
@@ -295,9 +291,9 @@ namespace EasyCLI.Formatting
         /// <returns>An enumerable of strings representing the table lines.</returns>
         public static IEnumerable<string> BuildSimpleTable(IReadOnlyList<string> headers, IEnumerable<IReadOnlyList<string>> rows, int padding = 1, int maxWidth = 0, IReadOnlyList<CellAlign>? alignments = null)
         {
-            headers ??= Array.Empty<string>();
+            headers ??= [];
             int cols = headers.Count;
-            List<IReadOnlyList<string>> rowList = new List<IReadOnlyList<string>>();
+            List<IReadOnlyList<string>> rowList = [];
             if (rows != null)
             {
                 foreach (IReadOnlyList<string> r in rows)
@@ -377,39 +373,14 @@ namespace EasyCLI.Formatting
 
             CellAlign GetAlign(int c)
             {
-                if (alignments != null && c < alignments.Count)
-                {
-                    return alignments[c];
-                }
-
-                return CellAlign.Left;
+                return alignments != null && c < alignments.Count ? alignments[c] : CellAlign.Left;
             }
 
             string PadCell(string? s, int widthPer, CellAlign align)
             {
                 s ??= string.Empty;
                 int innerWidth = Math.Max(0, widthPer - (padding * 2));
-                string content;
-                if (s.Length > innerWidth)
-                {
-                    if (innerWidth <= 0)
-                    {
-                        content = string.Empty;
-                    }
-                    else if (innerWidth == 1)
-                    {
-                        content = "…";
-                    }
-                    else
-                    {
-                        content = TruncateWithEllipsis(s, innerWidth - 1);
-                    }
-                }
-                else
-                {
-                    content = s;
-                }
-
+                string content = s.Length > innerWidth ? innerWidth <= 0 ? string.Empty : innerWidth == 1 ? "…" : TruncateWithEllipsis(s, innerWidth - 1) : s;
                 int remaining = Math.Max(0, innerWidth - content.Length);
                 int leftPad = 0;
                 int rightPad = remaining;
@@ -491,7 +462,7 @@ namespace EasyCLI.Formatting
             char bl = '└',
             char br = '┘')
         {
-            List<string> lines = new();
+            List<string> lines = [];
             if (contentLines != null)
             {
                 lines.AddRange(contentLines);
@@ -545,7 +516,7 @@ namespace EasyCLI.Formatting
             char br = '┘')
         {
             title ??= string.Empty;
-            List<string> lines = new();
+            List<string> lines = [];
             if (contentLines != null)
             {
                 lines.AddRange(contentLines);

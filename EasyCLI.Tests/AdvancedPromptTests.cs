@@ -18,7 +18,7 @@ namespace EasyCLI.Tests
         public void HiddenInputPrompt_ReturnsValue()
         {
             var writer = new FakeConsoleWriter();
-            var reader = new FakeConsoleReader(new string[0]);
+            var reader = new FakeConsoleReader(Array.Empty<string>());
             var hidden = new FakeHidden("secret");
             var p = new HiddenInputPrompt("Password", writer, reader, hiddenSource: hidden, @default: null);
             var v = p.GetValue();
