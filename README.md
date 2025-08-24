@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/github/actions/workflow/status/SamMRoberts/EasyCLI/version-tag-publish.yml?branch=main" alt="Version/Tag/Publish"/>
 <a href="https://www.nuget.org/packages/SamMRoberts.EasyCLI"><img src="https://img.shields.io/nuget/v/SamMRoberts.EasyCLI.svg" alt="NuGet"></a>
 <a href="https://www.nuget.org/packages/SamMRoberts.EasyCLI"><img src="https://img.shields.io/nuget/dt/SamMRoberts.EasyCLI.svg" alt="NuGet Downloads"></a>
-<a href="https://github.com/SamMRoberts/EasyCLI/releases"><img src="https://img.shields.io/github/v/release/SamMRoberts/EasyCLI?display_name=tag&sort=semver" alt="GitHub Release"></a>
+<a href="https://github.com/SamMRoberts/EasyCLI/releases"><img src="https://img.shields.io/github/v/release/SamMRoberts/EasyCLI?include_prereleases&sort=semver" alt="GitHub Release"></a>
 <img src="https://img.shields.io/badge/GitHub%20Packages-active-brightgreen" alt="GitHub Packages"/>
 
 This is a .NET (C#) class library intended for building PowerShell Cmdlets and reusable CLI tooling. It includes a lightweight ANSI styling layer for console output.
