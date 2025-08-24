@@ -152,12 +152,7 @@ namespace EasyCLI.Styling
         /// <exception cref="ArgumentOutOfRangeException">Thrown when index is not between 0 and 255.</exception>
         public static ConsoleStyle Indexed256(int index)
         {
-            if (index is < 0 or > 255)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index));
-            }
-
-            return new ConsoleStyle(38, 5, index);
+            return index is < 0 or > 255 ? throw new ArgumentOutOfRangeException(nameof(index)) : new ConsoleStyle(38, 5, index);
         }
 
 #if DEBUG
