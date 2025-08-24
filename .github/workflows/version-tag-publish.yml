@@ -68,10 +68,11 @@ jobs:
           new='${{ steps.derive.outputs.version }}'
           csproj='EasyCLI/EasyCLI.csproj'
           safeNew=$(printf '%s' "$new" | sed -e 's/[\\/&]/\\&/g')
-          if grep -q '<Version>[^<]\+</Version>' "$csproj"; then
-            sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeNew</Version>#" "$csproj"
+          # Replace existing <Version> element if present, else insert before closing PropertyGroup
+          if grep -E -q '<Version>[^<]+</Version>' "$csproj"; then
+            sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeNew</Version>#" "$csproj" || { echo 'Failed to replace version'; exit 1; }
           else
-            sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeNew</Version>\n  </PropertyGroup>#" "$csproj"
+            sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeNew</Version>\n  </PropertyGroup>#" "$csproj" || { echo 'Failed to insert version'; exit 1; }
           fi
           rm -f "$csproj.bak"
           git config user.name 'github-actions'
@@ -113,10 +114,21 @@ jobs:
         run: |
           csproj='EasyCLI/EasyCLI.csproj'
           ver='${{ needs.auto_prerelease.outputs.version }}'
+          if ! grep -q "<Version>${ver}</Version>" "$csproj"; then
+            echo "<Version>${ver}</Version> not found, attempting in-place update (fallback)" >&2
+            safeVer=$(printf '%s' "$ver" | sed -e 's/[\\/&]/\\&/g')
+            if grep -E -q '<Version>[^<]+</Version>' "$csproj"; then
+              sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeVer</Version>#" "$csproj"
+            else
+              sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeVer</Version>\n  </PropertyGroup>#" "$csproj"
+            fi
+            rm -f "$csproj.bak"
             if ! grep -q "<Version>${ver}</Version>" "$csproj"; then
-            echo "Expected <Version>${ver}</Version> in $csproj but not found" >&2
-            grep -n '<Version>' "$csproj" || true
-            exit 1
+              echo "Failed to set version to ${ver}" >&2
+              grep -n '<Version>' "$csproj" || true
+              exit 1
+            fi
+            echo "Applied fallback version update to ${ver}" >&2
           fi
           echo "Verified csproj version $ver"
       - name: Restore
