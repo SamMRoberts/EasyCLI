@@ -152,10 +152,26 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         id: tagver
         run: |
-          ref='${GITHUB_REF#refs/tags/v}'
-          echo "tag_version=$ref" >> $GITHUB_OUTPUT
-          sed -i.bak -E "s#<Version>[^<]+#<Version>$ref#" EasyCLI/EasyCLI.csproj
-          rm EasyCLI/EasyCLI.csproj.bak
+          ref="${GITHUB_REF#refs/tags/v}"
+          echo "tag_version=$ref" >> "$GITHUB_OUTPUT"
+          csproj='EasyCLI/EasyCLI.csproj'
+          # Escape replacement for sed (/, &, backslashes)
+          safeRef=$(printf '%s' "$ref" | sed -e 's/[\\/&]/\\&/g')
+          if grep -q "<Version>$safeRef</Version>" "$csproj"; then
+            echo "<Version> already set to $ref"
+          else
+            if grep -q '<Version>[^<]\+</Version>' "$csproj"; then
+              sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeRef</Version>#" "$csproj" || updateFailed=1
+            else
+              # Insert before closing PropertyGroup if not present
+              sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeRef</Version>\n  </PropertyGroup>#" "$csproj" || updateFailed=1
+            fi
+            if [ "${updateFailed:-}" = 1 ]; then
+              echo 'Failed to update version in csproj' >&2; cat "$csproj"; exit 1
+            fi
+            echo "Updated <Version> to $ref"
+          fi
+          rm -f "$csproj.bak"
 
       - name: Restore
         run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
