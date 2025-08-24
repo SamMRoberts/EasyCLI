@@ -1,23 +1,16 @@
-using System;
-
 namespace EasyCLI.Prompts.Validators
 {
     /// <summary>
     /// Wraps a predicate for simple custom validation logic.
     /// </summary>
     /// <typeparam name="T">The converted value type.</typeparam>
-    public sealed class PredicateValidator<T> : IPromptValidator<T>
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="PredicateValidator{T}"/> class.
+    /// </remarks>
+    /// <param name="func">The validation function that takes a string and returns a validation result tuple.</param>
+    public sealed class PredicateValidator<T>(Func<string, (bool Ok, T Value, string? Error)> func) : IPromptValidator<T>
     {
-        private readonly Func<string, (bool Ok, T Value, string? Error)> func;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PredicateValidator{T}"/> class.
-        /// </summary>
-        /// <param name="func">The validation function that takes a string and returns a validation result tuple.</param>
-        public PredicateValidator(Func<string, (bool Ok, T Value, string? Error)> func)
-        {
-            this.func = func;
-        }
+        private readonly Func<string, (bool Ok, T Value, string? Error)> func = func;
 
         /// <summary>
         /// Validates the input using the configured predicate function.
@@ -27,15 +20,10 @@ namespace EasyCLI.Prompts.Validators
         /// <returns>A validation result indicating success or failure.</returns>
         public PromptValidationResult Validate(string raw, out T value)
         {
-            (bool Ok, T Value, string? Error) result = this.func(raw);
-            value = result.Value;
+            (bool Ok, T Value, string? Error) = func(raw);
+            value = Value;
 
-            if (!result.Ok)
-            {
-                return PromptValidationResult.Fail(result.Error ?? "Invalid value");
-            }
-
-            return PromptValidationResult.Success();
+            return !Ok ? PromptValidationResult.Fail(Error ?? "Invalid value") : PromptValidationResult.Success();
         }
     }
 }
