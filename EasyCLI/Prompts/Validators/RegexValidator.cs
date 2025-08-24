@@ -5,22 +5,16 @@ namespace EasyCLI.Prompts.Validators
     /// <summary>
     /// Validates string input against a regular expression.
     /// </summary>
-    public sealed class RegexValidator : IPromptValidator<string>
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="RegexValidator"/> class.
+    /// </remarks>
+    /// <param name="pattern">The regular expression pattern to validate against.</param>
+    /// <param name="errorMessage">The error message to display when validation fails.</param>
+    /// <param name="options">Regular expression options to apply.</param>
+    public sealed class RegexValidator(string pattern, string errorMessage, RegexOptions options = RegexOptions.None) : IPromptValidator<string>
     {
-        private readonly Regex regex;
-        private readonly string message;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RegexValidator"/> class.
-        /// </summary>
-        /// <param name="pattern">The regular expression pattern to validate against.</param>
-        /// <param name="errorMessage">The error message to display when validation fails.</param>
-        /// <param name="options">Regular expression options to apply.</param>
-        public RegexValidator(string pattern, string errorMessage, RegexOptions options = RegexOptions.None)
-        {
-            this.regex = new Regex(pattern, options);
-            this.message = errorMessage;
-        }
+        private readonly Regex regex = new(pattern, options);
+        private readonly string message = errorMessage;
 
         /// <summary>
         /// Validates that the input matches the configured regular expression pattern.
@@ -32,12 +26,7 @@ namespace EasyCLI.Prompts.Validators
         {
             value = raw;
 
-            if (!this.regex.IsMatch(raw))
-            {
-                return PromptValidationResult.Fail(this.message);
-            }
-
-            return PromptValidationResult.Success();
+            return !regex.IsMatch(raw) ? PromptValidationResult.Fail(message) : PromptValidationResult.Success();
         }
     }
 }

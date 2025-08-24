@@ -33,15 +33,9 @@ namespace EasyCLI.Prompts
             {
                 RenderPrompt();
                 string captured = _hiddenSource.ReadHidden(_mask);
-                if (Options.EnableEscapeCancel && captured == "\u001b")
-                {
-                    return HandleCancel();
-                }
-                if (string.IsNullOrEmpty(captured) && Default is not null)
-                {
-                    return Default;
-                }
-                return captured;
+                return Options.EnableEscapeCancel && captured == "\u001b"
+                    ? HandleCancel()
+                    : string.IsNullOrEmpty(captured) && Default is not null ? Default : captured;
             }
             return base.GetValue();
         }

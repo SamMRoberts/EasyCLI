@@ -96,7 +96,7 @@ namespace EasyCLI.Prompts
                 }
             }
 
-            List<T> results = new List<T>();
+            List<T> results = [];
             string[] tokens = raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             foreach (string token in tokens)
             {
