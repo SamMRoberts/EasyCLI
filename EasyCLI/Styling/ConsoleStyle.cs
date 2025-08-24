@@ -11,7 +11,7 @@ namespace EasyCLI.Styling
         /// <param name="codes">The ANSI SGR codes that define this style.</param>
         public ConsoleStyle(params int[] codes)
         {
-            Codes = codes ?? Array.Empty<int>();
+            Codes = codes ?? [];
         }
 
         /// <summary>
@@ -26,11 +26,7 @@ namespace EasyCLI.Styling
         /// <returns>The message wrapped with ANSI escape sequences for this style.</returns>
         public string Apply(string message)
         {
-            if (string.IsNullOrEmpty(message) || Codes.Length == 0)
-            {
-                return message ?? string.Empty;
-            }
-            return $"\u001b[{string.Join(';', Codes)}m{message}\u001b[0m";
+            return string.IsNullOrEmpty(message) || Codes.Length == 0 ? message ?? string.Empty : $"\u001b[{string.Join(';', Codes)}m{message}\u001b[0m";
         }
     }
 }

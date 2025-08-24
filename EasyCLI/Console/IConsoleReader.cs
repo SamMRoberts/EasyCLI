@@ -1,4 +1,4 @@
-namespace EasyCLI
+namespace EasyCLI.Console
 {
     /// <summary>
     /// Defines a method for reading input from the console.
