@@ -1,7 +1,7 @@
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using Xunit;
-using System.Linq;
 
 namespace EasyCLI.Tests
 {

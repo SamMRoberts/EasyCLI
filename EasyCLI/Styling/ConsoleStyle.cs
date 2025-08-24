@@ -9,6 +9,17 @@ namespace EasyCLI.Styling
     /// <param name="codes">The ANSI SGR codes that define this style.</param>
     public readonly struct ConsoleStyle(params int[] codes)
     {
+<<<<<<< HEAD
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ConsoleStyle"/> struct with the specified ANSI SGR codes.
+        /// </summary>
+        /// <param name="codes">The ANSI SGR codes that define this style.</param>
+        public ConsoleStyle(params int[] codes)
+        {
+            Codes = codes ?? [];
+        }
+=======
+>>>>>>> origin/develop
 
         /// <summary>
         /// Gets the ANSI SGR codes that define this style.
@@ -22,9 +33,13 @@ namespace EasyCLI.Styling
         /// <returns>The message wrapped with ANSI escape sequences for this style.</returns>
         public string Apply(string message)
         {
+<<<<<<< HEAD
+            return string.IsNullOrEmpty(message) || Codes.Length == 0 ? message ?? string.Empty : $"\u001b[{string.Join(';', Codes)}m{message}\u001b[0m";
+=======
             return string.IsNullOrEmpty(message) || Codes.Length == 0
                 ? message ?? string.Empty
                 : $"\u001b[{string.Join(';', Codes)}m{message}\u001b[0m";
+>>>>>>> origin/develop
         }
     }
 }

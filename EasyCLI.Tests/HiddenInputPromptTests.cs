@@ -1,6 +1,6 @@
+using EasyCLI.Console;
 using EasyCLI.Prompts;
 using EasyCLI.Styling;
-using EasyCLI.Console;
 
 namespace EasyCLI.Tests
 {
