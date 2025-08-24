@@ -3,6 +3,7 @@ name: Publish NuGet Package
 on:
   push:
     branches:
+      - main0
 
 # Prevent overlapping publish runs on rapid successive pushes
 concurrency:
@@ -44,36 +45,14 @@ jobs:
       - name: Show produced packages
         run: ls -1 dist
 
-      - name: Rename packages for Alpha release
-        run: |
-          # Rename package files to include -Alpha suffix
-          for pkg in dist/*.nupkg; do
-            if [[ "$pkg" != *"-Alpha.nupkg" ]]; then
-              new_pkg="${pkg%.nupkg}-Alpha.nupkg"
-              echo "Renaming $pkg to $new_pkg"
-              mv "$pkg" "$new_pkg"
-            fi
-          done
-          echo "Packages after renaming:"
-          ls -1 dist
-
-      - name: Publish to NuGet.org
-        if: success()
+      - name: Publish to NuGet
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          if [ -z "${NUGET_API_KEY}" ]; then
-            echo "NUGET_API_KEY secret not set; skipping publish." >&2
-            exit 0
-          fi
-          # Push all nupkg (non-symbol) files; skip duplicates to allow idempotent main pushes
+          if [ -z "$NUGET_API_KEY" ]; then echo 'Missing NUGET_API_KEY' >&2; exit 1; fi
           for pkg in dist/*.nupkg; do
-            new_pkg="${pkg%.nupkg}-Alpha.nupkg"
-            echo "Pushing $new_pkg"
-            dotnet nuget push "$new_pkg" \
-              --api-key "$NUGET_API_KEY" \
-              --source https://api.nuget.org/v3/index.json \
-              --skip-duplicate
+            echo "Pushing $pkg";
+            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate;
           done
 
       - name: Summary
