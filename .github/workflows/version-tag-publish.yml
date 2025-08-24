@@ -17,12 +17,79 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'release/**'
 
 permissions:
   contents: write
   packages: write
 
 jobs:
+  auto_prerelease:
+    name: Auto prerelease tag (release/* branch)
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Derive prerelease tag
+        id: derive
+        run: |
+          branch="${GITHUB_REF#refs/heads/release/}"
+          base="$branch"
+          preid="alpha"  # default prerelease identifier
+          # If branch already specifies a preid (e.g. 1.2.0-rc), honor it
+          if echo "$base" | grep -q '-'; then
+            preid_part=${base#*-}
+            preid=${preid_part%%.*}
+            base=${base%%-*}
+          fi
+          # Count existing prerelease tags
+            count=$(git tag -l "v${base}-${preid}.*" | wc -l | tr -d ' ')
+          next=$((count+1))
+          new_version="${base}-${preid}.${next}"
+          # If HEAD already tagged, skip
+          if git tag --points-at HEAD | grep -q "^v${base}-${preid}.[0-9]\+$"; then
+            echo "HEAD already has a prerelease tag; skipping."; echo "skip=true" >> $GITHUB_OUTPUT; exit 0
+          fi
+          echo "version=$new_version" >> $GITHUB_OUTPUT
+          echo "base=$base" >> $GITHUB_OUTPUT
+          echo "preid=$preid" >> $GITHUB_OUTPUT
+      - name: Update version in csproj & commit
+        if: steps.derive.outputs.skip != 'true'
+        run: |
+          new='${{ steps.derive.outputs.version }}'
+          csproj='EasyCLI/EasyCLI.csproj'
+          safeNew=$(printf '%s' "$new" | sed -e 's/[\\/&]/\\&/g')
+          if grep -q '<Version>[^<]\+</Version>' "$csproj"; then
+            sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeNew</Version>#" "$csproj"
+          else
+            sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeNew</Version>\n  </PropertyGroup>#" "$csproj"
+          fi
+          rm -f "$csproj.bak"
+          git config user.name 'github-actions'
+          git config user.email 'github-actions@users.noreply.github.com'
+          git add "$csproj"
+          git commit -m "chore: prerelease $new" || echo 'No changes'
+      - name: Create & push tag
+        if: steps.derive.outputs.skip != 'true'
+        run: |
+          new='${{ steps.derive.outputs.version }}'
+          git tag "v$new"
+          git push
+          git push origin "v$new"
+      - name: Summary
+        run: |
+          if [ '${{ steps.derive.outputs.skip }}' = 'true' ]; then
+            echo "Skipped prerelease tagging" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Created prerelease tag v${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
   prepare:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -209,12 +276,12 @@ jobs:
             dotnet nuget push "$pkg" --api-key "${GITHUB_TOKEN}" --source github --skip-duplicate;
           done
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && needs.prepare.outputs.new_version != '')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: EasyCLI ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', needs.prepare.outputs.new_version) }}
+          name: EasyCLI ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', needs.prepare.outputs.new_version) }}
+          prerelease: ${{ contains(startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', needs.prepare.outputs.new_version), '-') }}
           generate_release_notes: true
           files: dist/*.nupkg
 
