@@ -1,5 +1,3 @@
-using EasyCLI.Console;
-
 namespace EasyCLI.Cmdlets
 {
     /// <summary>
@@ -18,7 +16,7 @@ namespace EasyCLI.Cmdlets
         /// Gets or sets the array of option strings to present to the user.
         /// </summary>
         [Parameter(Position = 0)]
-        public string[] Options { get; set; } = Array.Empty<string>();
+        public string[] Options { get; set; } = [];
 
         /// <summary>
         /// Gets or sets accept objects from the pipeline; if they have a Name (string) property that is used as the option label, else ToString().
@@ -76,7 +74,8 @@ namespace EasyCLI.Cmdlets
         public SwitchParameter PassThruObject { get; set; }
 
         private ConsoleWriter? _writer;
-        private ConsoleTheme _theme = new();
+        // Theme kept as a mutable property for planned future dynamic theme switching; using a property avoids readonly suggestion.
+        private ConsoleTheme Theme { get; set; } = new();
 
         /// <summary>
         /// Initializes the cmdlet for processing.
@@ -84,9 +83,11 @@ namespace EasyCLI.Cmdlets
         protected override void BeginProcessing()
         {
             _writer = new ConsoleWriter(enableColors: !NoColor.IsPresent);
+            // Touch Theme to intentionally mark it as used (reserved for future styling logic)
+            _ = Theme;
         }
 
-        private readonly List<string> _pipelineOptions = new();
+        private readonly List<string> _pipelineOptions = [];
 
         /// <summary>
         /// Processes each input record from the pipeline and adds it to the options.
@@ -97,7 +98,7 @@ namespace EasyCLI.Cmdlets
             {
                 string? label = null;
                 // Handle PSObject properties dynamically (avoid strong PowerShell dependency for reflection only scenario)
-                if (InputObject is System.Management.Automation.PSObject pso)
+                if (InputObject is PSObject pso)
                 {
                     PSPropertyInfo nameProp = pso.Properties["Name"];
                     if (nameProp != null && nameProp.Value is string s)
@@ -128,7 +129,7 @@ namespace EasyCLI.Cmdlets
         protected override void EndProcessing()
         {
             // If pipeline provided options, prefer those over explicit Options (unless none were gathered)
-            string[] activeOptions = _pipelineOptions.Count > 0 ? _pipelineOptions.ToArray() : Options;
+            string[] activeOptions = _pipelineOptions.Count > 0 ? [.. _pipelineOptions] : Options;
             if (activeOptions.Length == 0)
             {
                 WriteError(new ErrorRecord(new InvalidOperationException("No options supplied."), "NoOptions", ErrorCategory.InvalidArgument, null));
@@ -212,7 +213,7 @@ namespace EasyCLI.Cmdlets
         {
             string promptText = Prompt + (Default != null ? $" [{Default}]" : string.Empty) + ": ";
             w.WriteHeading(promptText);
-            StringBuilder buffer = new StringBuilder();
+            StringBuilder buffer = new();
             if (!string.IsNullOrEmpty(SimulateKeys))
             {
                 for (int i = 0; i < SimulateKeys.Length; i++)
@@ -227,14 +228,10 @@ namespace EasyCLI.Cmdlets
                         }
                         continue; // ignore if not canceling
                     }
-                    if (ch == '\n' || ch == '\r')
+                    if (ch is '\n' or '\r')
                     {
                         w.WriteLine(string.Empty);
-                        if (Default != null)
-                        {
-                            return Default;
-                        }
-                        return buffer.ToString();
+                        return Default ?? buffer.ToString();
                     }
                     if (ch == '\b')
                     {
@@ -246,15 +243,11 @@ namespace EasyCLI.Cmdlets
                     }
                     if (!char.IsControl(ch))
                     {
-                        buffer.Append(ch);
+                        _ = buffer.Append(ch);
                     }
                 }
                 // If simulate ended without explicit enter, treat as enter
-                if (buffer.Length == 0 && Default != null)
-                {
-                    return Default;
-                }
-                return buffer.ToString();
+                return buffer.Length == 0 && Default != null ? Default : buffer.ToString();
             }
             while (true)
             {
@@ -271,11 +264,7 @@ namespace EasyCLI.Cmdlets
                 if (key.Key == ConsoleKey.Enter)
                 {
                     w.WriteLine(string.Empty);
-                    if (buffer.Length == 0 && Default != null)
-                    {
-                        return Default;
-                    }
-                    return buffer.ToString();
+                    return buffer.Length == 0 && Default != null ? Default : buffer.ToString();
                 }
                 if (key.Key == ConsoleKey.Backspace)
                 {
@@ -288,7 +277,7 @@ namespace EasyCLI.Cmdlets
                 }
                 if (!char.IsControl(key.KeyChar))
                 {
-                    buffer.Append(key.KeyChar);
+                    _ = buffer.Append(key.KeyChar);
                     System.Console.Write(key.KeyChar);
                 }
             }

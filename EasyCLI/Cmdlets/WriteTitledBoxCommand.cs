@@ -1,5 +1,3 @@
-using EasyCLI.Console;
-
 namespace EasyCLI.Cmdlets
 {
     /// <summary>
@@ -35,7 +33,7 @@ namespace EasyCLI.Cmdlets
         [Parameter]
         public SwitchParameter PassThruObject { get; set; }
 
-        private readonly List<string> _lines = new();
+        private readonly List<string> _lines = [];
         private ConsoleWriter? _writer;
 
         /// <summary>
@@ -64,10 +62,10 @@ namespace EasyCLI.Cmdlets
         {
             ConsoleWriter w = _writer!;
             ConsoleTheme theme = new();
-            List<string> boxLines = ConsoleFormatting.BuildTitledBox(_lines, Title).ToList();
+            List<string> boxLines = [.. ConsoleFormatting.BuildTitledBox(_lines, Title)];
             // Write with styles similar to WriteTitledBox extension
             // Define border characters for box drawing
-            char[] borderChars = { '┌', '└', '│', '┐', '┘' };
+            char[] borderChars = ['┌', '└', '│', '┐', '┘'];
             foreach (string? line in boxLines)
             {
                 bool isBorder = line.Length > 0 && borderChars.Contains(line[0]);

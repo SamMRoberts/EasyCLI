@@ -1,6 +1,3 @@
-using System.IO;
-using EasyCLI.Console;
-
 namespace EasyCLI.Console
 {
     /// <summary>
@@ -112,12 +109,7 @@ namespace EasyCLI.Console
             }
 
             string? term = Environment.GetEnvironmentVariable("TERM");
-            if (string.Equals(term, "dumb", StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            return true;
+            return !string.Equals(term, "dumb", StringComparison.OrdinalIgnoreCase);
         }
 
         private static ColorSupportLevel DetectColorLevel()

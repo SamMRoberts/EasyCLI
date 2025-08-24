@@ -1,5 +1,3 @@
-using System.IO;
-
 namespace EasyCLI
 {
     /// <summary>
@@ -9,16 +7,12 @@ namespace EasyCLI
     /// This class provides backward compatibility for code that references EasyCLI.ConsoleWriter.
     /// For new code, consider using EasyCLI.Console.ConsoleWriter directly.
     /// </remarks>
-    public class ConsoleWriter : Console.ConsoleWriter
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="ConsoleWriter"/> class.
+    /// </remarks>
+    /// <param name="enableColors">Explicit override for color support. If null, auto-detects based on environment.</param>
+    /// <param name="output">The text writer to use for output. If null, uses <see cref="System.Console.Out"/>.</param>
+    public class ConsoleWriter(bool? enableColors = null, TextWriter? output = null) : Console.ConsoleWriter(enableColors, output)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ConsoleWriter"/> class.
-        /// </summary>
-        /// <param name="enableColors">Explicit override for color support. If null, auto-detects based on environment.</param>
-        /// <param name="output">The text writer to use for output. If null, uses <see cref="System.Console.Out"/>.</param>
-        public ConsoleWriter(bool? enableColors = null, TextWriter? output = null)
-            : base(enableColors, output)
-        {
-        }
     }
 }
