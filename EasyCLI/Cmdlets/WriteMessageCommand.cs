@@ -1,5 +1,3 @@
-using EasyCLI.Console;
-
 namespace EasyCLI.Cmdlets
 {
     /// <summary>

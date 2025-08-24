@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using EasyCLI.Console;
 
 namespace EasyCLI.Prompts
@@ -15,7 +12,10 @@ namespace EasyCLI.Prompts
         private readonly IKeyReader? _keyReader;
         private bool _renderedChoices = false;
         private int _page = 0;
-        private int _lastRenderLines = 0; // retained for compatibility (not used in save/restore mode)
+        // Retained for future paging diff logic (line clearing); suppress "unused / make readonly" suggestions intentionally.
+#pragma warning disable IDE0052, IDE0044
+        private int _lastRenderLines = 0;
+#pragma warning restore IDE0052, IDE0044
         private bool _savedCursor = false; // whether we've issued an ANSI save cursor position
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace EasyCLI.Prompts
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
             : base(prompt, writer, reader, options, @default)
         {
-            _choices = choices.ToList();
+            _choices = [.. choices];
             if (_choices.Count == 0)
             {
                 throw new ArgumentException("Choices cannot be empty", nameof(choices));
@@ -61,7 +61,7 @@ namespace EasyCLI.Prompts
 
         private void RenderList(List<Choice<T>> list, int offset = 0)
         {
-            foreach (var (item, idx) in list.Select((c, i) => (c, i)))
+            foreach ((Choice<T> item, int idx) in list.Select((c, i) => (c, i)))
             {
                 Writer.WriteLine($"  {offset + idx + 1}) {item.Label}");
             }
@@ -76,13 +76,13 @@ namespace EasyCLI.Prompts
             }
             StringComparison comparison = StringComparison.OrdinalIgnoreCase;
             return Options.FilterMatchStartsWith
-                ? _choices.Where(c => c.Label.StartsWith(filter, comparison)).ToList()
-                : _choices.Where(c => c.Label.Contains(filter, comparison)).ToList();
+                ? [.. _choices.Where(c => c.Label.StartsWith(filter, comparison))]
+                : [.. _choices.Where(c => c.Label.Contains(filter, comparison))];
         }
 
         private void RenderPageFiltered(string filter)
         {
-            var list = ApplyFilter(filter);
+            List<Choice<T>> list = ApplyFilter(filter);
             int totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
             if (_page >= totalPages && totalPages > 0)
             {
@@ -118,7 +118,7 @@ namespace EasyCLI.Prompts
                     return true;
                 }
             }
-            var match = _choices.FirstOrDefault(c => c.Label.Equals(raw, StringComparison.OrdinalIgnoreCase))
+            Choice<T>? match = _choices.FirstOrDefault(c => c.Label.Equals(raw, StringComparison.OrdinalIgnoreCase))
                         ?? _choices.FirstOrDefault(c => c.Label.StartsWith(raw, StringComparison.OrdinalIgnoreCase));
             if (match != null)
             {
@@ -151,8 +151,8 @@ namespace EasyCLI.Prompts
                 // Simple line-based paging navigation (legacy behavior for tests)
                 if (Options.EnablePaging && _choices.Count > Options.PageSize && !string.IsNullOrEmpty(raw))
                 {
-                    var list = _choices; // original list for page calculations
-                    var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
+                    List<Choice<T>> list = _choices; // original list for page calculations
+                    int totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
                     if (totalPages > 1)
                     {
                         if (string.Equals(raw, "n", StringComparison.OrdinalIgnoreCase))
@@ -173,7 +173,7 @@ namespace EasyCLI.Prompts
                 {
                     return Default!;
                 }
-                if (TryConvert(raw, out var converted))
+                if (TryConvert(raw, out T? converted))
                 {
                     return converted;
                 }
@@ -205,7 +205,7 @@ namespace EasyCLI.Prompts
                 }
                 else
                 {
-                    var listCurrent = ApplyFilter(filter);
+                    List<Choice<T>> listCurrent = ApplyFilter(filter);
                     RenderList(listCurrent);
                     _renderedChoices = true;
                 }
@@ -216,7 +216,7 @@ namespace EasyCLI.Prompts
                     System.Console.Write($"Filter: {filter}");
                 }
 
-                var key = _keyReader!.ReadKey(true);
+                ConsoleKeyInfo key = _keyReader!.ReadKey(true);
                 if (key.Key == ConsoleKey.Escape)
                 {
                     if (Options.EnableEscapeCancel)
@@ -229,8 +229,8 @@ namespace EasyCLI.Prompts
                 }
                 if (key.Key == ConsoleKey.N && Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
-                    var list = ApplyFilter(filter);
-                    var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
+                    List<Choice<T>> list = ApplyFilter(filter);
+                    int totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
                     if (totalPages > 1)
                     {
                         _page = (_page + 1) % totalPages;
@@ -239,8 +239,8 @@ namespace EasyCLI.Prompts
                 }
                 if (key.Key == ConsoleKey.P && Options.EnablePaging && _choices.Count > Options.PageSize)
                 {
-                    var list = ApplyFilter(filter);
-                    var totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
+                    List<Choice<T>> list = ApplyFilter(filter);
+                    int totalPages = (list.Count + Options.PageSize - 1) / Options.PageSize;
                     if (totalPages > 1)
                     {
                         _page = (_page - 1 + totalPages) % totalPages;
@@ -258,12 +258,12 @@ namespace EasyCLI.Prompts
                 }
                 if (key.Key == ConsoleKey.Enter)
                 {
-                    var list = ApplyFilter(filter);
+                    List<Choice<T>> list = ApplyFilter(filter);
                     if (string.IsNullOrEmpty(filter) && Default is not null)
                     {
                         return Default!;
                     }
-                    if (int.TryParse(filter, out var idxEnter) && idxEnter >= 1 && idxEnter <= _choices.Count)
+                    if (int.TryParse(filter, out int idxEnter) && idxEnter >= 1 && idxEnter <= _choices.Count)
                     {
                         return _choices[idxEnter - 1].Value;
                     }
@@ -271,7 +271,7 @@ namespace EasyCLI.Prompts
                     {
                         return list[0].Value;
                     }
-                    var matchEnter = _choices.FirstOrDefault(c => c.Label.Equals(filter, StringComparison.OrdinalIgnoreCase))
+                    Choice<T>? matchEnter = _choices.FirstOrDefault(c => c.Label.Equals(filter, StringComparison.OrdinalIgnoreCase))
                                ?? _choices.FirstOrDefault(c => c.Label.StartsWith(filter, StringComparison.OrdinalIgnoreCase));
                     if (matchEnter != null)
                     {
@@ -294,7 +294,7 @@ namespace EasyCLI.Prompts
                     {
                         if (char.IsDigit(key.KeyChar))
                         {
-                            var d = key.KeyChar - '0';
+                            int d = key.KeyChar - '0';
                             if (d >= 1 && d <= _choices.Count)
                             {
                                 return _choices[d - 1].Value;

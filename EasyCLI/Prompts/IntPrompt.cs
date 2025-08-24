@@ -1,26 +1,22 @@
+using System.Globalization;
+using EasyCLI.Console;
+
 namespace EasyCLI.Prompts
 {
-    using System.Globalization;
-    using EasyCLI.Console;
-
     /// <summary>
     /// A prompt that accepts integer input from the user.
     /// </summary>
-    public sealed class IntPrompt : BasePrompt<int>
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="IntPrompt"/> class.
+    /// </remarks>
+    /// <param name="prompt">The prompt text to display to the user.</param>
+    /// <param name="writer">The console writer to use for output.</param>
+    /// <param name="reader">The console reader to use for input.</param>
+    /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
+    /// <param name="default">The default value to use if the user provides no input.</param>
+    /// <param name="validator">The validator to use for validating user input.</param>
+    public sealed class IntPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, int? @default = null, IPromptValidator<int>? validator = null) : BasePrompt<int>(prompt, writer, reader, options, @default ?? default, validator)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="IntPrompt"/> class.
-        /// </summary>
-        /// <param name="prompt">The prompt text to display to the user.</param>
-        /// <param name="writer">The console writer to use for output.</param>
-        /// <param name="reader">The console reader to use for input.</param>
-        /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
-        /// <param name="default">The default value to use if the user provides no input.</param>
-        /// <param name="validator">The validator to use for validating user input.</param>
-        public IntPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, int? @default = null, IPromptValidator<int>? validator = null)
-            : base(prompt, writer, reader, options, @default ?? default, validator)
-        {
-        }
 
         /// <summary>
         /// Attempts to convert the raw user input to an integer.

@@ -1,5 +1,3 @@
-using System;
-
 namespace EasyCLI.Prompts.Validators
 {
     /// <summary>
@@ -19,8 +17,8 @@ namespace EasyCLI.Prompts.Validators
                 throw new ArgumentException("max must be >= min");
             }
 
-            this.Min = min;
-            this.Max = max;
+            Min = min;
+            Max = max;
         }
 
         /// <summary>
@@ -41,17 +39,11 @@ namespace EasyCLI.Prompts.Validators
         /// <returns>A validation result indicating success or failure.</returns>
         public PromptValidationResult Validate(string raw, out int value)
         {
-            if (!int.TryParse(raw, out value))
-            {
-                return PromptValidationResult.Fail("Not a number");
-            }
-
-            if (value < this.Min || value > this.Max)
-            {
-                return PromptValidationResult.Fail($"Value must be between {this.Min} and {this.Max}");
-            }
-
-            return PromptValidationResult.Success();
+            return !int.TryParse(raw, out value)
+                ? PromptValidationResult.Fail("Not a number")
+                : value < Min || value > Max
+                ? PromptValidationResult.Fail($"Value must be between {Min} and {Max}")
+                : PromptValidationResult.Success();
         }
     }
 }
