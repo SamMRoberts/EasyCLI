@@ -1,0 +1,17 @@
+name: LEGACY Disabled Publish Workflow
+
+# This file replaces the original publish.yml which has been removed.
+# It is intentionally inert (no triggers) and kept only for historical reference.
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Legacy workflow kept for reference only.'
+        required: false
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Legacy publish workflow disabled; use version-tag-publish.yml instead."

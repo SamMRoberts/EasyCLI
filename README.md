@@ -1,6 +1,59 @@
-# EasyCLI <img src="https://img.shields.io/github/actions/workflow/status/SamMRoberts/EasyCLI/ci.yml?branch=main" alt="CI"/>
+# EasyCLI 
+
+<img src="https://img.shields.io/github/actions/workflow/status/SamMRoberts/EasyCLI/ci.yml?branch=main" alt="CI"/>
+<img src="https://img.shields.io/github/actions/workflow/status/SamMRoberts/EasyCLI/status-checks.yml?branch=main" alt="Status Checks"/>
+<img src="https://img.shields.io/github/actions/workflow/status/SamMRoberts/EasyCLI/version-tag-publish.yml?branch=main" alt="Version/Tag/Publish"/>
+<a href="https://www.nuget.org/packages/SamMRoberts.EasyCLI"><img src="https://img.shields.io/nuget/v/SamMRoberts.EasyCLI.svg" alt="NuGet"></a>
+<a href="https://www.nuget.org/packages/SamMRoberts.EasyCLI"><img src="https://img.shields.io/nuget/dt/SamMRoberts.EasyCLI.svg" alt="NuGet Downloads"></a>
+<a href="https://github.com/SamMRoberts/EasyCLI/releases"><img src="https://img.shields.io/github/v/release/SamMRoberts/EasyCLI?display_name=tag&sort=semver" alt="GitHub Release"></a>
+<img src="https://img.shields.io/badge/GitHub%20Packages-active-brightgreen" alt="GitHub Packages"/>
 
 This is a .NET (C#) class library intended for building PowerShell Cmdlets and reusable CLI tooling. It includes a lightweight ANSI styling layer for console output.
+
+## Install
+
+Using the .NET CLI:
+
+```sh
+dotnet add package SamMRoberts.EasyCLI
+```
+
+Or add to your project file:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="SamMRoberts.EasyCLI" Version="*" />
+</ItemGroup>
+```
+
+PowerShell (NuGet provider):
+
+```powershell
+Install-Package SamMRoberts.EasyCLI
+```
+
+GitHub Packages (alternative source):
+
+Add or update a `nuget.config` (next to your solution) with:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <add key="nuget" value="https://api.nuget.org/v3/index.json" />
+    <add key="github" value="https://nuget.pkg.github.com/SamMRoberts/index.json" />
+  </packageSources>
+</configuration>
+```
+
+Then authenticate once (CI or local):
+
+```sh
+dotnet nuget add source https://nuget.pkg.github.com/SamMRoberts/index.json \
+  --name github --username "SamMRoberts" --password "$GITHUB_TOKEN" --store-password-in-clear-text
+```
+
+Restore/install as usual.
 
 ## Getting Started
 
