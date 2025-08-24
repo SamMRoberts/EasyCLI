@@ -135,8 +135,10 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json') }}
       - name: Restore
         run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+      - name: Build
+        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
       - name: Pack
-        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release -o dist --no-restore -p:ContinuousIntegrationBuild=true
+        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release -o dist --no-build -p:ContinuousIntegrationBuild=true
       - name: List Artifacts
         run: ls -1 dist
       - name: Upload Packages
