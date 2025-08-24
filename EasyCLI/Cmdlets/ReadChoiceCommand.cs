@@ -99,7 +99,7 @@ namespace EasyCLI.Cmdlets
                 // Handle PSObject properties dynamically (avoid strong PowerShell dependency for reflection only scenario)
                 if (InputObject is System.Management.Automation.PSObject pso)
                 {
-                    var nameProp = pso.Properties["Name"];
+                    PSPropertyInfo nameProp = pso.Properties["Name"];
                     if (nameProp != null && nameProp.Value is string s)
                     {
                         label = s;
@@ -107,8 +107,8 @@ namespace EasyCLI.Cmdlets
                 }
                 if (label == null)
                 {
-                    var type = InputObject.GetType();
-                    var nameProp = type.GetProperty("Name");
+                    Type type = InputObject.GetType();
+                    System.Reflection.PropertyInfo? nameProp = type.GetProperty("Name");
                     if (nameProp != null && nameProp.PropertyType == typeof(string))
                     {
                         label = nameProp.GetValue(InputObject) as string;
@@ -183,7 +183,7 @@ namespace EasyCLI.Cmdlets
 
         private static (string? Value, int Index) ResolveSelection(string raw, string[] activeOptions)
         {
-            if (int.TryParse(raw, out var idx))
+            if (int.TryParse(raw, out int idx))
             {
                 if (idx >= 1 && idx <= activeOptions.Length)
                 {
@@ -210,14 +210,14 @@ namespace EasyCLI.Cmdlets
 
         private string? ReadInteractiveSelection(ConsoleWriter w)
         {
-            var promptText = Prompt + (Default != null ? $" [{Default}]" : string.Empty) + ": ";
+            string promptText = Prompt + (Default != null ? $" [{Default}]" : string.Empty) + ": ";
             w.WriteHeading(promptText);
-            var buffer = new StringBuilder();
+            StringBuilder buffer = new StringBuilder();
             if (!string.IsNullOrEmpty(SimulateKeys))
             {
                 for (int i = 0; i < SimulateKeys.Length; i++)
                 {
-                    var ch = SimulateKeys[i];
+                    char ch = SimulateKeys[i];
                     if (ch == '\u001b')
                     {
                         if (CancelOnEscape)
@@ -258,7 +258,7 @@ namespace EasyCLI.Cmdlets
             }
             while (true)
             {
-                var key = System.Console.ReadKey(intercept: true);
+                ConsoleKeyInfo key = System.Console.ReadKey(intercept: true);
                 if (key.Key == ConsoleKey.Escape)
                 {
                     if (CancelOnEscape)
