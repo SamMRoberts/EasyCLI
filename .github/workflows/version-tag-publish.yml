@@ -93,6 +93,76 @@ jobs:
             echo "Created prerelease tag v${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           fi
 
+  prerelease_publish:
+    name: Immediate prerelease publish
+    needs: auto_prerelease
+    if: needs.auto_prerelease.outputs.version != '' && needs.auto_prerelease.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Verify version
+        run: |
+          csproj='EasyCLI/EasyCLI.csproj'
+          ver='${{ needs.auto_prerelease.outputs.version }}'
+            if ! grep -q "<Version>${ver}</Version>" "$csproj"; then
+            echo "Expected <Version>${ver}</Version> in $csproj but not found" >&2
+            grep -n '<Version>' "$csproj" || true
+            exit 1
+          fi
+          echo "Verified csproj version $ver"
+      - name: Restore
+        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+      - name: Build
+        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
+      - name: Pack
+        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
+      - name: Publish to NuGet
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then echo 'Missing NUGET_API_KEY' >&2; exit 1; fi
+          for pkg in dist/*.nupkg; do
+            echo "Pushing $pkg";
+            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate;
+          done
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget remove source github 2>/dev/null || true
+          dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --name github \
+            --username "${{ github.repository_owner }}" \
+            --password "${GITHUB_TOKEN}" \
+            --store-password-in-clear-text
+          for pkg in dist/*.nupkg; do
+            echo "Pushing $pkg to GitHub Packages";
+            dotnet nuget push "$pkg" --api-key "${GITHUB_TOKEN}" --source github --skip-duplicate;
+          done
+      - name: Create GitHub Release (prerelease)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.auto_prerelease.outputs.version }}
+          name: EasyCLI v${{ needs.auto_prerelease.outputs.version }}
+          prerelease: true
+          generate_release_notes: true
+          files: dist/*.nupkg
+      - name: Summary
+        run: |
+          echo "## Immediate Prerelease Publish" >> $GITHUB_STEP_SUMMARY
+          echo "Version: v${{ needs.auto_prerelease.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          ls -1 dist >> $GITHUB_STEP_SUMMARY
+          echo "Published to NuGet.org & GitHub Packages (duplicates skipped)." >> $GITHUB_STEP_SUMMARY
+
   prepare:
     runs-on: ubuntu-latest
     outputs:
