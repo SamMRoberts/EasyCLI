@@ -2,9 +2,9 @@ name: Status Checks
 
 on:
   pull_request:
-    branches: ["main"]
+    branches: ["main", "develop", "release*"]
   push:
-    branches: ["main"]
+    branches: ["release*"]
 
 permissions:
   contents: read
