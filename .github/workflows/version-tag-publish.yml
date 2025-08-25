@@ -217,7 +217,7 @@ jobs:
           ls -1 dist >> $GITHUB_STEP_SUMMARY
   update_init:
     name: Update Init (version, csproj, tag)
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/') && github.event_name != 'create'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.derive.outputs.version }}
