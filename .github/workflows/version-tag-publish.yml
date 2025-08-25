@@ -61,8 +61,8 @@ jobs:
       - name: Create tag
         run: |
           ver='${{ steps.derive.outputs.version }}'
-          if git rev-parse "v$ver" >/dev/null 2>&1; then
-            echo "Tag v$ver already exists (skipping)"
+            echo "Tag v$ver already exists. Failing workflow."
+            exit 1
           else
             git tag "v$ver"
             git push origin "v$ver"
