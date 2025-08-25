@@ -19,21 +19,21 @@ Always reference these instructions first and fallback to search or bash command
   ```bash
   dotnet build
   ```
-  - **Timing**: First build takes ~32 seconds (includes package restore). Subsequent builds take ~2 seconds.
+  - **Timing**: First build takes ~50 seconds (includes package restore). Subsequent builds take ~2 seconds.
   - **NEVER CANCEL**: Set timeout to 120+ seconds for builds.
 
 - Run all tests:
   ```bash
   dotnet test --verbosity minimal
   ```
-  - **Timing**: Test suite takes ~11 seconds to run 67 tests.
+  - **Timing**: Test suite takes ~15 seconds to run 95 tests.
   - **NEVER CANCEL**: Set timeout to 60+ seconds for tests.
 
 - Run the demo application:
   ```bash
   dotnet run --project EasyCLI.Demo/EasyCLI.Demo.csproj
   ```
-  - **Timing**: Runs in ~2 seconds. 
+  - **Timing**: Runs in ~5 seconds. 
   - **Note**: Demo will be interactive if input is not redirected. Use `echo "" | dotnet run --project EasyCLI.Demo/EasyCLI.Demo.csproj` for non-interactive execution.
 
 ### Code Formatting (CRITICAL)
@@ -45,7 +45,7 @@ Always reference these instructions first and fallback to search or bash command
   ```bash
   dotnet format --verify-no-changes
   ```
-- **Timing**: Format check/fix takes ~8-10 seconds.
+- **Timing**: Format check/fix takes ~14-15 seconds.
 
 ## Manual Validation Scenarios
 
@@ -63,7 +63,7 @@ Expected output: Styled console output with colors, tables, themes (Dark/Light/H
 # Run cmdlet tests to verify PowerShell integration
 dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj -v minimal --filter "CmdletTests"
 ```
-Expected: All 10 PowerShell cmdlet tests pass, verifying `Show-EasyMessage` cmdlet works correctly.
+Expected: All 38 PowerShell cmdlet tests pass, verifying `Write-Message` cmdlet (alias `Show-Message`) works correctly.
 
 ### 3. ANSI Styling and Environment Variables
 Test that color output respects environment variables:
@@ -88,9 +88,9 @@ dotnet run --project EasyCLI.Demo/EasyCLI.Demo.csproj
   - `ConsoleWriter.cs`, `ConsoleWriterExtensions.cs` - Main console output classes
   - `ConsoleThemes.cs` - Built-in color themes (Dark, Light, HighContrast)
   - `ConsoleFormatting.cs` - Advanced formatting helpers (tables, boxes, rules)
-  - `Cmdlets/Show-EasyMessage.cs` - PowerShell cmdlet implementation
+  - `Cmdlets/WriteMessageCommand.cs` - PowerShell cmdlet implementation (`Write-Message` with alias `Show-Message`)
   - `Prompts/` - Interactive prompt framework (string, int, choice, multi-select, hidden)
-- `EasyCLI.Tests/` - Unit tests (67 tests covering ANSI behavior, cmdlets, prompts)
+- `EasyCLI.Tests/` - Unit tests (95 tests covering ANSI behavior, cmdlets, prompts)
 - `EasyCLI.Demo/` - Demonstration application showing all library features
 - `.github/workflows/ci.yml` - CI pipeline (build, test, formatting validation)
 
@@ -116,7 +116,7 @@ dotnet run --project EasyCLI.Demo/EasyCLI.Demo.csproj
 4. Update demo in `EasyCLI.Demo/Program.cs`
 
 ### Modifying PowerShell Cmdlets
-1. Edit cmdlet in `Cmdlets/Show-EasyMessage.cs`
+1. Edit cmdlet in `Cmdlets/WriteMessageCommand.cs` or other cmdlet files
 2. Update `EasyCLI.psd1` if adding new cmdlets
 3. Always run cmdlet tests: `dotnet test --filter "CmdletTests"`
 
