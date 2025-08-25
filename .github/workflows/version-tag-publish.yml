@@ -1,305 +1,72 @@
-name: Version, Tag & Publish
+name: Release Branch Bootstrap & Publish (GitHub Packages)
+
+# When a release/* branch is CREATED, automatically:
+# 1. Derive version from branch name (release/<version>)
+# 2. Update csproj <Version> (commit to the branch)
+# 3. Create and push git tag v<version>
+# 4. Restore, build, test, pack
+# 5. Publish nupkg to GitHub Packages ONLY
+# 6. Create GitHub Release (prerelease flag if version contains '-')
 
 on:
-  workflow_dispatch:
-    inputs:
-      release:
-        description: 'Release type (auto, patch, minor, major, pre)'
-        required: true
-        default: 'patch'
-      preid:
-        description: 'Prerelease identifier (e.g. alpha, beta, rc) if release=pre'
-        required: false
-      skip-publish:
-        description: 'Skip NuGet push (true/false)'
-        required: false
-        default: 'false'
-  push:
-    tags:
-      - 'v*'
-    branches:
-      - 'release/**'
+  create: {}
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  auto_prerelease:
-    name: Auto prerelease tag (release/* branch)
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
+  release_init_publish:
+    name: Init + Test + Publish
+    if: github.event_name == 'create' && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'release/')
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      version: ${{ steps.derive.outputs.version }}
-      skip: ${{ steps.derive.outputs.skip }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Derive prerelease tag
+
+      - name: Derive version from branch name
         id: derive
         run: |
-          branch="${GITHUB_REF#refs/heads/release/}"
-          base="$branch"
-          preid="alpha"  # default prerelease identifier
-          # If branch already specifies a preid (e.g. 1.2.0-rc), honor it
-          if echo "$base" | grep -q '-'; then
-            preid_part=${base#*-}
-            preid=${preid_part%%.*}
-            base=${base%%-*}
+          raw_ref='${{ github.event.ref }}' # e.g. release/0.4.0 or release/0.4.0-rc.1
+          version="${raw_ref#release/}"
+          if [ -z "$version" ]; then
+            echo 'Could not parse version from branch name' >&2; exit 1
           fi
-          # Count existing prerelease tags
-            count=$(git tag -l "v${base}-${preid}.*" | wc -l | tr -d ' ')
-          next=$((count+1))
-          new_version="${base}-${preid}.${next}"
-          # If HEAD already tagged, skip
-          if git tag --points-at HEAD | grep -q "^v${base}-${preid}.[0-9]\+$"; then
-            echo "HEAD already has a prerelease tag; skipping."; echo "skip=true" >> $GITHUB_OUTPUT; exit 0
+          # Basic SemVer-ish validation (allow pre-release with -)
+          if ! echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "Branch version '$version' does not look like SemVer (X.Y.Z or X.Y.Z-prerelease)" >&2; exit 1
           fi
-          echo "version=$new_version" >> $GITHUB_OUTPUT
-          echo "base=$base" >> $GITHUB_OUTPUT
-          echo "preid=$preid" >> $GITHUB_OUTPUT
-      - name: Update version in csproj & commit
-        if: steps.derive.outputs.skip != 'true'
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Derived version: $version"
+
+      - name: Update csproj version & commit
         run: |
-          new='${{ steps.derive.outputs.version }}'
+          ver='${{ steps.derive.outputs.version }}'
           csproj='EasyCLI/EasyCLI.csproj'
-          safeNew=$(printf '%s' "$new" | sed -e 's/[\\/&]/\\&/g')
-          # Replace existing <Version> element if present, else insert before closing PropertyGroup
-          if grep -E -q '<Version>[^<]+</Version>' "$csproj"; then
-            sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeNew</Version>#" "$csproj" || { echo 'Failed to replace version'; exit 1; }
+          safe=$(printf '%s' "$ver" | sed -e 's/[\\/&]/\\&/g')
+          if grep -q '<Version>[^<]*</Version>' "$csproj"; then
+            sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safe</Version>#" "$csproj" || { echo 'Failed to replace version'; exit 1; }
           else
-            sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeNew</Version>\n  </PropertyGroup>#" "$csproj" || { echo 'Failed to insert version'; exit 1; }
+            sed -i.bak -E "s#</PropertyGroup>#  <Version>$safe</Version>\n  </PropertyGroup>#" "$csproj" || { echo 'Failed to insert version'; exit 1; }
           fi
           rm -f "$csproj.bak"
           git config user.name 'github-actions'
-          git config user.email 'github-actions@users.noreply.github.com'
+            git config user.email 'github-actions@users.noreply.github.com'
           git add "$csproj"
-          git commit -m "chore: prerelease $new" || echo 'No changes'
-      - name: Create & push tag
-        if: steps.derive.outputs.skip != 'true'
-        run: |
-          new='${{ steps.derive.outputs.version }}'
-          git tag "v$new"
+          git commit -m "chore: set release version $ver" || echo 'No changes to commit'
           git push
-          git push origin "v$new"
-      - name: Summary
-        run: |
-          if [ '${{ steps.derive.outputs.skip }}' = 'true' ]; then
-            echo "Skipped prerelease tagging" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "Created prerelease tag v${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          fi
-
-  prerelease_publish:
-    name: Immediate prerelease publish
-    needs: auto_prerelease
-    if: needs.auto_prerelease.outputs.version != '' && needs.auto_prerelease.outputs.skip != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.x'
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
-      - name: Verify version
-        run: |
-          csproj='EasyCLI/EasyCLI.csproj'
-          ver='${{ needs.auto_prerelease.outputs.version }}'
-          if ! grep -q "<Version>${ver}</Version>" "$csproj"; then
-            echo "<Version>${ver}</Version> not found, attempting in-place update (fallback)" >&2
-            safeVer=$(printf '%s' "$ver" | sed -e 's/[\\/&]/\\&/g')
-            if grep -E -q '<Version>[^<]+</Version>' "$csproj"; then
-              sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeVer</Version>#" "$csproj"
-            else
-              sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeVer</Version>\n  </PropertyGroup>#" "$csproj"
-            fi
-            rm -f "$csproj.bak"
-            if ! grep -q "<Version>${ver}</Version>" "$csproj"; then
-              echo "Failed to set version to ${ver}" >&2
-              grep -n '<Version>' "$csproj" || true
-              exit 1
-            fi
-            echo "Applied fallback version update to ${ver}" >&2
-          fi
-          echo "Verified csproj version $ver"
-      - name: Restore
-        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
-      - name: Build
-        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
-      - name: Pack
-        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
-      - name: Publish to NuGet
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          if [ -z "$NUGET_API_KEY" ]; then echo 'Missing NUGET_API_KEY' >&2; exit 1; fi
-          for pkg in dist/*.nupkg; do
-            echo "Pushing $pkg";
-            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate;
-          done
-      - name: Publish to GitHub Packages
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          dotnet nuget remove source github 2>/dev/null || true
-          dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-            --name github \
-            --username "${{ github.repository_owner }}" \
-            --password "${GITHUB_TOKEN}" \
-            --store-password-in-clear-text
-          for pkg in dist/*.nupkg; do
-            echo "Pushing $pkg to GitHub Packages";
-            dotnet nuget push "$pkg" --api-key "${GITHUB_TOKEN}" --source github --skip-duplicate;
-          done
-      - name: Create GitHub Release (prerelease)
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ needs.auto_prerelease.outputs.version }}
-          name: EasyCLI v${{ needs.auto_prerelease.outputs.version }}
-          prerelease: true
-          generate_release_notes: true
-          files: dist/*.nupkg
-      - name: Summary
-        run: |
-          echo "## Immediate Prerelease Publish" >> $GITHUB_STEP_SUMMARY
-          echo "Version: v${{ needs.auto_prerelease.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          ls -1 dist >> $GITHUB_STEP_SUMMARY
-          echo "Published to NuGet.org & GitHub Packages (duplicates skipped)." >> $GITHUB_STEP_SUMMARY
-
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      new_version: ${{ steps.bump.outputs.version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.x'
-
-      - name: Derive current version
-        if: github.event_name == 'workflow_dispatch'
-        id: cur
-        run: |
-          csproj='EasyCLI/EasyCLI.csproj'
-          psd1='EasyCLI/EasyCLI.psd1'
-          
-          # Try to extract version from csproj first
-          cur=$(grep -oE '<Version>[^<]+' "$csproj" | sed 's/<Version>//' | head -1)
-          
-          # If empty or not found, fallback to PowerShell module version
-          if [ -z "$cur" ] && [ -f "$psd1" ]; then
-            cur=$(grep -oE "ModuleVersion = '[^']+'" "$psd1" | sed "s/ModuleVersion = '//" | sed "s/'$//" | head -1)
-          fi
-          
-          # Final fallback to 0.2.0 if nothing found
-          if [ -z "$cur" ]; then
-            cur='0.2.0'
-          fi
-          
-          echo "current=$cur" >> $GITHUB_OUTPUT
-          echo "Derived current version: $cur"
-
-      - name: Bump version
-        if: github.event_name == 'workflow_dispatch'
-        id: bump
-        run: |
-          rel='${{ github.event.inputs.release }}'
-          pre='${{ github.event.inputs.preid }}'
-          csproj='EasyCLI/EasyCLI.csproj'
-          cur='${{ steps.cur.outputs.current }}'
-          # Auto mode derives bump from Conventional Commit messages since last tag
-          if [ "$rel" = 'auto' ]; then
-            last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
-            if [ -n "$last_tag" ]; then range="$last_tag..HEAD"; else range="HEAD"; fi
-            commits=$(git log --format=%s $range)
-            if echo "$commits" | grep -E 'BREAKING CHANGE|!: ' -q; then rel=major
-            elif echo "$commits" | grep -E '^feat(\(|:)' -q; then rel=minor
-            elif echo "$commits" | grep -E '^fix(\(|:)|^perf(\(|:)|^refactor(\(|:)' -q; then rel=patch
-            else rel=patch; fi
-          fi
-          IFS='.' read -r MAJOR MINOR PATCH <<<"$cur"
-          
-          # Validate and set defaults for empty version components
-          MAJOR=${MAJOR:-0}
-          MINOR=${MINOR:-0}
-          PATCH=${PATCH:-0}
-          
-          # Ensure they are valid integers
-          if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
-            echo "Error: Invalid version components parsed from '$cur'. Using 0.2.0 as fallback."
-            MAJOR=0; MINOR=2; PATCH=0
-          fi
-          
-          case "$rel" in
-            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH+1)) ;;
-            pre) ;; 
-            *) echo "Unknown release type: $rel"; exit 1 ;;
-          esac
-          base="$MAJOR.$MINOR.$PATCH"
-          if [ "$rel" = 'pre' ]; then
-            if [ -z "$pre" ]; then echo 'preid required for prerelease'; exit 1; fi
-            count=$(git tag -l "v$base-$pre.*" | wc -l | tr -d ' ')
-            next=$((count+1))
-            new="$base-$pre.$next"
-          else
-            new="$base"
-          fi
-          if grep -q '<Version>' "$csproj"; then
-            sed -i.bak -E "s#<Version>[^<]+#<Version>$new#g" "$csproj"
-          else
-            sed -i.bak -E "s#</PropertyGroup>#  <Version>$new</Version>\n  </PropertyGroup>#" "$csproj"
-          fi
-          rm "$csproj.bak"
-          echo "version=$new" >> $GITHUB_OUTPUT
-          echo "New version: $new (mode: ${rel})"
-
-      - name: Commit version bump
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          new='${{ steps.bump.outputs.version }}'
-          git config user.name 'github-actions'
-          git config user.email 'github-actions@users.noreply.github.com'
-          git add EasyCLI/EasyCLI.csproj
-          git commit -m "chore: bump version to $new" || echo 'No changes'
 
       - name: Create tag
-        if: github.event_name == 'workflow_dispatch'
         run: |
-          new='${{ steps.bump.outputs.version }}'
-          git tag "v$new"
-          git push
-          git push origin HEAD --tags
-
-  publish:
-    needs: [prepare]
-    # Run when:
-    # - Tag push (standard or prerelease)
-    # - Manual dispatch that produced a new_version (prepare step)
-    if: >-
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
-      || (github.event_name == 'workflow_dispatch' && needs.prepare.outputs.new_version != '')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+          ver='${{ steps.derive.outputs.version }}'
+          if git rev-parse "v$ver" >/dev/null 2>&1; then
+            echo "Tag v$ver already exists (skipping)"
+          else
+            git tag "v$ver"
+            git push origin "v$ver"
+          fi
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -308,56 +75,24 @@ jobs:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
 
-      - name: Use tag version
-        if: startsWith(github.ref, 'refs/tags/v')
-        id: tagver
-        run: |
-          ref="${GITHUB_REF#refs/tags/v}"
-          echo "tag_version=$ref" >> "$GITHUB_OUTPUT"
-          csproj='EasyCLI/EasyCLI.csproj'
-          # Escape replacement for sed (/, &, backslashes)
-          safeRef=$(printf '%s' "$ref" | sed -e 's/[\\/&]/\\&/g')
-          if grep -q "<Version>$safeRef</Version>" "$csproj"; then
-            echo "<Version> already set to $ref"
-          else
-            if grep -q '<Version>[^<]\+</Version>' "$csproj"; then
-              sed -i.bak -E "s#<Version>[^<]+</Version>#<Version>$safeRef</Version>#" "$csproj" || updateFailed=1
-            else
-              # Insert before closing PropertyGroup if not present
-              sed -i.bak -E "s#</PropertyGroup>#  <Version>$safeRef</Version>\n  </PropertyGroup>#" "$csproj" || updateFailed=1
-            fi
-            if [ "${updateFailed:-}" = 1 ]; then
-              echo 'Failed to update version in csproj' >&2; cat "$csproj"; exit 1
-            fi
-            echo "Updated <Version> to $ref"
-          fi
-          rm -f "$csproj.bak"
-
       - name: Restore
-        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+        run: |
+          dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+          dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode || dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj
 
       - name: Build
         run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
 
+      - name: Test
+        run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj -c Release --no-restore --verbosity minimal
+
       - name: Pack
         run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
 
-      - name: Publish to NuGet
-        if: github.event.inputs.skip-publish != 'true'
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          if [ -z "$NUGET_API_KEY" ]; then echo 'Missing NUGET_API_KEY' >&2; exit 1; fi
-          for pkg in dist/*.nupkg; do
-            echo "Pushing $pkg";
-            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate;
-          done
       - name: Publish to GitHub Packages
-        if: github.event.inputs.skip-publish != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Add (or update) an authenticated GitHub Packages source and push each nupkg
           dotnet nuget remove source github 2>/dev/null || true
           dotnet nuget add source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
             --name github \
@@ -368,29 +103,22 @@ jobs:
             echo "Pushing $pkg to GitHub Packages";
             dotnet nuget push "$pkg" --api-key "${GITHUB_TOKEN}" --source github --skip-duplicate;
           done
+
       - name: Create GitHub Release
-        if: >-
-          (startsWith(github.ref, 'refs/tags/v'))
-          || (github.event_name == 'workflow_dispatch' && needs.prepare.outputs.new_version != '')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', needs.prepare.outputs.new_version) }}
-          name: EasyCLI ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', needs.prepare.outputs.new_version) }}
-          prerelease: ${{ contains(startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', needs.prepare.outputs.new_version), '-') }}
+          tag_name: v${{ steps.derive.outputs.version }}
+          name: EasyCLI v${{ steps.derive.outputs.version }}
+          prerelease: ${{ contains(steps.derive.outputs.version, '-') }}
           generate_release_notes: true
           files: dist/*.nupkg
 
       - name: Summary
         run: |
-          echo "## Publish" >> $GITHUB_STEP_SUMMARY
+          echo "## Release Branch Bootstrap" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: $GITHUB_REF" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Tag: v${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Published to GitHub Packages only (NuGet.org intentionally skipped)." >> $GITHUB_STEP_SUMMARY
+          echo "Packages:" >> $GITHUB_STEP_SUMMARY
           ls -1 dist >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Source event: $GITHUB_EVENT_NAME" >> $GITHUB_STEP_SUMMARY
-          echo "Ref: $GITHUB_REF" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.prepare.outputs.new_version }}" != "" ]; then
-            echo "Manual bump version: ${{ needs.prepare.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Published to:" >> $GITHUB_STEP_SUMMARY
-          echo "- NuGet.org (skipped if duplicate)" >> $GITHUB_STEP_SUMMARY
-          echo "- GitHub Packages (skipped if duplicate)" >> $GITHUB_STEP_SUMMARY
