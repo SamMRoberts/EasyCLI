@@ -102,6 +102,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json') }}
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -111,14 +117,24 @@ jobs:
 
       - name: Restore
         run: |
-          dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
-          dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode || dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj
+          set -e
+          echo "Restoring (locked mode) library & tests"
+          dotnet restore EasyCLI/EasyCLI.csproj --locked-mode
+          dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode
 
       - name: Build
         run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
 
       - name: Test
         run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj -c Release --no-restore --verbosity minimal
+
+      - name: Upload library build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lib-build-release
+          path: |
+            EasyCLI/bin/Release/
+            EasyCLI/obj/
 
       - name: Summary
         run: |
@@ -142,9 +158,17 @@ jobs:
           dotnet-version: '9.x'
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: lib-build-release
+          path: .
 
-      - name: Build
-        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
+      - name: Verify build artifacts
+        run: |
+          test -f EasyCLI/bin/Release/net9.0/EasyCLI.dll || { echo 'Missing built DLL'; exit 1; }
+          ls -1 EasyCLI/bin/Release/net9.0
 
       - name: Pack
         run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
@@ -254,6 +278,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/packages.lock.json') }}
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -263,14 +293,24 @@ jobs:
 
       - name: Restore
         run: |
-          dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
-          dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode || dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj
+          set -e
+          echo "Restoring (locked mode) library & tests"
+          dotnet restore EasyCLI/EasyCLI.csproj --locked-mode
+            dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode
 
       - name: Build
         run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
 
       - name: Test
         run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj -c Release --no-restore --verbosity minimal
+
+      - name: Upload library build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lib-build-release
+          path: |
+            EasyCLI/bin/Release/
+            EasyCLI/obj/
 
       - name: Summary
         run: |
@@ -294,12 +334,20 @@ jobs:
           dotnet-version: '9.x'
           cache: true
           cache-dependency-path: '**/packages.lock.json'
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: lib-build-release
+          path: .
 
-      - name: Restore (library only)
-        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+      - name: Verify build artifacts
+        run: |
+          test -f EasyCLI/bin/Release/net9.0/EasyCLI.dll || { echo 'Missing built DLL'; exit 1; }
+          ls -1 EasyCLI/bin/Release/net9.0
 
       - name: Pack
-        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
+        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build --no-restore -p:ContinuousIntegrationBuild=true -o dist
 
       - name: Publish to GitHub Packages
         env:
