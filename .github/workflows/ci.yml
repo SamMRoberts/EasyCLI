@@ -18,14 +18,11 @@ jobs:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
 
-      - name: Restore (Library)
-        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode
-
-      - name: Restore (Tests)
-        run: dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --locked-mode
-
-      - name: Restore (Demo)
-        run: dotnet restore EasyCLI.Demo/EasyCLI.Demo.csproj --locked-mode
+      - name: Restore
+        run: |
+          dotnet restore EasyCLI/EasyCLI.csproj --verbosity detailed --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj --verbosity detailed
+          dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --verbosity detailed --locked-mode || dotnet restore EasyCLI.Tests/EasyCLI.Tests.csproj --verbosity detailed
+          dotnet restore EasyCLI.Demo/EasyCLI.Demo.csproj --verbosity detailed --locked-mode || dotnet restore EasyCLI.Demo/EasyCLI.Demo.csproj --verbosity detailed
 
       - name: Build (Library)
         run: dotnet build EasyCLI/EasyCLI.csproj --configuration Release --no-restore
