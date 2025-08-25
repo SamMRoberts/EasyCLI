@@ -142,7 +142,7 @@ jobs:
   summary:
     name: summary
     runs-on: ubuntu-latest
-    needs: [format, build, tests, cmdlets, pack, deps-audit]
+    needs: [format, build, tests, pack, deps-audit]
     if: always()
     steps:
       - name: Results Summary
@@ -151,6 +151,5 @@ jobs:
           echo "Format: ${{ needs.format.result }}" >> $GITHUB_STEP_SUMMARY
           echo "Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "Tests: ${{ needs.tests.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "Cmdlets: ${{ needs.cmdlets.result }}" >> $GITHUB_STEP_SUMMARY
           echo "Pack: ${{ needs.pack.result }}" >> $GITHUB_STEP_SUMMARY
           echo "Deps: ${{ needs.deps-audit.result }}" >> $GITHUB_STEP_SUMMARY
