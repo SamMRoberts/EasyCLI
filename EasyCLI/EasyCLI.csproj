@@ -23,6 +23,7 @@
     <PackageTags>cli powershell ansi console formatting</PackageTags>
   <!-- Enable warnings as errors in CI only -->
   <TreatWarningsAsErrors Condition="'$(CI)'=='true'">true</TreatWarningsAsErrors>
+    <Version>0.3.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
