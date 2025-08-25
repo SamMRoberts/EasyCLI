@@ -143,8 +143,8 @@ jobs:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
 
-      - name: Restore (library only)
-        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+      - name: Build
+        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
 
       - name: Pack
         run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
