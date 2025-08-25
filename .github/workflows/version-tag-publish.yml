@@ -143,8 +143,8 @@ jobs:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
 
-      - name: Restore (library only)
-        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+      - name: Build
+        run: dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
 
       - name: Pack
         run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
@@ -180,10 +180,12 @@ jobs:
           echo "Tag: v${{ needs.init.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "Packages:" >> $GITHUB_STEP_SUMMARY
           ls -1 dist >> $GITHUB_STEP_SUMMARY
-  release_update_publish:
-    name: Update + Test + Publish
+  update_init:
+    name: Update Init (version, csproj, tag)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.derive.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -193,7 +195,7 @@ jobs:
       - name: Derive version from branch name
         id: derive
         run: |
-          raw_ref='${GITHUB_REF_NAME}' # e.g. release/0.4.0 or release/0.4.0-rc.1
+          raw_ref='${GITHUB_REF_NAME}'
           version="${raw_ref#release/}"
           if [ -z "$version" ]; then
             echo 'Could not parse version from branch name' >&2; exit 1
@@ -222,10 +224,10 @@ jobs:
             git config user.email 'github-actions@users.noreply.github.com'
             git add "$csproj"
             git commit -m "chore: align release version $ver" || echo 'No changes to commit'
-            git push
+            git push || true
           fi
 
-      - name: Ensure tag exists
+      - name: Ensure tag
         run: |
           ver='${{ steps.derive.outputs.version }}'
           git fetch --tags --quiet || true
@@ -235,6 +237,22 @@ jobs:
             git tag "v$ver"
             git push origin "v$ver"
           fi
+
+      - name: Summary
+        run: |
+          echo "## Update Init" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+
+  update_test:
+    name: Update Test (restore, build, test)
+    needs: update_init
+    if: needs.update_init.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -254,6 +272,32 @@ jobs:
       - name: Test
         run: dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj -c Release --no-restore --verbosity minimal
 
+      - name: Summary
+        run: |
+          echo "## Update Test" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ needs.update_init.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+
+  update_publish:
+    name: Update Publish (pack, GitHub Packages, release)
+    needs: [update_test, update_init]
+    if: needs.update_init.outputs.version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore (library only)
+        run: dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+
       - name: Pack
         run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
 
@@ -272,20 +316,19 @@ jobs:
             dotnet nuget push "$pkg" --api-key "${GITHUB_TOKEN}" --source github --skip-duplicate;
           done
 
-      - name: Update / Create GitHub Release
+      - name: Create / Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.derive.outputs.version }}
-          name: EasyCLI v${{ steps.derive.outputs.version }}
-          prerelease: ${{ contains(steps.derive.outputs.version, '-') }}
+          tag_name: v${{ needs.update_init.outputs.version }}
+          name: EasyCLI v${{ needs.update_init.outputs.version }}
+          prerelease: ${{ contains(needs.update_init.outputs.version, '-') }}
           generate_release_notes: true
           files: dist/*.nupkg
 
       - name: Summary
         run: |
-          echo "## Release Branch Update" >> $GITHUB_STEP_SUMMARY
-          echo "Branch: $GITHUB_REF" >> $GITHUB_STEP_SUMMARY
-          echo "Version: ${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "Tag: v${{ steps.derive.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "Packages (GitHub Packages only):" >> $GITHUB_STEP_SUMMARY
+          echo "## Update Publish" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ needs.update_init.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Tag: v${{ needs.update_init.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Packages:" >> $GITHUB_STEP_SUMMARY
           ls -1 dist >> $GITHUB_STEP_SUMMARY
