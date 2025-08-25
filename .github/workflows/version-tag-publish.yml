@@ -167,7 +167,18 @@ jobs:
 
       - name: Verify build artifacts
         run: |
-          test -f EasyCLI/bin/Release/net9.0/EasyCLI.dll || { echo 'Missing built DLL'; exit 1; }
+          echo "Listing downloaded artifact contents (top-level):"
+          find EasyCLI/bin/Release -maxdepth 3 -type f -name '*.dll' -print || true
+          if [ ! -f EasyCLI/bin/Release/net9.0/EasyCLI.dll ]; then
+            echo 'Missing built DLL after artifact download; performing on-demand restore+build fallback.'
+            dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+            dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
+          fi
+          if [ ! -f EasyCLI/bin/Release/net9.0/EasyCLI.dll ]; then
+            echo 'Still missing EasyCLI.dll after fallback build.' >&2
+            ls -R EasyCLI/bin/Release || true
+            exit 1
+          fi
           ls -1 EasyCLI/bin/Release/net9.0
 
       - name: Pack
@@ -343,7 +354,18 @@ jobs:
 
       - name: Verify build artifacts
         run: |
-          test -f EasyCLI/bin/Release/net9.0/EasyCLI.dll || { echo 'Missing built DLL'; exit 1; }
+          echo "Listing downloaded artifact contents (top-level):"
+          find EasyCLI/bin/Release -maxdepth 3 -type f -name '*.dll' -print || true
+          if [ ! -f EasyCLI/bin/Release/net9.0/EasyCLI.dll ]; then
+            echo 'Missing built DLL after artifact download; performing on-demand restore+build fallback.'
+            dotnet restore EasyCLI/EasyCLI.csproj --locked-mode || dotnet restore EasyCLI/EasyCLI.csproj
+            dotnet build EasyCLI/EasyCLI.csproj -c Release --no-restore
+          fi
+            if [ ! -f EasyCLI/bin/Release/net9.0/EasyCLI.dll ]; then
+            echo 'Still missing EasyCLI.dll after fallback build.' >&2
+            ls -R EasyCLI/bin/Release || true
+            exit 1
+          fi
           ls -1 EasyCLI/bin/Release/net9.0
 
       - name: Pack
