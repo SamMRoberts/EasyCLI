@@ -1,0 +1,334 @@
+using EasyCLI.Console;
+using EasyCLI.Styling;
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace EasyCLI.Shell
+{
+    /// <summary>
+    /// An interactive, persistent CLI shell hosting registered commands and delegating to external processes.
+    /// </summary>
+    public class CliShell
+    {
+        private readonly IConsoleReader _reader;
+        private readonly IConsoleWriter _writer;
+        private readonly ShellOptions _options;
+        private readonly Dictionary<string, ICliCommand> _commands = new(StringComparer.OrdinalIgnoreCase);
+        private readonly List<string> _history = new();
+        private readonly object _historyLock = new();
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CliShell"/> class.
+        /// </summary>
+        public CliShell(IConsoleReader reader, IConsoleWriter writer, ShellOptions? options = null)
+        {
+            _reader = reader;
+            _writer = writer;
+            _options = options ?? new ShellOptions();
+
+            RegisterBuiltIns();
+        }
+
+        /// <summary>
+        /// Gets or sets the current working directory for shell commands.
+        /// </summary>
+        public string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
+
+        /// <summary>
+        /// Registers a command instance. Last registration wins for name collisions.
+        /// </summary>
+        public CliShell Register(ICliCommand command)
+        {
+            if (command is null)
+            {
+                throw new ArgumentNullException(nameof(command));
+            }
+            _commands[command.Name] = command;
+            return this;
+        }
+
+        /// <summary>
+        /// Gets a snapshot of registered command names.
+        /// </summary>
+    public IReadOnlyCollection<string> CommandNames => _commands.Keys.ToArray();
+
+        /// <summary>
+        /// Runs the shell loop until exit/quit or cancellation.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        public async Task<int> RunAsync(CancellationToken cancellationToken = default)
+        {
+            ShellExecutionContext ctx = new ShellExecutionContext(this, _writer);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                WritePrompt();
+                string line = _reader.ReadLine();
+                if (line == string.Empty && cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                if (line is null)
+                {
+                    // EOF
+                    break;
+                }
+
+                line = line.Trim();
+                if (string.IsNullOrEmpty(line))
+                {
+                    continue;
+                }
+
+                if (_options.EnableHistory)
+                {
+                    AddHistory(line);
+                }
+
+                if (IsExitCommand(line))
+                {
+                    break;
+                }
+
+                try
+                {
+                    int code = await DispatchAsync(ctx, line, cancellationToken).ConfigureAwait(false);
+                    if (code != 0)
+                    {
+                        _writer.WriteLine($"(exit code {code})", ConsoleStyles.FgRed);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    _writer.WriteLine("^C", ConsoleStyles.FgYellow);
+                }
+                catch (Exception ex)
+                {
+                    _writer.WriteLine(ex.Message, ConsoleStyles.FgRed);
+                }
+            }
+            return 0;
+        }
+
+        private async Task<int> DispatchAsync(ShellExecutionContext ctx, string line, CancellationToken ct)
+        {
+            string[] parts = Tokenize(line);
+            if (parts.Length == 0)
+            {
+                return 0;
+            }
+            string name = parts[0];
+            string[] args = parts.Length > 1 ? parts[1..] : Array.Empty<string>();
+            if (_commands.TryGetValue(name, out ICliCommand cmd))
+            {
+                return await cmd.ExecuteAsync(ctx, args, ct).ConfigureAwait(false);
+            }
+            // External process fallback
+            return await RunExternalAsync(name, args, ct).ConfigureAwait(false);
+        }
+
+        private async Task<int> RunExternalAsync(string fileName, string[] args, CancellationToken ct)
+        {
+            try
+            {
+                ProcessStartInfo psi = new()
+                {
+                    FileName = fileName,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = false,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = CurrentDirectory
+                };
+                foreach (string a in args)
+                {
+                    psi.ArgumentList.Add(a);
+                }
+                using Process proc = new() { StartInfo = psi, EnableRaisingEvents = true };
+                if (!proc.Start())
+                {
+                    _writer.WriteLine($"Unable to start process '{fileName}'", ConsoleStyles.FgRed);
+                    return 127;
+                }
+                Task<string> stdOutTask = proc.StandardOutput.ReadToEndAsync();
+                Task<string> stdErrTask = proc.StandardError.ReadToEndAsync();
+                await proc.WaitForExitAsync(ct).ConfigureAwait(false);
+                string outText = await stdOutTask.ConfigureAwait(false);
+                string errText = await stdErrTask.ConfigureAwait(false);
+                if (outText.Length > 0)
+                {
+                    _writer.Write(outText);
+                }
+                if (errText.Length > 0)
+                {
+                    _writer.Write(errText, ConsoleStyles.FgRed);
+                }
+                return proc.ExitCode;
+            }
+            catch (Exception ex)
+            {
+                _writer.WriteLine($"Command '{fileName}' failed: {ex.Message}", ConsoleStyles.FgRed);
+                return 127;
+            }
+        }
+
+        private void AddHistory(string line)
+        {
+            lock (_historyLock)
+            {
+                _history.Add(line);
+                if (_options.HistoryLimit > 0 && _history.Count > _options.HistoryLimit)
+                {
+                    _history.RemoveAt(0);
+                }
+            }
+        }
+
+        private void WritePrompt()
+        {
+            if (_options.PromptStyle != null)
+            {
+                _writer.Write(_options.Prompt, _options.PromptStyle.Value);
+            }
+            else
+            {
+                _writer.Write(_options.Prompt);
+            }
+            _writer.Write(" ");
+        }
+
+        private static bool IsExitCommand(string line)
+        {
+            return string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(line, "quit", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void RegisterBuiltIns()
+        {
+            _ = Register(new DelegateCommand("help", "Show help or detailed help for a command", async (ctx, args, ct) =>
+            {
+                if (args.Length == 0)
+                {
+                    foreach (string name in _commands.Keys.OrderBy(k => k))
+                    {
+                        ICliCommand c = _commands[name];
+                        ctx.Writer.WriteLine($"{c.Name}\t{c.Description}");
+                    }
+                    return 0;
+                }
+                string cmd = args[0];
+                if (_commands.TryGetValue(cmd, out ICliCommand target))
+                {
+                    ctx.Writer.WriteLine($"{target.Name}: {target.Description}");
+                    return 0;
+                }
+                ctx.Writer.WriteLine($"Unknown command '{cmd}'", ConsoleStyles.FgRed);
+                return 1;
+            }));
+
+            _ = Register(new DelegateCommand("history", "Show recent command history", (ctx, args, ct) =>
+            {
+                int index = 1;
+                lock (_historyLock)
+                {
+                    foreach (string h in _history)
+                    {
+                        ctx.Writer.WriteLine($"{index,4}  {h}");
+                        index++;
+                    }
+                }
+                return Task.FromResult(0);
+            }));
+
+            _ = Register(new DelegateCommand("pwd", "Print working directory", (ctx, args, ct) =>
+            {
+                ctx.Writer.WriteLine(CurrentDirectory);
+                return Task.FromResult(0);
+            }));
+
+            _ = Register(new DelegateCommand("cd", "Change working directory", (ctx, args, ct) =>
+            {
+                if (args.Length == 0)
+                {
+                    ctx.Writer.WriteLine(CurrentDirectory);
+                    return Task.FromResult(0);
+                }
+                string path = args[0];
+                string target = Path.IsPathRooted(path) ? path : Path.Combine(CurrentDirectory, path);
+                if (Directory.Exists(target))
+                {
+                    CurrentDirectory = Path.GetFullPath(target);
+                    return Task.FromResult(0);
+                }
+                ctx.Writer.WriteLine($"Directory not found: {path}", ConsoleStyles.FgRed);
+                return Task.FromResult(1);
+            }));
+
+            _ = Register(new DelegateCommand("clear", "Clear the screen", (ctx, args, ct) =>
+            {
+                try { System.Console.Clear(); } catch { /* ignore if redirected */ }
+                return Task.FromResult(0);
+            }));
+
+            _ = Register(new DelegateCommand("complete", "List completions for a prefix", (ctx, args, ct) =>
+            {
+                string prefix = args.Length == 0 ? string.Empty : args[0];
+                string[] matches = _commands.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).OrderBy(k => k).ToArray();
+                foreach (string m in matches)
+                {
+                    ctx.Writer.WriteLine(m);
+                }
+                return Task.FromResult(0);
+            }));
+        }
+
+        private static string[] Tokenize(string line)
+        {
+            // Simple tokenizer supporting quotes
+            List<string> result = [];
+            StringBuilder sb = new();
+            bool inQuotes = false;
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '\"')
+                {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+                if (char.IsWhiteSpace(c) && !inQuotes)
+                {
+                    if (sb.Length > 0)
+                    {
+                        result.Add(sb.ToString());
+                        _ = sb.Clear();
+                    }
+                    continue;
+                }
+                _ = sb.Append(c);
+            }
+            if (sb.Length > 0)
+            {
+                result.Add(sb.ToString());
+            }
+            return [.. result];
+        }
+
+        private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler) : ICliCommand
+        {
+            private readonly Func<ShellExecutionContext, string[], CancellationToken, Task<int>> _handler = handler;
+            public string Name { get; } = name;
+            public string Description { get; } = description;
+            public Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken) => _handler(context, args, cancellationToken);
+        }
+    }
+}
