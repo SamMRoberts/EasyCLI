@@ -122,7 +122,7 @@ namespace EasyCLI.Shell
         /// <returns>A string describing the parsed arguments.</returns>
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             _ = sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"Arguments:");
             for (int i = 0; i < _arguments.Count; i++)
             {

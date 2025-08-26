@@ -21,7 +21,7 @@ namespace EasyCLI.Shell
         /// <returns>Command help information.</returns>
         public virtual CommandHelp GetHelp()
         {
-            CommandHelp help = new CommandHelp
+            CommandHelp help = new()
             {
                 Usage = $"{Name} [options]",
                 Description = Description,
@@ -52,7 +52,7 @@ namespace EasyCLI.Shell
 
             try
             {
-                CommandLineArgs parsedArgs = new CommandLineArgs(args);
+                CommandLineArgs parsedArgs = new(args);
 
                 // Handle help request
                 if (parsedArgs.IsHelpRequested)
@@ -102,7 +102,7 @@ namespace EasyCLI.Shell
             }
             catch (Exception ex)
             {
-                CommandLineArgs parsedArgs = new CommandLineArgs(args);
+                CommandLineArgs parsedArgs = new(args);
                 if (parsedArgs.IsVerbose)
                 {
                     context.Writer.WriteErrorLine($"Unexpected error: {ex}");
@@ -126,7 +126,7 @@ namespace EasyCLI.Shell
         public virtual string[] GetCompletions(ShellExecutionContext context, string prefix)
         {
             // Provide common option completions
-            string[] commonOptions = new[] { "--help", "--verbose", "--quiet", "--dry-run", "--force", "--yes" };
+            string[] commonOptions = ["--help", "--verbose", "--quiet", "--dry-run", "--force", "--yes"];
 
             if (string.IsNullOrEmpty(prefix))
             {
