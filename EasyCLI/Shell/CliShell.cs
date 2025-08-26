@@ -223,7 +223,7 @@ namespace EasyCLI.Shell
             catch (Exception ex)
             {
                 _writer.WriteLine($"Command '{fileName}' failed: {ex.Message}", ConsoleStyles.FgRed);
-                return 127;
+                return ExitCodes.CommandNotFound;
             }
         }
 
@@ -348,6 +348,9 @@ namespace EasyCLI.Shell
                 return Task.FromResult(0);
             }),
                 cancellationToken).ConfigureAwait(false);
+
+            // Register enhanced CLI example commands
+            await RegisterAsync(new Commands.EchoCommand(), cancellationToken).ConfigureAwait(false);
         }
 
         private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler) : ICliCommand
