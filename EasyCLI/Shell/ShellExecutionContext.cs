@@ -1,4 +1,3 @@
-using System;
 using EasyCLI.Console;
 
 namespace EasyCLI.Shell
