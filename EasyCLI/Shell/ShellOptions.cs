@@ -1,5 +1,3 @@
-using EasyCLI.Styling;
-
 namespace EasyCLI.Shell
 {
     /// <summary>
