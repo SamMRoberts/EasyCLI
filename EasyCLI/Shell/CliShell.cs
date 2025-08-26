@@ -1,14 +1,5 @@
-using EasyCLI.Console;
-using EasyCLI.Styling;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+using EasyCLI.Console;
 
 namespace EasyCLI.Shell
 {
@@ -21,19 +12,60 @@ namespace EasyCLI.Shell
         private readonly IConsoleWriter _writer;
         private readonly ShellOptions _options;
         private readonly Dictionary<string, ICliCommand> _commands = new(StringComparer.OrdinalIgnoreCase);
-        private readonly List<string> _history = new();
-        private readonly object _historyLock = new();
+        private readonly List<string> _history = [];
+        private readonly Lock _historyLock = new();
+
+        private static bool IsExitCommand(string line)
+        {
+            return string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(line, "quit", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string[] Tokenize(string line)
+        {
+            // Simple tokenizer supporting quotes
+            List<string> result = [];
+            StringBuilder sb = new();
+            bool inQuotes = false;
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+                if (c == '\"')
+                {
+                    inQuotes = !inQuotes;
+                    continue;
+                }
+                if (char.IsWhiteSpace(c) && !inQuotes)
+                {
+                    if (sb.Length > 0)
+                    {
+                        result.Add(sb.ToString());
+                        _ = sb.Clear();
+                    }
+                    continue;
+                }
+                _ = sb.Append(c);
+            }
+            if (sb.Length > 0)
+            {
+                result.Add(sb.ToString());
+            }
+            return [.. result];
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CliShell"/> class.
         /// </summary>
+        /// <param name="reader">The console reader used for input.</param>
+        /// <param name="writer">The console writer used for output.</param>
+        /// <param name="options">Optional shell options.</param>
         public CliShell(IConsoleReader reader, IConsoleWriter writer, ShellOptions? options = null)
         {
             _reader = reader;
             _writer = writer;
             _options = options ?? new ShellOptions();
-
-            RegisterBuiltIns();
+            // Synchronously wait for async built-in registration (constructor cannot be async)
+            RegisterBuiltInsAsync().GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -44,28 +76,42 @@ namespace EasyCLI.Shell
         /// <summary>
         /// Registers a command instance. Last registration wins for name collisions.
         /// </summary>
+        /// <param name="command">The command to register.</param>
+        /// <returns>The current <see cref="CliShell"/> instance for chaining.</returns>
         public CliShell Register(ICliCommand command)
         {
-            if (command is null)
-            {
-                throw new ArgumentNullException(nameof(command));
-            }
+            ArgumentNullException.ThrowIfNull(command);
             _commands[command.Name] = command;
             return this;
         }
 
         /// <summary>
+        /// Asynchronously registers a command instance. Provided for API symmetry when caller prefers async/await.
+        /// </summary>
+        /// <param name="command">The command to register.</param>
+        /// <param name="cancellationToken">Cancellation token (currently unused; provided for future extensibility).</param>
+        /// <returns>A completed task.</returns>
+        public ValueTask RegisterAsync(ICliCommand command, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ArgumentNullException.ThrowIfNull(command);
+            _commands[command.Name] = command;
+            return ValueTask.CompletedTask;
+        }
+
+        /// <summary>
         /// Gets a snapshot of registered command names.
         /// </summary>
-    public IReadOnlyCollection<string> CommandNames => _commands.Keys.ToArray();
+        public IReadOnlyCollection<string> CommandNames => [.. _commands.Keys];
 
         /// <summary>
         /// Runs the shell loop until exit/quit or cancellation.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A <see cref="Task{Int32}"/> representing the asynchronous shell loop operation. Returns 0 on normal exit.</returns>
         public async Task<int> RunAsync(CancellationToken cancellationToken = default)
         {
-            ShellExecutionContext ctx = new ShellExecutionContext(this, _writer);
+            ShellExecutionContext ctx = new(this, _writer);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -126,8 +172,8 @@ namespace EasyCLI.Shell
                 return 0;
             }
             string name = parts[0];
-            string[] args = parts.Length > 1 ? parts[1..] : Array.Empty<string>();
-            if (_commands.TryGetValue(name, out ICliCommand cmd))
+            string[] args = parts.Length > 1 ? parts[1..] : [];
+            if (_commands.TryGetValue(name, out ICliCommand? cmd))
             {
                 return await cmd.ExecuteAsync(ctx, args, ct).ConfigureAwait(false);
             }
@@ -147,7 +193,7 @@ namespace EasyCLI.Shell
                     RedirectStandardInput = false,
                     UseShellExecute = false,
                     CreateNoWindow = true,
-                    WorkingDirectory = CurrentDirectory
+                    WorkingDirectory = CurrentDirectory,
                 };
                 foreach (string a in args)
                 {
@@ -159,8 +205,8 @@ namespace EasyCLI.Shell
                     _writer.WriteLine($"Unable to start process '{fileName}'", ConsoleStyles.FgRed);
                     return 127;
                 }
-                Task<string> stdOutTask = proc.StandardOutput.ReadToEndAsync();
-                Task<string> stdErrTask = proc.StandardError.ReadToEndAsync();
+                Task<string> stdOutTask = proc.StandardOutput.ReadToEndAsync(ct);
+                Task<string> stdErrTask = proc.StandardError.ReadToEndAsync(ct);
                 await proc.WaitForExitAsync(ct).ConfigureAwait(false);
                 string outText = await stdOutTask.ConfigureAwait(false);
                 string errText = await stdErrTask.ConfigureAwait(false);
@@ -206,15 +252,10 @@ namespace EasyCLI.Shell
             _writer.Write(" ");
         }
 
-        private static bool IsExitCommand(string line)
+        private async Task RegisterBuiltInsAsync(CancellationToken cancellationToken = default)
         {
-            return string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(line, "quit", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private void RegisterBuiltIns()
-        {
-            _ = Register(new DelegateCommand("help", "Show help or detailed help for a command", async (ctx, args, ct) =>
+            await RegisterAsync(
+                new DelegateCommand("help", "Show help or detailed help for a command", (ctx, args, ct) =>
             {
                 if (args.Length == 0)
                 {
@@ -223,19 +264,21 @@ namespace EasyCLI.Shell
                         ICliCommand c = _commands[name];
                         ctx.Writer.WriteLine($"{c.Name}\t{c.Description}");
                     }
-                    return 0;
+                    return Task.FromResult(0);
                 }
                 string cmd = args[0];
-                if (_commands.TryGetValue(cmd, out ICliCommand target))
+                if (_commands.TryGetValue(cmd, out ICliCommand? target))
                 {
                     ctx.Writer.WriteLine($"{target.Name}: {target.Description}");
-                    return 0;
+                    return Task.FromResult(0);
                 }
                 ctx.Writer.WriteLine($"Unknown command '{cmd}'", ConsoleStyles.FgRed);
-                return 1;
-            }));
+                return Task.FromResult(1);
+            }),
+                cancellationToken).ConfigureAwait(false);
 
-            _ = Register(new DelegateCommand("history", "Show recent command history", (ctx, args, ct) =>
+            await RegisterAsync(
+                new DelegateCommand("history", "Show recent command history", (ctx, args, ct) =>
             {
                 int index = 1;
                 lock (_historyLock)
@@ -247,15 +290,19 @@ namespace EasyCLI.Shell
                     }
                 }
                 return Task.FromResult(0);
-            }));
+            }),
+                cancellationToken).ConfigureAwait(false);
 
-            _ = Register(new DelegateCommand("pwd", "Print working directory", (ctx, args, ct) =>
+            await RegisterAsync(
+                new DelegateCommand("pwd", "Print working directory", (ctx, args, ct) =>
             {
                 ctx.Writer.WriteLine(CurrentDirectory);
                 return Task.FromResult(0);
-            }));
+            }),
+                cancellationToken).ConfigureAwait(false);
 
-            _ = Register(new DelegateCommand("cd", "Change working directory", (ctx, args, ct) =>
+            await RegisterAsync(
+                new DelegateCommand("cd", "Change working directory", (ctx, args, ct) =>
             {
                 if (args.Length == 0)
                 {
@@ -271,56 +318,36 @@ namespace EasyCLI.Shell
                 }
                 ctx.Writer.WriteLine($"Directory not found: {path}", ConsoleStyles.FgRed);
                 return Task.FromResult(1);
-            }));
+            }),
+                cancellationToken).ConfigureAwait(false);
 
-            _ = Register(new DelegateCommand("clear", "Clear the screen", (ctx, args, ct) =>
+            await RegisterAsync(
+                new DelegateCommand("clear", "Clear the screen", (ctx, args, ct) =>
             {
-                try { System.Console.Clear(); } catch { /* ignore if redirected */ }
+                try
+                {
+                    System.Console.Clear();
+                }
+                catch
+                {
+                    // ignore if redirected
+                }
                 return Task.FromResult(0);
-            }));
+            }),
+                cancellationToken).ConfigureAwait(false);
 
-            _ = Register(new DelegateCommand("complete", "List completions for a prefix", (ctx, args, ct) =>
+            await RegisterAsync(
+                new DelegateCommand("complete", "List completions for a prefix", (ctx, args, ct) =>
             {
                 string prefix = args.Length == 0 ? string.Empty : args[0];
-                string[] matches = _commands.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).OrderBy(k => k).ToArray();
+                string[] matches = [.. _commands.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).OrderBy(k => k)];
                 foreach (string m in matches)
                 {
                     ctx.Writer.WriteLine(m);
                 }
                 return Task.FromResult(0);
-            }));
-        }
-
-        private static string[] Tokenize(string line)
-        {
-            // Simple tokenizer supporting quotes
-            List<string> result = [];
-            StringBuilder sb = new();
-            bool inQuotes = false;
-            for (int i = 0; i < line.Length; i++)
-            {
-                char c = line[i];
-                if (c == '\"')
-                {
-                    inQuotes = !inQuotes;
-                    continue;
-                }
-                if (char.IsWhiteSpace(c) && !inQuotes)
-                {
-                    if (sb.Length > 0)
-                    {
-                        result.Add(sb.ToString());
-                        _ = sb.Clear();
-                    }
-                    continue;
-                }
-                _ = sb.Append(c);
-            }
-            if (sb.Length > 0)
-            {
-                result.Add(sb.ToString());
-            }
-            return [.. result];
+            }),
+                cancellationToken).ConfigureAwait(false);
         }
 
         private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler) : ICliCommand
@@ -328,7 +355,10 @@ namespace EasyCLI.Shell
             private readonly Func<ShellExecutionContext, string[], CancellationToken, Task<int>> _handler = handler;
             public string Name { get; } = name;
             public string Description { get; } = description;
-            public Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken) => _handler(context, args, cancellationToken);
+            public Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken)
+            {
+                return _handler(context, args, cancellationToken);
+            }
         }
     }
 }
