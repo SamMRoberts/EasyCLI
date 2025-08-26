@@ -182,7 +182,14 @@ jobs:
           ls -1 EasyCLI/bin/Release/net9.0
 
       - name: Pack
-        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -o dist
+        env:
+          PKG_VERSION: ${{ needs.init.outputs.version }}
+        run: |
+          echo "Packing version $PKG_VERSION"
+          dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build \
+            -p:ContinuousIntegrationBuild=true \
+            -p:Version=$PKG_VERSION -p:PackageVersion=$PKG_VERSION -p:InformationalVersion=$PKG_VERSION \
+            -o dist
 
       - name: Publish to GitHub Packages
         env:
@@ -369,7 +376,14 @@ jobs:
           ls -1 EasyCLI/bin/Release/net9.0
 
       - name: Pack
-        run: dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build --no-restore -p:ContinuousIntegrationBuild=true -o dist
+        env:
+          PKG_VERSION: ${{ needs.update_init.outputs.version }}
+        run: |
+          echo "Packing version $PKG_VERSION (update workflow)"
+          dotnet pack EasyCLI/EasyCLI.csproj -c Release --no-build --no-restore \
+            -p:ContinuousIntegrationBuild=true \
+            -p:Version=$PKG_VERSION -p:PackageVersion=$PKG_VERSION -p:InformationalVersion=$PKG_VERSION \
+            -o dist
 
       - name: Publish to GitHub Packages
         env:
