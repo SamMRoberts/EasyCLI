@@ -24,9 +24,6 @@ namespace EasyCLI.Shell
         public IConsoleWriter Writer { get; }
 
         /// <summary>
-        /// Writes a styled informational line (alias for Writer.WriteLine but future extension point).
-        /// </summary>
-        /// <summary>
         /// Writes an informational message.
         /// </summary>
         /// <param name="message">Message to write.</param>
