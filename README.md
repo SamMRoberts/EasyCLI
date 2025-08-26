@@ -113,6 +113,93 @@ Environment controls:
 
 EasyCLI provides a lightweight prompting framework.
 
+## Interactive Shell (Persistent CLI)
+
+EasyCLI now includes an experimental persistent shell so users can enter a session once and invoke commands without repeatedly prefixing with an executable name. The shell provides:
+
+Built‑in commands:
+- `help` – List commands or show details (e.g. `help cd`)
+- `history` – Display recent commands
+- `pwd` – Print current working directory
+- `cd <dir>` – Change working directory (affects subsequent external processes)
+- `clear` – Clear the screen
+- `complete <prefix>` – List command name completions
+- `exit` / `quit` – Leave the shell (Ctrl+D / EOF also exits)
+
+Other features:
+- Executes external programs found on PATH (e.g. `ls`, `git status`, `dotnet --info`)
+- Command history (configurable size) – future releases may add arrow‑key navigation
+- Custom prompt text & style via `ShellOptions`
+- Graceful handling of unknown commands (falls back to external process execution)
+
+### Quick start
+
+```csharp
+using EasyCLI.Console;
+using EasyCLI.Shell;
+
+var reader = new ConsoleReader();
+var writer = new ConsoleWriter();
+var shell = new CliShell(reader, writer, new ShellOptions
+{
+  Prompt = "easy>"  // choose your own, e.g. "mytool>"
+});
+
+// Register a custom command (simple example)
+shell.Register(new EchoCommand());
+
+// Start loop (runs until user types exit/quit or EOF)
+await shell.RunAsync();
+
+// Example custom command
+class EchoCommand : ICliCommand
+{
+  public string Name => "echo";
+  public string Description => "Echo arguments back to the console";
+  public Task<int> ExecuteAsync(ShellExecutionContext ctx, string[] args, CancellationToken ct)
+  {
+    ctx.Writer.WriteLine(string.Join(' ', args));
+    return Task.FromResult(0);
+  }
+}
+```
+
+### Customizing the prompt
+
+```csharp
+var shell = new CliShell(reader, writer, new ShellOptions
+{
+  Prompt = "myapp>",
+  PromptStyle = EasyCLI.ConsoleStyles.FgGreen,
+  HistoryLimit = 1000
+});
+```
+
+### Executing external commands
+
+If a typed name does not match a registered `ICliCommand`, the shell attempts to launch it as an external process in the current working directory (changed via `cd`). Output and error streams are captured and written through the existing `ConsoleWriter` (stderr styled red when colors are enabled).
+
+### Registering additional commands dynamically
+
+```csharp
+shell.Register(new DelegateCommand("hello", "Say hello", (ctx, args, ct) =>
+{
+  ctx.Writer.WriteLine("Hello from dynamic command");
+  return Task.FromResult(0);
+}));
+```
+
+`DelegateCommand` is an internal helper used for built‑ins; for public APIs prefer implementing `ICliCommand` directly (a thin adaptor pattern can be added later if needed).
+
+### Roadmap (potential future enhancements)
+- Command history navigation & reverse search
+- Tab completion (names + file system)
+- PowerShell runspace integration (invoke existing cmdlets directly)
+- Configuration file & startup scripts (`~/.easyclirc`)
+- Multi‑line block input and scripting mode
+
+> Note: The shell is currently marked experimental; public API surfaces (`CliShell`, `ShellOptions`, `ICliCommand`) may evolve before 1.0 stabilization. Feedback welcome.
+
 ## PowerShell Cmdlets
 
 EasyCLI ships a PowerShell module (see `EasyCLI.psd1`) exposing high-level cmdlets:
