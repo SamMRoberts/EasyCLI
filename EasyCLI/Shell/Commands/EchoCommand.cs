@@ -85,7 +85,7 @@ namespace EasyCLI.Shell.Commands
         protected override string[] GetCustomCompletions(ShellExecutionContext context, string prefix)
         {
             string[] echoOptions = ["--success", "--warning", "--error", "--info", "--hint", "--uppercase", "--repeat"];
-            return echoOptions.Where(opt => opt.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray();
+            return [.. echoOptions.Where(opt => opt.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))];
         }
 
         /// <summary>

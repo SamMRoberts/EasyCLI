@@ -133,7 +133,7 @@ namespace EasyCLI.Shell
                 return commonOptions;
             }
 
-            string[] matches = commonOptions.Where(opt => opt.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToArray();
+            string[] matches = [.. commonOptions.Where(opt => opt.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))];
 
             // Allow derived classes to add specific completions
             string[] customCompletions = GetCustomCompletions(context, prefix);
