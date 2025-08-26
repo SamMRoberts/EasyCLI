@@ -1,6 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace EasyCLI.Shell
 {
     /// <summary>
@@ -24,14 +21,11 @@ namespace EasyCLI.Shell
         /// <param name="context">The shell execution context.</param>
         /// <param name="args">Arguments (excluding command name).</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-    /// <summary>
-    /// Executes the command.
-    /// </summary>
-    /// <param name="context">Shell execution context.</param>
-    /// <param name="args">Arguments.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Exit code (0 for success).</returns>
-    Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken);
+        /// <summary>
+        /// Executes the command.
+        /// </summary>
+        /// <returns>Exit code (0 for success).</returns>
+        Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken);
 
         /// <summary>
         /// Produces completion suggestions for a given prefix.
@@ -42,8 +36,6 @@ namespace EasyCLI.Shell
         /// <summary>
         /// Gets completion suggestions for a partially typed token.
         /// </summary>
-        /// <param name="context">Execution context.</param>
-        /// <param name="prefix">Already typed text.</param>
         /// <returns>Matching completion candidates.</returns>
         string[] GetCompletions(ShellExecutionContext context, string prefix)
         {
