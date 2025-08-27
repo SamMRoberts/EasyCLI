@@ -1,9 +1,3 @@
-using EasyCLI.Console;
-using EasyCLI.Shell;
-using System.IO;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace EasyCLI.Tests
 {
     public class ShellTests
