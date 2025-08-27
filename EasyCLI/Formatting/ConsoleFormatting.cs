@@ -164,7 +164,7 @@ namespace EasyCLI.Formatting
                 lines[i] = pad + lines[i];
             }
 
-            return string.Join(Environment.NewLine, lines);
+            return string.Join(System.Environment.NewLine, lines);
         }
 
         /// <summary>

@@ -351,6 +351,7 @@ namespace EasyCLI.Shell
 
             // Register enhanced CLI example commands
             await RegisterAsync(new Commands.EchoCommand(), cancellationToken).ConfigureAwait(false);
+            await RegisterAsync(new Commands.ConfigCommand(), cancellationToken).ConfigureAwait(false);
         }
 
         private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler) : ICliCommand
