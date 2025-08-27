@@ -10,8 +10,22 @@
 
 EasyCLI is a comprehensive .NET 9.0 class library for building modern command-line interfaces, PowerShell cmdlets, and interactive console applications. It provides professional-grade ANSI styling, interactive prompts, and an experimental persistent shell framework.
 
+## 🆕 What's New in v0.2.0 - Phase 2 CLI Enhancement
+
+**Phase 2 introduces professional CLI best practices and enterprise-ready features:**
+
+- **🔧 Enhanced CLI Framework**: New `EnhancedCliCommand` base class with built-in support for standard CLI patterns (--help, --verbose, --dry-run, proper exit codes)
+- **📋 Configuration Management**: Hierarchical configuration system with global and local JSON config files via `ConfigManager`
+- **🌍 Environment Detection**: Automatic detection of Git repositories, Docker environments, CI/CD systems, and platform information
+- **📊 Structured Logging**: Professional logging framework with verbosity levels (Quiet, Normal, Verbose, Debug) and CLI flag integration
+- **⚡ PowerShell Module v0.2.0**: Enhanced cmdlets with pipeline binding for objects, PassThruObject outputs, and `Show-Message` alias
+- **🏗️ Professional CLI Patterns**: Dry-run mode, smart error suggestions, environment-aware behavior, and standardized argument parsing
+
+These enhancements make EasyCLI suitable for building production-grade CLI tools that follow modern CLI conventions and best practices.
+
 ## ✨ Features
 
+### Core Framework
 - **🎨 ANSI Styling**: Rich console output with colors, themes, and environment-aware formatting
 - **💬 Interactive Prompts**: String, integer, yes/no, hidden input, choice, and multi-select prompts with validation
 - **⚡ PowerShell Integration**: Ready-to-use cmdlets (`Write-Message`, `Write-Rule`, `Write-TitledBox`, `Read-Choice`)
@@ -21,20 +35,35 @@ EasyCLI is a comprehensive .NET 9.0 class library for building modern command-li
 - **🌍 Environment Aware**: Respects `NO_COLOR`, `FORCE_COLOR`, and output redirection
 - **🔧 Extensible**: Plugin-friendly architecture with `ICliCommand` interface
 
+### CLI Enhancement Features (v0.2.0+)
+- **⚙️ Configuration Management**: Hierarchical JSON configuration with global (`~/.appname/config.json`) and local (`./.appname.json`) support
+- **🔍 Environment Detection**: Automatic detection of Git repos, Docker containers, CI/CD environments, and platform information
+- **📝 Structured Logging**: Professional logging with verbosity levels and automatic CLI flag integration (`--verbose`, `--quiet`, `--debug`)
+- **🛠️ Enhanced Commands**: `EnhancedCliCommand` base class with built-in help system, argument validation, and CLI best practices
+- **🏃‍♂️ Dry-Run Support**: Built-in `--dry-run` mode for safe operation previews
+- **⚠️ Smart Error Handling**: Intelligent error suggestions and recovery with proper exit codes
+- **🎯 Professional CLI Patterns**: Standard flag support (`--help`, `--verbose`, `--quiet`, `--dry-run`) following CLI conventions
+
 ## 📚 Table of Contents
 
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [ANSI Styling](#ansi-styling)
-- [Interactive Prompts](#interactive-prompts)
-- [Persistent Shell](#persistent-shell)
-- [PowerShell Cmdlets](#powershell-cmdlets)
-- [Project Structure](#project-structure)
-- [Development](#development)
-- [Contributing](#contributing)
-- [Versioning](#versioning)
-- [License](#license)
+- [What's New in v0.2.0](#-whats-new-in-v020---phase-2-cli-enhancement)
+- [Requirements](#-requirements)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [ANSI Styling](#-ansi-styling)
+- [Interactive Prompts](#-interactive-prompts)
+- [CLI Enhancement Features](#-cli-enhancement-features)
+  - [Configuration Management](#configuration-management)
+  - [Environment Detection](#environment-detection)
+  - [Structured Logging](#structured-logging)
+  - [Enhanced Command Framework](#enhanced-command-framework)
+- [Persistent Shell](#-persistent-shell)
+- [PowerShell Cmdlets](#-powershell-cmdlets)
+- [Project Structure](#-project-structure)
+- [Development](#-development)
+- [Contributing](#-contributing)
+- [Versioning](#-versioning)
+- [License](#-license)
 
 ## 📋 Requirements
 
@@ -161,6 +190,52 @@ shell.Register(new MyCustomCommand());
 await shell.RunAsync();
 ```
 
+### Building a Professional CLI (v0.2.0+)
+```csharp
+using EasyCLI.Shell;
+
+// Professional CLI with enhanced features
+public class MyEnhancedCommand : EnhancedCliCommand
+{
+    public override string Name => "deploy";
+    public override string Description => "Deploy application with professional CLI features";
+
+    protected override void ConfigureHelp(CommandHelp help)
+    {
+        help.Usage = "deploy [options] <environment>";
+        help.Arguments.Add(new CommandArgument("environment", "Target environment", required: true));
+        help.Options.Add(new CommandOption("dry-run", "n", "Preview deployment"));
+        help.Options.Add(new CommandOption("verbose", "v", "Enable verbose output"));
+    }
+
+    protected override async Task<int> ExecuteCommand(CommandLineArgs args, 
+        ShellExecutionContext context, CancellationToken cancellationToken)
+    {
+        // Automatically available:
+        // - Logger (with verbosity from --verbose/--quiet)
+        // - ConfigManager (loads global/local configs)
+        // - Environment (detects Git, Docker, CI)
+        // - Dry-run support (args.IsDryRun)
+
+        var environment = args.Arguments[0];
+        
+        if (args.IsDryRun)
+        {
+            Logger.LogWarning($"[DRY RUN] Would deploy to {environment}");
+            return ExitCodes.Success;
+        }
+
+        Logger.LogVerbose("Loading configuration...");
+        var config = await ConfigManager.LoadConfigAsync<AppConfig>();
+        
+        Logger.LogInfo($"Deploying to {environment}...");
+        // Deployment logic here
+        
+        return ExitCodes.Success;
+    }
+}
+```
+
 ## 🎨 ANSI Styling
 
 EasyCLI provides comprehensive ANSI styling capabilities with automatic terminal detection and environment-aware behavior.
@@ -284,6 +359,197 @@ else
 {
     writer.WriteLine("Running without colors");
 }
+```
+
+## 🔧 CLI Enhancement Features
+
+> **New in v0.2.0**: Professional CLI development framework with enterprise-ready features.
+
+EasyCLI v0.2.0 introduces a comprehensive CLI enhancement framework that implements modern CLI best practices, making it suitable for building production-grade command-line tools.
+
+### Configuration Management
+
+EasyCLI provides hierarchical configuration management with support for global and local JSON configuration files.
+
+#### Basic Configuration Usage
+
+```csharp
+using EasyCLI.Configuration;
+
+// Initialize configuration manager for your app
+var configManager = new ConfigManager("myapp");
+
+// Load configuration (merges global and local configs)
+var config = await configManager.LoadConfigAsync<AppConfig>();
+
+// Configuration file locations:
+// Global: ~/.myapp/config.json  
+// Local:  ./.myapp.json (project-specific, overrides global)
+```
+
+#### Configuration Class Example
+
+```csharp
+public class AppConfig
+{
+    public string ApiUrl { get; set; } = "https://api.example.com";
+    public int Timeout { get; set; } = 30;
+    public bool EnableLogging { get; set; } = true;
+    public Dictionary<string, string> Environment { get; set; } = new();
+}
+```
+
+#### Configuration Sources and Precedence
+
+1. **Default values** (hardcoded in config class)
+2. **Global config** (`~/.appname/config.json`)
+3. **Local config** (`./.appname.json`) - highest priority
+
+### Environment Detection
+
+Automatic detection and analysis of the execution environment for context-aware CLI behavior.
+
+```csharp
+using EasyCLI.Environment;
+
+// Detect current environment
+var env = EnvironmentDetector.DetectEnvironment();
+
+// Available environment information
+if (env.IsGitRepository)
+{
+    Console.WriteLine($"Git branch: {env.GitBranch}");
+}
+
+if (env.IsDockerEnvironment)
+{
+    Console.WriteLine("Running in Docker container");
+}
+
+if (env.IsContinuousIntegration)
+{
+    Console.WriteLine($"CI Environment: {env.CiProvider}");
+}
+
+// Platform and interaction detection
+Console.WriteLine($"Platform: {env.Platform}");
+Console.WriteLine($"Interactive: {env.IsInteractive}");
+Console.WriteLine($"Config file: {env.ConfigFile ?? "None found"}");
+```
+
+#### Supported Environment Detection
+
+| Environment | Detection Method | Information Provided |
+|-------------|------------------|---------------------|
+| **Git Repository** | `.git` directory | Current branch name |
+| **Docker Container** | Container environment variables | Container runtime detection |
+| **CI/CD Systems** | Environment variables | Provider name (GitHub, GitLab, Azure DevOps, etc.) |
+| **Platform** | Runtime detection | Windows, Linux, macOS |
+| **Interactive Session** | Console capabilities | TTY/terminal detection |
+| **Configuration Files** | File system scan | Located config file paths |
+
+### Structured Logging
+
+Professional logging framework with multiple verbosity levels and automatic CLI flag integration.
+
+```csharp
+using EasyCLI.Logging;
+
+// Logger automatically detects verbosity from command args
+var logger = new Logger(writer, LogLevel.Normal, theme);
+
+// Logging levels (each includes all lower levels)
+logger.LogDebug("Detailed debugging information");    // --debug only
+logger.LogVerbose("Verbose operational details");     // --verbose and --debug  
+logger.LogNormal("Standard informational messages");  // Normal level and above
+logger.LogWarning("Important warnings");              // Always shown (unless --quiet)
+logger.LogError("Error messages");                    // Always shown
+
+// Automatic CLI flag detection
+string[] args = ["--verbose", "mycommand"];
+var logLevel = Logger.DetermineLogLevel(args);  // Returns LogLevel.Verbose
+```
+
+#### Log Level Determination
+
+| Condition | Log Level | Behavior |
+|-----------|-----------|----------|
+| `--quiet` or `-q` | `Quiet` | Errors only |
+| `--verbose` or `-v` | `Verbose` | Normal + verbose messages |
+| `--debug` | `Debug` | All messages including debug |
+| CI Environment | `Quiet` | Reduces noise in automation |
+| Default | `Normal` | Standard operation |
+
+### Enhanced Command Framework
+
+The `EnhancedCliCommand` base class provides professional CLI features with minimal boilerplate code.
+
+```csharp
+using EasyCLI.Shell;
+
+public class DeployCommand : EnhancedCliCommand
+{
+    public override string Name => "deploy";
+    public override string Description => "Deploy application to specified environment";
+
+    protected override void ConfigureHelp(CommandHelp help)
+    {
+        help.Usage = "deploy [options] <environment>";
+        help.Arguments.Add(new CommandArgument("environment", 
+            "Target environment (dev, staging, production)", required: true));
+        help.Options.Add(new CommandOption("dry-run", "n", 
+            "Show what would be deployed without executing"));
+        help.Examples.Add(new CommandExample("deploy staging --dry-run", 
+            "Preview staging deployment"));
+    }
+
+    protected override async Task<int> ExecuteCommand(CommandLineArgs args, 
+        ShellExecutionContext context, CancellationToken cancellationToken)
+    {
+        // Enhanced commands automatically provide:
+        // - Logger with appropriate verbosity
+        // - ConfigManager for configuration
+        // - Environment detection
+        // - Dry-run mode support
+        // - Professional help system
+
+        if (args.IsDryRun)
+        {
+            Logger.LogWarning("[DRY RUN] Would deploy to " + args.Arguments[0]);
+            return ExitCodes.Success;
+        }
+
+        Logger.LogVerbose("Starting deployment process...");
+        
+        // Your deployment logic here
+        
+        return ExitCodes.Success;
+    }
+}
+```
+
+#### Built-in Enhanced Features
+
+| Feature | Description | Usage |
+|---------|-------------|--------|
+| **Automatic Help** | Professional help generation | `command --help` |
+| **Dry-Run Mode** | Safe operation preview | `command --dry-run` |
+| **Verbosity Control** | Logging level management | `--verbose`, `--quiet`, `--debug` |
+| **Configuration** | Hierarchical config loading | `ConfigManager` property |
+| **Environment** | Context detection | `Environment` property |
+| **Exit Codes** | Standard CLI exit codes | `ExitCodes` constants |
+| **Error Handling** | Smart error suggestions | Automatic validation |
+
+#### Standard CLI Flags
+
+All enhanced commands automatically support these standard flags:
+
+```bash
+mycommand --help           # Show detailed help
+mycommand --verbose        # Enable verbose output  
+mycommand --quiet          # Minimize output
+mycommand --debug          # Show debug information
+mycommand --dry-run        # Preview mode (no changes)
 ```
 
 ## 💬 Interactive Prompts
@@ -738,16 +1004,18 @@ shell.Register(new DelegateCommand("hello", "Say hello", async (ctx, args, ct) =
 
 ## ⚡ PowerShell Cmdlets
 
+> **Updated in v0.2.0**: Enhanced pipeline support, PassThruObject outputs, and new aliases.
+
 EasyCLI ships with a PowerShell module (`EasyCLI.psd1`) that provides high-level cmdlets for styled console output and interactive prompts. The module is compatible with PowerShell 7.0+ and follows PowerShell best practices.
 
 ### Cmdlet Summary
 
-| Cmdlet | Aliases | Purpose | Key Parameters |
-|--------|---------|---------|----------------|
-| `Write-Message` | `Show-Message` | Styled console output | `-Message`, `-Success`, `-Warning`, `-Error`, `-Info`, `-Hint` |
-| `Write-Rule` | | Horizontal divider with optional title | `-Title`, `-Center`, `-PassThruObject` |
-| `Write-TitledBox` | | Framed box around content | `-Title`, `-PassThruObject`, pipeline input |
-| `Read-Choice` | `Select-EasyChoice` | Interactive choice selection | `-Options`, `-Select`, `-PassThruIndex`, `-PassThruObject` |
+| Cmdlet | Aliases | Purpose | v0.2.0 Enhancements |
+|--------|---------|---------|---------------------|
+| `Write-Message` | `Show-Message` | Styled console output | New `Show-Message` alias for backward compatibility |
+| `Write-Rule` | | Horizontal divider with optional title | Enhanced `PassThruObject` with `RuleInfo` metadata |
+| `Write-TitledBox` | | Framed box around content | Enhanced `PassThruObject` with `TitledBoxInfo` metadata |
+| `Read-Choice` | `Select-EasyChoice` | Interactive choice selection | Pipeline binding for objects with `Name` property, enhanced `PassThruObject` |
 
 ### Write-Message
 
@@ -761,7 +1029,7 @@ Write-Message "Critical error occurred" -Error
 Write-Message "Processing files..." -Info
 Write-Message "Tip: Use -Verbose for details" -Hint
 
-# Using alias for backward compatibility
+# NEW in v0.2.0: Show-Message alias for backward compatibility
 Show-Message "Legacy alias still works" -Success
 
 # Pipeline support
@@ -794,7 +1062,7 @@ Write-Rule -Title "Configuration Section"
 # Centered title
 Write-Rule -Title "Main Content" -Center
 
-# Get structured output
+# NEW in v0.2.0: Enhanced structured output with detailed metadata
 $rule = Write-Rule -Title "Build Results" -PassThruObject
 $rule | Format-List *
 # Output:
@@ -803,12 +1071,14 @@ $rule | Format-List *
 # PaddingLeft  : 32
 # PaddingRight : 32
 # FillerChar   : -
+# IsTitle      : True
+# IsCentered   : False
 ```
 
 **Parameters:**
 - `-Title`: Optional title text to display in the rule
 - `-Center`: Center the title within the rule
-- `-PassThruObject`: Return a `RuleInfo` object instead of just displaying
+- `-PassThruObject`: Return a `RuleInfo` object with detailed metadata
 
 ### Write-TitledBox
 
@@ -821,19 +1091,21 @@ Creates framed boxes around content with optional titles.
 # Multiple inputs
 "Important", "Information" | Write-TitledBox -Title "Notice"
 
-# Get structured output
+# NEW in v0.2.0: Enhanced structured output with comprehensive metadata
 $box = @("Alpha", "Beta") | Write-TitledBox -Title "Data" -PassThruObject
 $box | Format-List *
 # Output:
-# Title     : Data
-# Lines     : {Alpha, Beta}
-# Width     : 12
-# HasTitle  : True
+# Title       : Data
+# Lines       : {Alpha, Beta}
+# Width       : 12
+# HasTitle    : True
+# LineCount   : 2
+# MaxLineLength : 5
 ```
 
 **Parameters:**
 - `-Title`: Title to display above the box
-- `-PassThruObject`: Return a `TitledBoxInfo` object with metadata
+- `-PassThruObject`: Return a `TitledBoxInfo` object with comprehensive metadata
 - Pipeline input: Content lines for the box
 
 ### Read-Choice
@@ -853,7 +1125,7 @@ $choice = Read-Choice -Options "Red", "Green", "Blue" -Select "Green"
 $index = Read-Choice -Options "One", "Two", "Three" -Select "Two" -PassThruIndex
 # Returns: 1
 
-# Pipeline with objects (uses Name property)
+# NEW in v0.2.0: Pipeline with objects (uses Name property)
 $items = @(
     [PSCustomObject]@{Name="Development"; Url="dev.example.com"},
     [PSCustomObject]@{Name="Production"; Url="prod.example.com"}
@@ -861,14 +1133,16 @@ $items = @(
 $selected = $items | Read-Choice -Select 2
 # Returns: "Production"
 
-# Structured output with metadata
+# NEW in v0.2.0: Enhanced structured output with comprehensive metadata
 $choice = Read-Choice -Options "X", "Y", "Z" -Select "Y" -PassThruObject
 $choice | Format-List *
 # Output:
-# SelectedValue : Y
-# SelectedIndex : 1
-# Options       : {X, Y, Z}
-# WasInteractive: False
+# SelectedValue    : Y
+# SelectedIndex    : 1
+# Options          : {X, Y, Z}
+# WasInteractive   : False
+# SelectionMethod  : ByValue
+# TotalOptions     : 3
 
 # Disable colors
 Read-Choice -Options "Item1", "Item2" -Select 1 -NoColor
@@ -878,9 +1152,18 @@ Read-Choice -Options "Item1", "Item2" -Select 1 -NoColor
 - `-Options`: Array of choice options (strings)
 - `-Select`: Non-interactive selection (by index number or value)
 - `-PassThruIndex`: Return the selected index instead of the value
-- `-PassThruObject`: Return a `ChoiceSelection` object with metadata
+- `-PassThruObject`: Return a `ChoiceSelection` object with comprehensive metadata
 - `-NoColor`: Disable colored output
-- Pipeline input: Objects with `Name` property become options
+- **NEW**: Pipeline input: Objects with `Name` property become options automatically
+
+### v0.2.0 PowerShell Enhancements Summary
+
+| Enhancement | Description | Benefit |
+|-------------|-------------|---------|
+| **Pipeline Object Binding** | `Read-Choice` accepts objects with `Name` property | Easier integration with complex data |
+| **PassThruObject Metadata** | Enhanced output objects with detailed information | Better automation and scripting support |
+| **Show-Message Alias** | Backward compatibility alias for `Write-Message` | Smoother transitions from older versions |
+| **Validation Improvements** | Better parameter validation and error messages | More robust cmdlet behavior |
 
 ### Environment Integration
 
@@ -986,37 +1269,67 @@ EasyCLI/
 │   │   ├── CliShell.cs               # Main shell implementation
 │   │   ├── ICliCommand.cs            # Command interface
 │   │   ├── BaseCliCommand.cs         # Enhanced command base class
+│   │   ├── EnhancedCliCommand.cs     # NEW: Professional CLI patterns
 │   │   ├── ShellOptions.cs           # Shell configuration
 │   │   └── Commands/                 # Built-in command implementations
+│   │       └── ConfigCommand.cs     # NEW: Configuration management command
+│   ├── Configuration/                # NEW: Configuration management
+│   │   ├── ConfigManager.cs          # Hierarchical configuration loader
+│   │   ├── AppConfig.cs              # Default configuration class
+│   │   └── ConfigurationSource.cs    # Configuration source tracking
+│   ├── Environment/                  # NEW: Environment detection
+│   │   ├── EnvironmentDetector.cs    # Environment analysis
+│   │   └── EnvironmentInfo.cs        # Environment information container
+│   ├── Logging/                      # NEW: Structured logging
+│   │   ├── Logger.cs                 # Professional logging framework
+│   │   └── LogLevel.cs               # Logging verbosity levels
 │   ├── Cmdlets/                      # PowerShell cmdlet implementations
 │   │   ├── WriteMessageCommand.cs    # Write-Message cmdlet
 │   │   ├── WriteRuleCommand.cs       # Write-Rule cmdlet
 │   │   ├── WriteTitledBoxCommand.cs  # Write-TitledBox cmdlet
-│   │   └── ReadChoiceCommand.cs      # Read-Choice cmdlet
+│   │   ├── ReadChoiceCommand.cs      # Read-Choice cmdlet
+│   │   ├── RuleInfo.cs               # NEW: Rule metadata object
+│   │   ├── TitledBoxInfo.cs          # NEW: Box metadata object
+│   │   └── ChoiceSelection.cs        # NEW: Choice metadata object
 │   ├── Formatting/                   # Advanced formatting utilities
 │   ├── Extensions/                   # Extension methods
-│   └── EasyCLI.psd1                  # PowerShell module manifest
-├── EasyCLI.Tests/                    # Unit test suite (100 tests)
+│   └── EasyCLI.psd1                  # PowerShell module manifest (v0.2.0)
+├── EasyCLI.Tests/                    # Unit test suite (100+ tests)
 │   ├── ConsoleWriterTests.cs         # ANSI output testing
 │   ├── PromptTests.cs                # Interactive prompt testing
 │   ├── CmdletTests.cs                # PowerShell cmdlet testing
-│   └── ShellTests.cs                 # Shell functionality testing
-├── EasyCLI.Demo/                     # Demonstration application
+│   ├── ShellTests.cs                 # Shell functionality testing
+│   ├── Phase2EnhancementTests.cs     # NEW: CLI enhancement features testing
+│   └── EnhancedCliTests.cs           # NEW: Enhanced command testing
+├── EasyCLI.Demo/                     # Original demonstration application
 │   └── Program.cs                    # Feature showcase and examples
+├── EasyCLI.Demo.Enhanced/            # NEW: Enhanced CLI demonstration
+│   └── Program.cs                    # Phase 2 features showcase
 ├── .github/                          # GitHub configuration
 │   ├── workflows/ci.yml              # Continuous integration pipeline
-│   └── copilot-instructions.md       # Development guidelines
+│   ├── copilot-instructions.md       # Development guidelines
+│   └── instructions/                 # NEW: CLI best practices guides
+│       ├── cli-best-practices.instructions.md
+│       └── cli-quick-reference.instructions.md
 └── README.md                         # This documentation
 ```
 
 ### Key Components
 
+#### Core Framework
 - **Console I/O**: Thread-safe console reading and writing with ANSI support
 - **Styling System**: Comprehensive ANSI styling with environment detection
 - **Prompt Framework**: Extensible interactive input system with validation
 - **Shell Framework**: Experimental command-line shell with custom command support
 - **PowerShell Integration**: Native cmdlets following PowerShell conventions
 - **Rich Formatting**: Tables, boxes, rules, and structured output helpers
+
+#### CLI Enhancement Features (v0.2.0+)
+- **Configuration Management**: Hierarchical JSON configuration system
+- **Environment Detection**: Automatic detection of Git, Docker, CI, and platform environments
+- **Structured Logging**: Professional logging with verbosity levels and CLI integration
+- **Enhanced Commands**: `EnhancedCliCommand` base class with CLI best practices
+- **Professional Patterns**: Standard CLI flags, dry-run mode, smart error handling
 
 ## 🔧 Development
 
