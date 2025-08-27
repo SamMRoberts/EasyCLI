@@ -1,7 +1,6 @@
 using EasyCLI.Configuration;
 using EasyCLI.Environment;
 using EasyCLI.Logging;
-using Xunit;
 
 namespace EasyCLI.Tests
 {
