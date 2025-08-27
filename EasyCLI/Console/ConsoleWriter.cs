@@ -91,13 +91,13 @@ namespace EasyCLI.Console
                 return enableColors.Value;
             }
 
-            string? noColor = Environment.GetEnvironmentVariable("NO_COLOR");
+            string? noColor = System.Environment.GetEnvironmentVariable("NO_COLOR");
             if (!string.IsNullOrEmpty(noColor))
             {
                 return false;
             }
 
-            string? forceColor = Environment.GetEnvironmentVariable("FORCE_COLOR");
+            string? forceColor = System.Environment.GetEnvironmentVariable("FORCE_COLOR");
             if (!string.IsNullOrEmpty(forceColor))
             {
                 return true;
@@ -108,21 +108,21 @@ namespace EasyCLI.Console
                 return false;
             }
 
-            string? term = Environment.GetEnvironmentVariable("TERM");
+            string? term = System.Environment.GetEnvironmentVariable("TERM");
             return !string.Equals(term, "dumb", StringComparison.OrdinalIgnoreCase);
         }
 
         private static ColorSupportLevel DetectColorLevel()
         {
             // Truecolor hint
-            string? colorterm = Environment.GetEnvironmentVariable("COLORTERM");
+            string? colorterm = System.Environment.GetEnvironmentVariable("COLORTERM");
             if (!string.IsNullOrEmpty(colorterm) && colorterm.Contains("truecolor", StringComparison.OrdinalIgnoreCase))
             {
                 return ColorSupportLevel.TrueColor;
             }
 
             // TERM based detection
-            string term = Environment.GetEnvironmentVariable("TERM") ?? string.Empty;
+            string term = System.Environment.GetEnvironmentVariable("TERM") ?? string.Empty;
             if (term.Contains("256color", StringComparison.OrdinalIgnoreCase))
             {
                 return ColorSupportLevel.Indexed256;

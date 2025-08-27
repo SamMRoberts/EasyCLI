@@ -15,8 +15,8 @@ namespace EasyCLI.Tests
             {
                 var (key, value) = vars[i];
                 _keys[i] = key;
-                _originals[key] = Environment.GetEnvironmentVariable(key);
-                Environment.SetEnvironmentVariable(key, value);
+                _originals[key] = System.Environment.GetEnvironmentVariable(key);
+                System.Environment.SetEnvironmentVariable(key, value);
             }
         }
 
@@ -24,7 +24,7 @@ namespace EasyCLI.Tests
         {
             foreach (var key in _keys)
             {
-                Environment.SetEnvironmentVariable(key, _originals[key]);
+                System.Environment.SetEnvironmentVariable(key, _originals[key]);
             }
         }
     }
