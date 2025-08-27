@@ -25,5 +25,12 @@ namespace EasyCLI.Shell
         /// Gets or sets the maximum number of history entries to retain. 0 = unlimited.
         /// </summary>
         public int HistoryLimit { get; set; } = 500;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to delegate commands with shell operators to the native shell.
+        /// When enabled, commands containing pipes, redirections, and other shell syntax are executed through
+        /// the native shell (bash, cmd, etc.) to preserve full shell functionality.
+        /// </summary>
+        public bool EnableNativeShellDelegation { get; set; } = true;
     }
 }

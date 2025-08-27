@@ -54,6 +54,33 @@ namespace EasyCLI.Shell
         }
 
         /// <summary>
+        /// Determines if a command line contains shell operators that require native shell interpretation.
+        /// </summary>
+        /// <param name="line">The command line to analyze.</param>
+        /// <returns>True if the line contains shell operators that need native shell handling.</returns>
+        private static bool ContainsShellOperators(string line)
+        {
+            // Check for common shell operators that require native shell interpretation
+            return line.Contains('|') // Pipes
+                || line.Contains('>') // Output redirection
+                || line.Contains('<') // Input redirection
+                || line.Contains("&&") // Command chaining (AND)
+                || line.Contains("||") // Command chaining (OR)
+                || line.Contains(';') // Command separator
+                || line.Contains('&') // Background process
+                || line.Contains('$') // Variable expansion
+                || line.Contains('`') // Command substitution (backticks)
+                || line.Contains("$(") // Command substitution (modern)
+                || line.Contains('*') // Wildcards
+                || line.Contains('?') // Wildcards
+                || line.Contains('[') // Character classes
+                || line.Contains('~') // Home directory expansion
+                || line.Contains(">>") // Append redirection
+                || line.Contains("2>") // Stderr redirection
+                || line.Contains("2&1"); // Stderr to stdout redirection
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="CliShell"/> class.
         /// </summary>
         /// <param name="reader">The console reader used for input.</param>
@@ -166,6 +193,12 @@ namespace EasyCLI.Shell
 
         private async Task<int> DispatchAsync(ShellExecutionContext ctx, string line, CancellationToken ct)
         {
+            // Check if native shell delegation is enabled and the command contains shell operators
+            if (_options.EnableNativeShellDelegation && ContainsShellOperators(line))
+            {
+                return await RunNativeShellAsync(line, ct).ConfigureAwait(false);
+            }
+
             string[] parts = Tokenize(line);
             if (parts.Length == 0)
             {
@@ -179,6 +212,76 @@ namespace EasyCLI.Shell
             }
             // External process fallback
             return await RunExternalAsync(name, args, ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Executes a command line through the native shell to preserve shell operators and functionality.
+        /// </summary>
+        /// <param name="commandLine">The complete command line to execute.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>The exit code from the native shell.</returns>
+        private async Task<int> RunNativeShellAsync(string commandLine, CancellationToken ct)
+        {
+            try
+            {
+                ProcessStartInfo psi = new()
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = CurrentDirectory,
+                };
+
+                // Determine the appropriate shell based on the operating system
+                if (OperatingSystem.IsWindows())
+                {
+                    psi.FileName = "cmd.exe";
+                    psi.Arguments = $"/c \"{commandLine}\"";
+                }
+                else
+                {
+                    // Use bash on Unix-like systems (Linux, macOS)
+                    // If bash is not available, fall back to sh
+                    string shell = System.Environment.GetEnvironmentVariable("SHELL") ?? "/bin/bash";
+                    if (!File.Exists(shell))
+                    {
+                        shell = "/bin/sh";
+                    }
+                    psi.FileName = shell;
+                    psi.Arguments = $"-c \"{commandLine}\"";
+                }
+
+                using Process proc = new() { StartInfo = psi, EnableRaisingEvents = true };
+                if (!proc.Start())
+                {
+                    _writer.WriteLine($"Unable to start native shell for command: {commandLine}", ConsoleStyles.FgRed);
+                    return 127;
+                }
+
+                Task<string> stdOutTask = proc.StandardOutput.ReadToEndAsync(ct);
+                Task<string> stdErrTask = proc.StandardError.ReadToEndAsync(ct);
+                await proc.WaitForExitAsync(ct).ConfigureAwait(false);
+                string outText = await stdOutTask.ConfigureAwait(false);
+                string errText = await stdErrTask.ConfigureAwait(false);
+
+                if (outText.Length > 0)
+                {
+                    _writer.Write(outText);
+                }
+                if (errText.Length > 0)
+                {
+                    _writer.Write(errText, ConsoleStyles.FgRed);
+                }
+
+                return proc.ExitCode;
+            }
+            catch (Exception ex)
+            {
+                _writer.WriteLine($"Native shell execution failed for '{commandLine}': {ex.Message}", ConsoleStyles.FgRed);
+                return ExitCodes.CommandNotFound;
+            }
         }
 
         private async Task<int> RunExternalAsync(string fileName, string[] args, CancellationToken ct)
