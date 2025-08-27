@@ -80,11 +80,11 @@ namespace EasyCLI.Tests
 
             int code = await shell.RunAsync();
             Assert.Equal(0, code);
-            
-            // When delegation is disabled, it should try to run "echo" and pass "hello", "|", "grep", "h" as separate commands
-            // The "|" will be treated as a separate command which should fail
+            // When delegation is disabled, the shell does NOT interpret the pipe; it invokes `echo` with the remaining tokens.
+            // So output should contain the literal characters including the pipe and NOT report a failing exit code.
             string all = output.ToString();
-            Assert.Contains("exit code", all); // Should show some command failure
+            Assert.Contains("hello | grep h", all); // literal, unprocessed pipeline text
+            Assert.DoesNotContain("exit code", all); // no failure expected
         }
 
         [Fact]
