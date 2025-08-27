@@ -97,7 +97,7 @@ namespace EasyCLI.Tests
             int code = await shell.RunAsync();
             Assert.Equal(0, code);
             string all = output.ToString();
-            
+
             // Should contain EasyCLI's built-in commands help output
             Assert.Contains("pwd", all);
             Assert.Contains("help", all);
