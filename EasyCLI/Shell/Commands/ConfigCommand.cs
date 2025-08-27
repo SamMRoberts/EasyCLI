@@ -64,9 +64,9 @@ namespace EasyCLI.Shell.Commands
             {
                 "show" => await ShowConfigurationAsync(args, context, theme),
                 "env" => await ShowEnvironmentAsync(args, context, theme),
-                "get" => await GetConfigurationValueAsync(args, context, theme),
-                "set" => await SetConfigurationValueAsync(args, context, theme),
-                "paths" => await ShowConfigurationPathsAsync(args, context, theme),
+                "get" => await GetConfigurationValueAsync(args, context),
+                "set" => await SetConfigurationValueAsync(args, context),
+                "paths" => await ShowConfigurationPathsAsync(context, theme),
                 _ => await ShowUnknownSubcommandAsync(subcommand, context, theme),
             };
         }
@@ -104,8 +104,8 @@ namespace EasyCLI.Shell.Commands
             ];
 
             context.Writer.WriteTableSimple(
-                configData.Take(1).First(),
-                configData.Skip(1).ToArray(),
+                configData[0],
+                configData[1..],
                 headerStyle: theme.Heading,
                 borderStyle: theme.Hint);
 
@@ -167,8 +167,8 @@ namespace EasyCLI.Shell.Commands
             }
 
             context.Writer.WriteTableSimple(
-                envData.First(),
-                envData.Skip(1).ToArray(),
+                envData[0],
+                envData[1..],
                 headerStyle: theme.Heading,
                 borderStyle: theme.Hint);
 
@@ -179,14 +179,12 @@ namespace EasyCLI.Shell.Commands
                 context.Writer.WriteHeadingLine("Additional Metadata", theme);
                 context.Writer.WriteLine("");
 
-                string[][] metadataData = Environment.Metadata
-                    .Select(kv => new[] { kv.Key, kv.Value })
-                    .Prepend(["Key", "Value"])
-                    .ToArray();
+                string[][] metadataData = [["Key", "Value"], .. Environment.Metadata
+                    .Select(kv => new[] { kv.Key, kv.Value })];
 
                 context.Writer.WriteTableSimple(
-                    metadataData.First(),
-                    metadataData.Skip(1).ToArray(),
+                    metadataData[0],
+                    metadataData[1..],
                     headerStyle: theme.Heading,
                     borderStyle: theme.Hint);
             }
@@ -198,7 +196,7 @@ namespace EasyCLI.Shell.Commands
         /// <summary>
         /// Gets a specific configuration value.
         /// </summary>
-        private Task<int> GetConfigurationValueAsync(CommandLineArgs args, ShellExecutionContext context, ConsoleTheme theme)
+        private Task<int> GetConfigurationValueAsync(CommandLineArgs args, ShellExecutionContext context)
         {
             string? key = args.GetArgument(1);
             if (string.IsNullOrEmpty(key))
@@ -240,7 +238,7 @@ namespace EasyCLI.Shell.Commands
         /// <summary>
         /// Sets a configuration value.
         /// </summary>
-        private Task<int> SetConfigurationValueAsync(CommandLineArgs args, ShellExecutionContext context, ConsoleTheme theme)
+        private Task<int> SetConfigurationValueAsync(CommandLineArgs args, ShellExecutionContext context)
         {
             string? key = args.GetArgument(1);
             string? value = args.GetArgument(2);
@@ -260,7 +258,7 @@ namespace EasyCLI.Shell.Commands
         /// <summary>
         /// Shows configuration file paths.
         /// </summary>
-        private Task<int> ShowConfigurationPathsAsync(CommandLineArgs args, ShellExecutionContext context, ConsoleTheme theme)
+        private Task<int> ShowConfigurationPathsAsync(ShellExecutionContext context, ConsoleTheme theme)
         {
             if (ConfigManager == null)
             {
@@ -281,8 +279,8 @@ namespace EasyCLI.Shell.Commands
             ];
 
             context.Writer.WriteTableSimple(
-                pathData.First(),
-                pathData.Skip(1).ToArray(),
+                pathData[0],
+                pathData[1..],
                 headerStyle: theme.Heading,
                 borderStyle: theme.Hint);
 
