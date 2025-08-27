@@ -1,3 +1,6 @@
+using EasyCLI.Console;
+using EasyCLI.Shell;
+
 namespace EasyCLI.Tests
 {
     public class ShellTests
