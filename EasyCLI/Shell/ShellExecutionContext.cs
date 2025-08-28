@@ -7,10 +7,11 @@ namespace EasyCLI.Shell
     /// </summary>
     public class ShellExecutionContext
     {
-        internal ShellExecutionContext(CliShell shell, IConsoleWriter writer)
+        internal ShellExecutionContext(CliShell shell, IConsoleWriter writer, IConsoleReader reader)
         {
             Shell = shell;
             Writer = writer;
+            Reader = reader;
         }
 
         /// <summary>
@@ -22,6 +23,11 @@ namespace EasyCLI.Shell
         /// Gets the console writer.
         /// </summary>
         public IConsoleWriter Writer { get; }
+
+        /// <summary>
+        /// Gets the console reader.
+        /// </summary>
+        public IConsoleReader Reader { get; }
 
         /// <summary>
         /// Writes an informational message.

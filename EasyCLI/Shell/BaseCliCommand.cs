@@ -16,6 +16,26 @@ namespace EasyCLI.Shell
         public abstract string Description { get; }
 
         /// <summary>
+        /// Confirms a dangerous operation with the user, respecting automation flags and environment context.
+        /// </summary>
+        /// <param name="operation">Description of the operation to be performed.</param>
+        /// <param name="context">The shell execution context.</param>
+        /// <param name="args">The parsed command line arguments.</param>
+        /// <param name="additionalWarnings">Optional additional warnings to display.</param>
+        /// <param name="customPrompt">Optional custom confirmation prompt text.</param>
+        /// <returns>True if the operation should proceed, false if cancelled.</returns>
+        protected static bool ConfirmDangerous(
+            string operation,
+            ShellExecutionContext context,
+            CommandLineArgs args,
+            string[]? additionalWarnings = null,
+            string? customPrompt = null)
+        {
+            return DangerousOperationConfirmation.ConfirmDangerous(
+                operation, context, args, additionalWarnings, customPrompt);
+        }
+
+        /// <summary>
         /// Gets the detailed help information for this command.
         /// </summary>
         /// <returns>Command help information.</returns>
@@ -31,6 +51,9 @@ namespace EasyCLI.Shell
             help.Options.Add(new CommandOption("help", "h", "Show help information"));
             help.Options.Add(new CommandOption("verbose", "v", "Enable verbose output"));
             help.Options.Add(new CommandOption("quiet", "q", "Suppress non-essential output"));
+            help.Options.Add(new CommandOption("yes", "y", "Confirm dangerous operations without prompting"));
+            help.Options.Add(new CommandOption("force", "f", "Force execution, bypassing safety checks"));
+            help.Options.Add(new CommandOption("dry-run", "n", "Show what would be done without executing"));
 
             // Allow derived classes to add specific help content
             ConfigureHelp(help);
