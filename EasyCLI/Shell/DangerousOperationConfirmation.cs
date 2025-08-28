@@ -1,4 +1,3 @@
-using EasyCLI.Console;
 using EasyCLI.Environment;
 using EasyCLI.Prompts;
 
@@ -36,7 +35,7 @@ namespace EasyCLI.Shell
             }
 
             // Detect automation context
-            if (IsAutomationContext(context))
+            if (IsAutomationContext())
             {
                 context.Writer.WriteErrorLine("Dangerous operation attempted in automation context without explicit confirmation.");
                 context.Writer.WriteErrorLine($"Operation: {operation}");
@@ -51,11 +50,10 @@ namespace EasyCLI.Shell
         /// <summary>
         /// Determines if the current context is an automation environment.
         /// </summary>
-        /// <param name="context">The shell execution context.</param>
         /// <returns>True if running in automation context.</returns>
-        private static bool IsAutomationContext(ShellExecutionContext context)
+        private static bool IsAutomationContext()
         {
-            var environment = EnvironmentDetector.DetectEnvironment();
+            EnvironmentInfo environment = EnvironmentDetector.DetectEnvironment();
 
             // Check if running in non-interactive mode or CI environment
             return !environment.IsInteractive || environment.IsContinuousIntegration;
@@ -83,7 +81,7 @@ namespace EasyCLI.Shell
             if (additionalWarnings != null && additionalWarnings.Length > 0)
             {
                 context.Writer.WriteLine(string.Empty);
-                foreach (var warning in additionalWarnings)
+                foreach (string warning in additionalWarnings)
                 {
                     context.Writer.WriteWarningLine($"⚠️  {warning}");
                 }
@@ -92,8 +90,8 @@ namespace EasyCLI.Shell
             context.Writer.WriteLine(string.Empty);
 
             // Get confirmation
-            var prompt = customPrompt ?? "Do you want to proceed with this dangerous operation?";
-            var confirmation = new YesNoPrompt(prompt, context.Writer, context.Reader, @default: false);
+            string prompt = customPrompt ?? "Do you want to proceed with this dangerous operation?";
+            YesNoPrompt confirmation = new(prompt, context.Writer, context.Reader, @default: false);
 
             try
             {

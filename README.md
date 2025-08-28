@@ -15,6 +15,7 @@ EasyCLI is a comprehensive .NET 9.0 class library for building modern command-li
 **Phase 2 introduces professional CLI best practices and enterprise-ready features:**
 
 - **🔧 Enhanced CLI Framework**: New `EnhancedCliCommand` base class with built-in support for standard CLI patterns (--help, --verbose, --dry-run, proper exit codes)
+- **⚠️ Dangerous Operation Confirmation**: Safety framework for destructive operations with automation detection and proper confirmation flows
 - **📋 Configuration Management**: Hierarchical configuration system with global and local JSON config files via `ConfigManager`
 - **🌍 Environment Detection**: Automatic detection of Git repositories, Docker environments, CI/CD systems, and platform information
 - **📊 Structured Logging**: Professional logging framework with verbosity levels (Quiet, Normal, Verbose, Debug) and CLI flag integration
@@ -41,6 +42,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - **📝 Structured Logging**: Professional logging with verbosity levels and automatic CLI flag integration (`--verbose`, `--quiet`, `--debug`)
 - **🛠️ Enhanced Commands**: `EnhancedCliCommand` base class with built-in help system, argument validation, and CLI best practices
 - **🏃‍♂️ Dry-Run Support**: Built-in `--dry-run` mode for safe operation previews
+- **🛡️ Dangerous Operation Confirmation**: Safety framework for destructive operations with automation detection (`--yes`, `--force`)
 - **⚠️ Smart Error Handling**: Intelligent error suggestions and recovery with proper exit codes
 - **🎯 Professional CLI Patterns**: Standard flag support (`--help`, `--verbose`, `--quiet`, `--dry-run`) following CLI conventions
 
@@ -57,6 +59,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
   - [Environment Detection](#environment-detection)
   - [Structured Logging](#structured-logging)
   - [Enhanced Command Framework](#enhanced-command-framework)
+    - [Dangerous Operation Confirmation](#dangerous-operation-confirmation)
 - [Persistent Shell](#-persistent-shell)
 - [PowerShell Cmdlets](#-powershell-cmdlets)
 - [Project Structure](#-project-structure)
@@ -550,7 +553,93 @@ mycommand --verbose        # Enable verbose output
 mycommand --quiet          # Minimize output
 mycommand --debug          # Show debug information
 mycommand --dry-run        # Preview mode (no changes)
+mycommand --yes            # Confirm dangerous operations
+mycommand --force          # Force dangerous operations
 ```
+
+### Dangerous Operation Confirmation
+
+EasyCLI provides a comprehensive framework for safely handling dangerous operations (delete, overwrite, etc.) with proper confirmation flows and automation support.
+
+#### Quick Start
+
+```csharp
+public class DeleteCommand : BaseCliCommand
+{
+    protected override Task<int> ExecuteCommand(CommandLineArgs args, ShellExecutionContext context, CancellationToken cancellationToken)
+    {
+        // Get confirmation for dangerous operation
+        bool confirmed = ConfirmDangerous(
+            "delete all user data", 
+            context, 
+            args, 
+            additionalWarnings: new[] { "This operation cannot be undone" });
+
+        if (!confirmed)
+        {
+            context.Writer.WriteInfoLine("Operation cancelled");
+            return Task.FromResult(ExitCodes.UserCancelled);
+        }
+
+        // Proceed with operation
+        PerformDeletion();
+        return Task.FromResult(ExitCodes.Success);
+    }
+}
+```
+
+#### Automation-Friendly
+
+The framework automatically handles automation contexts:
+
+```bash
+# Interactive mode - shows confirmation prompt
+myapp delete database
+
+# Automation mode - explicit confirmation required
+myapp delete database --yes        # Proceeds without prompting
+myapp delete database --force      # Bypasses safety checks
+myapp delete database              # Fails in CI/automated contexts
+
+# Preview mode
+myapp delete database --dry-run    # Shows what would be done
+```
+
+#### Advanced Usage
+
+```csharp
+// Custom confirmation prompt and warnings
+bool confirmed = ConfirmDangerous(
+    operation: "permanently delete database cluster",
+    context: context,
+    args: args,
+    additionalWarnings: new[]
+    {
+        "All data will be permanently lost",
+        "This affects multiple applications",
+        "No backups will be retained"
+    },
+    customPrompt: "Are you absolutely certain you want to proceed?");
+```
+
+#### Automation Detection
+
+The framework automatically detects automation contexts and blocks dangerous operations unless explicitly confirmed:
+
+| Context | Behavior | Required Flags |
+|---------|----------|----------------|
+| **Interactive Terminal** | Shows confirmation prompt | None (prompts user) |
+| **CI/CD Environment** | Blocks without explicit flag | `--yes` or `--force` |
+| **Piped Input** | Blocks without explicit flag | `--yes` or `--force` |
+| **Non-TTY Environment** | Blocks without explicit flag | `--yes` or `--force` |
+
+#### Exit Codes
+
+| Result | Exit Code | Description |
+|--------|-----------|-------------|
+| **Confirmed** | `0` | Operation completed successfully |
+| **Cancelled** | `6` | User declined or automation blocked |
+| **Error** | `1` | Operation failed after confirmation |
 
 ## 💬 Interactive Prompts
 
