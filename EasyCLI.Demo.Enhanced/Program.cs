@@ -1,4 +1,5 @@
 using EasyCLI.Console;
+using EasyCLI.Demo.Enhanced;
 using EasyCLI.Extensions;
 using EasyCLI.Formatting;
 using EasyCLI.Shell;
@@ -17,12 +18,16 @@ var shell = new CliShell(reader, writer, new ShellOptions
     HistoryLimit = 100
 });
 
+// Register demo commands
+await shell.RegisterAsync(new DeleteCommand());
+
 writer.WriteLine("");
 writer.WriteInfoLine("Enhanced CLI Shell with best practices features:");
 writer.WriteLine("- Professional help system (try 'echo --help')");
 writer.WriteLine("- Standardized argument parsing and flags");
 writer.WriteLine("- Rich error handling with suggestions");
 writer.WriteLine("- Dry-run mode support");
+writer.WriteLine("- Dangerous operation confirmation framework");
 writer.WriteLine("- Exit codes following CLI conventions");
 writer.WriteLine("- Configuration management with global/local configs");
 writer.WriteLine("- Environment detection (Git, Docker, CI)");
@@ -37,6 +42,11 @@ writer.WriteLine("  echo --warning --uppercase WARN # Warning with uppercase");
 writer.WriteLine("  echo --repeat 3 \"Repeated\"      # Repeat text");
 writer.WriteLine("  echo --dry-run \"Test\"           # Dry run mode");
 writer.WriteLine("  echo --verbose Hello World      # Verbose output");
+writer.WriteLine("  delete --help                   # Dangerous operation help");
+writer.WriteLine("  delete files                    # Demo dangerous operation with confirmation");
+writer.WriteLine("  delete files --yes              # Skip confirmation with explicit flag");
+writer.WriteLine("  delete database --permanent     # High-risk operation with warnings");
+writer.WriteLine("  delete config --dry-run         # Preview dangerous operation");
 writer.WriteLine("  config --help                   # Configuration management help");
 writer.WriteLine("  config show                     # Show current configuration");
 writer.WriteLine("  config env                      # Show environment information");
