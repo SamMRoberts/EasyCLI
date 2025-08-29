@@ -15,6 +15,23 @@ namespace EasyCLI.Shell
         private readonly List<string> _history = [];
         private readonly Lock _historyLock = new();
 
+        /// <summary>
+        /// Set of reserved command names that cannot be overridden by user commands.
+        /// </summary>
+        public static readonly IReadOnlySet<string> ReservedCommandNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "help",
+            "history",
+            "pwd",
+            "cd",
+            "clear",
+            "complete",
+            "exit",
+            "quit",
+            "echo",
+            "config",
+        };
+
         private static bool IsExitCommand(string line)
         {
             return string.Equals(line, "exit", StringComparison.OrdinalIgnoreCase)
@@ -101,27 +118,33 @@ namespace EasyCLI.Shell
         public string CurrentDirectory { get; set; } = Directory.GetCurrentDirectory();
 
         /// <summary>
-        /// Registers a command instance. Last registration wins for name collisions.
+        /// Registers a command instance. Validates against reserved names and duplicate registrations.
         /// </summary>
         /// <param name="command">The command to register.</param>
         /// <returns>The current <see cref="CliShell"/> instance for chaining.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
+        /// <exception cref="CommandNamingException">Thrown when the command name conflicts with a reserved name or already registered command.</exception>
         public CliShell Register(ICliCommand command)
         {
             ArgumentNullException.ThrowIfNull(command);
+            ValidateCommandName(command.Name);
             _commands[command.Name] = command;
             return this;
         }
 
         /// <summary>
-        /// Asynchronously registers a command instance. Provided for API symmetry when caller prefers async/await.
+        /// Asynchronously registers a command instance. Validates against reserved names and duplicate registrations.
         /// </summary>
         /// <param name="command">The command to register.</param>
         /// <param name="cancellationToken">Cancellation token (currently unused; provided for future extensibility).</param>
         /// <returns>A completed task.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when command is null.</exception>
+        /// <exception cref="CommandNamingException">Thrown when the command name conflicts with a reserved name or already registered command.</exception>
         public ValueTask RegisterAsync(ICliCommand command, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ArgumentNullException.ThrowIfNull(command);
+            ValidateCommandName(command.Name);
             _commands[command.Name] = command;
             return ValueTask.CompletedTask;
         }
@@ -130,6 +153,43 @@ namespace EasyCLI.Shell
         /// Gets a snapshot of registered command names.
         /// </summary>
         public IReadOnlyCollection<string> CommandNames => [.. _commands.Keys];
+
+        /// <summary>
+        /// Validates that a command name is not reserved and not already registered.
+        /// </summary>
+        /// <param name="commandName">The command name to validate.</param>
+        /// <exception cref="CommandNamingException">Thrown when the command name is invalid.</exception>
+        private void ValidateCommandName(string commandName)
+        {
+            if (string.IsNullOrWhiteSpace(commandName))
+            {
+                throw new CommandNamingException("Command name cannot be null, empty, or whitespace.");
+            }
+
+            if (ReservedCommandNames.Contains(commandName))
+            {
+                throw new CommandNamingException($"Command name '{commandName}' is reserved and cannot be overridden. Reserved names: {string.Join(", ", ReservedCommandNames.OrderBy(n => n))}");
+            }
+
+            if (_commands.ContainsKey(commandName))
+            {
+                throw new CommandNamingException($"Command '{commandName}' is already registered. Each command name must be unique.");
+            }
+        }
+
+        /// <summary>
+        /// Internal method to register built-in commands without validation.
+        /// </summary>
+        /// <param name="command">The command to register.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A completed task.</returns>
+        private ValueTask RegisterBuiltInAsync(ICliCommand command, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ArgumentNullException.ThrowIfNull(command);
+            _commands[command.Name] = command;
+            return ValueTask.CompletedTask;
+        }
 
         /// <summary>
         /// Runs the shell loop until exit/quit or cancellation.
@@ -357,7 +417,7 @@ namespace EasyCLI.Shell
 
         private async Task RegisterBuiltInsAsync(CancellationToken cancellationToken = default)
         {
-            await RegisterAsync(
+            await RegisterBuiltInAsync(
                 new DelegateCommand("help", "Show help or detailed help for a command", (ctx, args, ct) =>
             {
                 if (args.Length == 0)
@@ -380,7 +440,7 @@ namespace EasyCLI.Shell
             }),
                 cancellationToken).ConfigureAwait(false);
 
-            await RegisterAsync(
+            await RegisterBuiltInAsync(
                 new DelegateCommand("history", "Show recent command history", (ctx, args, ct) =>
             {
                 int index = 1;
@@ -396,7 +456,7 @@ namespace EasyCLI.Shell
             }),
                 cancellationToken).ConfigureAwait(false);
 
-            await RegisterAsync(
+            await RegisterBuiltInAsync(
                 new DelegateCommand("pwd", "Print working directory", (ctx, args, ct) =>
             {
                 ctx.Writer.WriteLine(CurrentDirectory);
@@ -404,7 +464,7 @@ namespace EasyCLI.Shell
             }),
                 cancellationToken).ConfigureAwait(false);
 
-            await RegisterAsync(
+            await RegisterBuiltInAsync(
                 new DelegateCommand("cd", "Change working directory", (ctx, args, ct) =>
             {
                 if (args.Length == 0)
@@ -424,7 +484,7 @@ namespace EasyCLI.Shell
             }),
                 cancellationToken).ConfigureAwait(false);
 
-            await RegisterAsync(
+            await RegisterBuiltInAsync(
                 new DelegateCommand("clear", "Clear the screen", (ctx, args, ct) =>
             {
                 try
@@ -439,7 +499,7 @@ namespace EasyCLI.Shell
             }),
                 cancellationToken).ConfigureAwait(false);
 
-            await RegisterAsync(
+            await RegisterBuiltInAsync(
                 new DelegateCommand("complete", "List completions for a prefix", (ctx, args, ct) =>
             {
                 string prefix = args.Length == 0 ? string.Empty : args[0];
@@ -453,8 +513,8 @@ namespace EasyCLI.Shell
                 cancellationToken).ConfigureAwait(false);
 
             // Register enhanced CLI example commands
-            await RegisterAsync(new Commands.EchoCommand(), cancellationToken).ConfigureAwait(false);
-            await RegisterAsync(new Commands.ConfigCommand(), cancellationToken).ConfigureAwait(false);
+            await RegisterBuiltInAsync(new Commands.EchoCommand(), cancellationToken).ConfigureAwait(false);
+            await RegisterBuiltInAsync(new Commands.ConfigCommand(), cancellationToken).ConfigureAwait(false);
         }
 
         private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler) : ICliCommand
