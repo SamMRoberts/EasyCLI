@@ -55,13 +55,6 @@ namespace EasyCLI.Shell.Commands
             ArgumentNullException.ThrowIfNull(args);
             ArgumentNullException.ThrowIfNull(context);
 
-            if (args.Arguments.Count == 0)
-            {
-                context.Writer.WriteErrorLine("Error: No text specified to echo");
-                ShowSuggestion(context, $"Use '{Name} --help' for usage information");
-                return ExitCodes.InvalidArguments;
-            }
-
             // Validate repeat count if specified
             string? repeatOption = args.GetOption("repeat");
             if (!string.IsNullOrEmpty(repeatOption))
