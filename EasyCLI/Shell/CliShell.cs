@@ -138,7 +138,7 @@ namespace EasyCLI.Shell
         /// <returns>A <see cref="Task{Int32}"/> representing the asynchronous shell loop operation. Returns 0 on normal exit.</returns>
         public async Task<int> RunAsync(CancellationToken cancellationToken = default)
         {
-            ShellExecutionContext ctx = new(this, _writer);
+            ShellExecutionContext ctx = new(this, _writer, _reader);
 
             while (!cancellationToken.IsCancellationRequested)
             {
