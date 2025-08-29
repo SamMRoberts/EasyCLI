@@ -229,6 +229,9 @@ namespace EasyCLI.Shell
                     context.Writer.WriteLine("");
                 }
             }
+
+            // Standard footer with support paths and version
+            HelpFooter.WriteFooter(context.Writer, theme);
         }
 
         /// <summary>

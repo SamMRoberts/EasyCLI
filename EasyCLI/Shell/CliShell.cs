@@ -427,6 +427,9 @@ namespace EasyCLI.Shell
                         ICliCommand c = _commands[name];
                         ctx.Writer.WriteLine($"{c.Name}\t{c.Description}");
                     }
+
+                    // Add standard footer to general help
+                    HelpFooter.WriteFooter(ctx.Writer, ConsoleThemes.Dark);
                     return Task.FromResult(0);
                 }
                 string cmd = args[0];

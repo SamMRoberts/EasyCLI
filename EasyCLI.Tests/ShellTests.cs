@@ -103,5 +103,23 @@ namespace EasyCLI.Tests
             Assert.Contains("help", all);
             Assert.Contains("Change working directory", all); // cd command description from help
         }
+
+        [Fact]
+        public async Task HelpFooter_AppearsInGeneralHelp()
+        {
+            var input = new StringReader("help\nexit\n");
+            var output = new StringWriter();
+            var shell = new CliShell(new ConsoleReader(input), new ConsoleWriter(enableColors: false, output), new ShellOptions { Prompt = "test>" });
+
+            int code = await shell.RunAsync();
+            Assert.Equal(0, code);
+            string all = output.ToString();
+
+            // Should contain the standard help footer
+            Assert.Contains("SUPPORT:", all);
+            Assert.Contains("Version:", all);
+            Assert.Contains("Issues:  https://github.com/SamMRoberts/EasyCLI/issues", all);
+            Assert.Contains("Docs:    https://github.com/SamMRoberts/EasyCLI", all);
+        }
     }
 }
