@@ -50,6 +50,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 
 ## 📚 Table of Contents
 
+- [Documentation](#-documentation)
 - [What's New in v0.2.0](#-whats-new-in-v020---phase-2-cli-enhancement)
 - [Requirements](#-requirements)
 - [Installation](#-installation)
@@ -70,6 +71,19 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - [Contributing](#-contributing)
 - [Versioning](#-versioning)
 - [License](#-license)
+
+## 📖 Documentation
+
+**[Visit the EasyCLI Wiki](https://github.com/SamMRoberts/EasyCLI/wiki)** for comprehensive documentation, tutorials, and examples!
+
+The wiki includes:
+- **[Getting Started Guide](https://github.com/SamMRoberts/EasyCLI/wiki/Getting-Started)** - Installation and first steps
+- **[Core Features](https://github.com/SamMRoberts/EasyCLI/wiki/Core-Features)** - ANSI styling, prompts, and theming
+- **[CLI Enhancement Features](https://github.com/SamMRoberts/EasyCLI/wiki/CLI-Enhancement-Features)** - Professional CLI patterns
+- **[Shell Framework](https://github.com/SamMRoberts/EasyCLI/wiki/Shell-Framework)** - Interactive shells and commands
+- **[Output and Scripting](https://github.com/SamMRoberts/EasyCLI/wiki/Output-and-Scripting)** - Automation-friendly output
+- **[API Reference](https://github.com/SamMRoberts/EasyCLI/wiki/API-Reference)** - Complete API documentation
+- **[Examples and Tutorials](https://github.com/SamMRoberts/EasyCLI/wiki/Examples-and-Tutorials)** - Practical usage examples
 
 ## 📋 Requirements
 
