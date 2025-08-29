@@ -71,7 +71,7 @@ namespace EasyCLI.Console
         {
             if (string.IsNullOrEmpty(text))
             {
-                return text ?? string.Empty;
+                return text;
             }
 
             // Remove ANSI escape sequences
