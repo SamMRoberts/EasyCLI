@@ -119,15 +119,15 @@ namespace EasyCLI.Shell
 
             context.Writer.WriteInfoLine($"{categoryName}:", theme);
 
-            if (compact && commandList.Count > 4)
+            if (compact && commandList.Count > 6)
             {
                 // Show first few commands with "and X more" hint
-                List<ICliCommand> displayed = commandList.Take(3).ToList();
+                List<ICliCommand> displayed = [.. commandList.Take(4)];
                 foreach (ICliCommand? cmd in displayed)
                 {
                     context.Writer.WriteLine($"  {cmd.Name,-12} {cmd.Description}");
                 }
-                context.Writer.WriteHintLine($"  ... and {commandList.Count - 3} more", theme);
+                context.Writer.WriteHintLine($"  ... and {commandList.Count - 4} more", theme);
             }
             else
             {
@@ -144,7 +144,7 @@ namespace EasyCLI.Shell
                 {
                     // Table format for larger categories
                     string[] headers = ["Command", "Description"];
-                    string[][] rows = commandList.Select(cmd => new[] { cmd.Name, cmd.Description }).ToArray();
+                    string[][] rows = [.. commandList.Select(cmd => new[] { cmd.Name, cmd.Description })];
 
                     context.Writer.WriteTableSimple(headers, rows, headerStyle: theme.Heading, borderStyle: theme.Hint);
                 }
@@ -509,11 +509,10 @@ namespace EasyCLI.Shell
                 ctx.Writer.WriteLine($"Unknown command '{cmd}'", ConsoleStyles.FgRed);
 
                 // Suggest similar commands
-                string[] suggestions = _commands.Keys
+                string[] suggestions = [.. _commands.Keys
                     .Where(k => LevenshteinDistance.Calculate(k, cmd) <= 2)
                     .OrderBy(k => LevenshteinDistance.Calculate(k, cmd))
-                    .Take(3)
-                    .ToArray();
+                    .Take(3)];
 
                 if (suggestions.Length > 0)
                 {
@@ -618,14 +617,30 @@ namespace EasyCLI.Shell
                 .GroupBy(c => c.Category)
                 .OrderBy(g => g.Key)];
 
-            // Show essential categories in compact format
+            // Show essential categories first, then others if there aren't too many total
             string[] essentialCategories = ["Core", "General", "Utility"];
+            HashSet<string> shownCategories = [];
+
+            // Show essential categories that exist
             foreach (string category in essentialCategories)
             {
                 IGrouping<string, ICliCommand>? categoryGroup = categorizedCommands.FirstOrDefault(g => g.Key == category);
                 if (categoryGroup != null)
                 {
                     ShowCategoryCommands(context, categoryGroup.Key, categoryGroup, theme, compact: true);
+                    _ = shownCategories.Add(category);
+                }
+            }
+
+            // Show remaining categories if total count is reasonable (≤ 5 categories)
+            if (categorizedCommands.Count <= 5)
+            {
+                foreach (IGrouping<string, ICliCommand> categoryGroup in categorizedCommands)
+                {
+                    if (!shownCategories.Contains(categoryGroup.Key))
+                    {
+                        ShowCategoryCommands(context, categoryGroup.Key, categoryGroup, theme, compact: true);
+                    }
                 }
             }
 
