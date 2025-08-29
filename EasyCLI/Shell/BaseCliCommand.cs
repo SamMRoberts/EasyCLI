@@ -1,3 +1,5 @@
+using EasyCLI.Deprecation;
+using EasyCLI.Extensions;
 using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell
@@ -112,6 +114,9 @@ namespace EasyCLI.Shell
                 {
                     return validationResult;
                 }
+
+                // Check for deprecated features and display warnings
+                CheckDeprecatedFeatures(parsedArgs, context);
 
                 // Execute the command
                 return await ExecuteCommand(parsedArgs, context, cancellationToken);
@@ -359,6 +364,27 @@ namespace EasyCLI.Shell
         {
             // Default implementation - derived classes can override
             return ExitCodes.Success;
+        }
+
+        /// <summary>
+        /// Checks for deprecated features and displays appropriate warnings.
+        /// </summary>
+        /// <param name="args">The parsed command line arguments.</param>
+        /// <param name="context">The execution context.</param>
+        protected virtual void CheckDeprecatedFeatures(CommandLineArgs args, ShellExecutionContext context)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+            ArgumentNullException.ThrowIfNull(context);
+
+            // Get command help information for deprecation checking
+            var help = GetHelp();
+            var theme = GetTheme(context);
+
+            // Check if this command itself is deprecated
+            DeprecationChecker.CheckAndWarnDeprecatedCommand(this, context.Writer, theme);
+
+            // Check for deprecated options and arguments
+            DeprecationChecker.PerformComprehensiveDeprecationCheck(this, args, help, context.Writer, theme);
         }
 
         /// <summary>
