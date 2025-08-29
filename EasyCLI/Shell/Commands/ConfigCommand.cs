@@ -35,7 +35,7 @@ namespace EasyCLI.Shell.Commands
             ArgumentNullException.ThrowIfNull(help);
 
             help.Usage = "config [subcommand] [options]";
-            help.Description = "Manage XDG-compliant configuration files and display environment information. Supports system, user, and local configuration files with proper precedence.";
+            help.Description = "Manage XDG-compliant configuration files and display environment information. Supports system, user, and local configuration files with proper precedence. For environment variables, see docs/env-vars.md.";
 
             help.Arguments.Add(new CommandArgument("subcommand", "The configuration subcommand: show, get, set, env, paths", false));
 
