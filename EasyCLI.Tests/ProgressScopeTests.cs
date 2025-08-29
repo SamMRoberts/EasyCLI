@@ -15,7 +15,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Constructor_ImmediatelyShowsStartingMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
 
@@ -27,7 +27,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Constructor_WithTheme_AppliesTheme()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
             var theme = ConsoleThemes.Dark;
 
             using var scope = new ProgressScope(writer, "test operation", theme: theme);
@@ -48,7 +48,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Constructor_WithEmptyMessage_ThrowsArgumentException()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             Assert.Throws<ArgumentException>(() => new ProgressScope(writer, ""));
             Assert.Throws<ArgumentException>(() => new ProgressScope(writer, "   "));
@@ -58,7 +58,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Complete_ShowsSuccessMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             Thread.Sleep(50); // Allow spinner to start
@@ -72,7 +72,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Complete_WithCustomMessage_ShowsCustomMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             Thread.Sleep(50); // Allow spinner to start
@@ -86,7 +86,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Fail_ShowsErrorMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             Thread.Sleep(50); // Allow spinner to start
@@ -100,7 +100,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Fail_WithCustomMessage_ShowsCustomMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             Thread.Sleep(50); // Allow spinner to start
@@ -114,7 +114,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_IsActive_StartsTrue()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
 
@@ -125,7 +125,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_IsActive_FalseAfterComplete()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             scope.Complete();
@@ -137,7 +137,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_IsActive_FalseAfterFail()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             scope.Fail();
@@ -149,7 +149,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_UpdateMessage_ChangesDisplayedMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
             Thread.Sleep(50); // Allow spinner to start
@@ -164,7 +164,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_UpdateMessage_WithNullOrEmpty_ThrowsArgumentException()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = new ProgressScope(writer, "test operation");
 
@@ -176,7 +176,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_WithCancellationToken_RespectsToken()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
             using var cts = new CancellationTokenSource();
 
             // Cancel immediately
@@ -193,7 +193,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_CreateProgressScope_ReturnsValidScope()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             using var scope = writer.CreateProgressScope("test operation");
 
@@ -208,7 +208,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteStarting_ShowsStartingMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             writer.WriteStarting("deployment");
 
@@ -220,7 +220,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteCompleted_ShowsCompletionMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             writer.WriteCompleted("deployment");
 
@@ -232,7 +232,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteFailed_ShowsFailureMessage()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             writer.WriteFailed("deployment");
 
@@ -244,7 +244,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteFailed_WithErrorMessage_ShowsErrorDetails()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             writer.WriteFailed("deployment", "network timeout");
 
@@ -256,7 +256,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_EarlyFeedbackMethods_WithTheme_ApplyTheme()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
             var theme = ConsoleThemes.Dark;
 
             writer.WriteStarting("test", theme);

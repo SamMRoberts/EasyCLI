@@ -134,7 +134,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteProgressBar_WritesCorrectOutput()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             writer.WriteProgressBar(50, 100);
 
@@ -148,7 +148,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteProgressBarLine_WritesWithNewline()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
 
             writer.WriteProgressBarLine(25, 100);
 
@@ -161,7 +161,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_WriteProgressBar_WithTheme_AppliesTheme()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output);
+            var writer = new ConsoleWriter(output: output);
             var theme = ConsoleThemes.Dark;
 
             writer.WriteProgressBar(50, 100, theme: theme);
