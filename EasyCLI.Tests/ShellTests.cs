@@ -122,7 +122,7 @@ namespace EasyCLI.Tests
             Assert.Contains("Docs:    https://github.com/SamMRoberts/EasyCLI", all);
             
             // Should contain output contract reference for script authors
-            Assert.Contains("For scripts, use --plain or --json for stable output.", all);
+            Assert.Contains("Use --plain or --json for stable output", all);
             Assert.Contains("https://github.com/SamMRoberts/EasyCLI/blob/main/docs/output-contract.md", all);
         }
 

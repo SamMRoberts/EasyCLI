@@ -33,8 +33,13 @@ namespace EasyCLI.Shell
                 "  Issues:  https://github.com/SamMRoberts/EasyCLI/issues",
                 "  Docs:    https://github.com/SamMRoberts/EasyCLI",
                 "",
-                "For scripts, use --plain or --json for stable output.",
-                "See: https://github.com/SamMRoberts/EasyCLI/blob/main/docs/output-contract.md"
+                "AUTOMATION & SCRIPTING:",
+                "  • Use --plain or --json for stable output (required for scripts)",
+                "  • Check exit codes: 0=success, >0=failure",
+                "  • JSON format guaranteed stable within major versions",
+                "  • Plain format provides script-friendly text output",
+                "",
+                "Complete scripting guide: https://github.com/SamMRoberts/EasyCLI/blob/main/docs/output-contract.md"
             ];
         }
 
@@ -51,7 +56,8 @@ namespace EasyCLI.Shell
 
             foreach (string line in footerLines)
             {
-                if (line.StartsWith("SUPPORT:", StringComparison.Ordinal))
+                if (line.StartsWith("SUPPORT:", StringComparison.Ordinal) ||
+                    line.StartsWith("AUTOMATION & SCRIPTING:", StringComparison.Ordinal))
                 {
                     writer.WriteInfoLine(line, theme);
                 }
