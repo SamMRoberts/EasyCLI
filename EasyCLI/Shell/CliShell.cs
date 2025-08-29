@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using EasyCLI.Console;
-using EasyCLI.Formatting;
 using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell
@@ -112,16 +111,19 @@ namespace EasyCLI.Shell
             ArgumentNullException.ThrowIfNull(context);
             ArgumentNullException.ThrowIfNull(commands);
 
-            var commandList = commands.OrderBy(c => c.Name).ToList();
-            if (commandList.Count == 0) return;
+            List<ICliCommand> commandList = [.. commands.OrderBy(c => c.Name)];
+            if (commandList.Count == 0)
+            {
+                return;
+            }
 
             context.Writer.WriteInfoLine($"{categoryName}:", theme);
 
             if (compact && commandList.Count > 4)
             {
                 // Show first few commands with "and X more" hint
-                var displayed = commandList.Take(3).ToList();
-                foreach (var cmd in displayed)
+                List<ICliCommand> displayed = commandList.Take(3).ToList();
+                foreach (ICliCommand? cmd in displayed)
                 {
                     context.Writer.WriteLine($"  {cmd.Name,-12} {cmd.Description}");
                 }
@@ -133,7 +135,7 @@ namespace EasyCLI.Shell
                 if (commandList.Count <= 8)
                 {
                     // Simple list for small categories
-                    foreach (var cmd in commandList)
+                    foreach (ICliCommand? cmd in commandList)
                     {
                         context.Writer.WriteLine($"  {cmd.Name,-12} {cmd.Description}");
                     }
@@ -141,8 +143,8 @@ namespace EasyCLI.Shell
                 else
                 {
                     // Table format for larger categories
-                    var headers = new[] { "Command", "Description" };
-                    var rows = commandList.Select(cmd => new[] { cmd.Name, cmd.Description }).ToArray();
+                    string[] headers = ["Command", "Description"];
+                    string[][] rows = commandList.Select(cmd => new[] { cmd.Name, cmd.Description }).ToArray();
 
                     context.Writer.WriteTableSimple(headers, rows, headerStyle: theme.Heading, borderStyle: theme.Hint);
                 }
@@ -507,7 +509,7 @@ namespace EasyCLI.Shell
                 ctx.Writer.WriteLine($"Unknown command '{cmd}'", ConsoleStyles.FgRed);
 
                 // Suggest similar commands
-                var suggestions = _commands.Keys
+                string[] suggestions = _commands.Keys
                     .Where(k => LevenshteinDistance.Calculate(k, cmd) <= 2)
                     .OrderBy(k => LevenshteinDistance.Calculate(k, cmd))
                     .Take(3)
@@ -607,21 +609,20 @@ namespace EasyCLI.Shell
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var theme = ConsoleThemes.Dark;
+            ConsoleTheme theme = ConsoleThemes.Dark;
             context.Writer.WriteHeadingLine("Available Commands", theme);
             context.Writer.WriteLine("");
 
             // Group commands by category
-            var categorizedCommands = _commands.Values
+            List<IGrouping<string, ICliCommand>> categorizedCommands = [.. _commands.Values
                 .GroupBy(c => c.Category)
-                .OrderBy(g => g.Key)
-                .ToList();
+                .OrderBy(g => g.Key)];
 
             // Show essential categories in compact format
-            var essentialCategories = new[] { "Core", "General", "Utility" };
+            string[] essentialCategories = ["Core", "General", "Utility"];
             foreach (string category in essentialCategories)
             {
-                var categoryGroup = categorizedCommands.FirstOrDefault(g => g.Key == category);
+                IGrouping<string, ICliCommand>? categoryGroup = categorizedCommands.FirstOrDefault(g => g.Key == category);
                 if (categoryGroup != null)
                 {
                     ShowCategoryCommands(context, categoryGroup.Key, categoryGroup, theme, compact: true);
@@ -645,19 +646,18 @@ namespace EasyCLI.Shell
         {
             ArgumentNullException.ThrowIfNull(context);
 
-            var theme = ConsoleThemes.Dark;
+            ConsoleTheme theme = ConsoleThemes.Dark;
             context.Writer.WriteHeadingLine("Command Index - All Categories", theme);
             context.Writer.WriteLine("");
 
             // Group commands by category
-            var categorizedCommands = _commands.Values
+            List<IGrouping<string, ICliCommand>> categorizedCommands = [.. _commands.Values
                 .GroupBy(c => c.Category)
-                .OrderBy(g => g.Key)
-                .ToList();
+                .OrderBy(g => g.Key)];
 
             // Show all categories
             bool first = true;
-            foreach (var categoryGroup in categorizedCommands)
+            foreach (IGrouping<string, ICliCommand>? categoryGroup in categorizedCommands)
             {
                 if (!first)
                 {

@@ -49,6 +49,8 @@ public sealed class GreetCommand : ICliCommand
 {
     public string Name => "greet";
     public string Description => "Greets a user";
+    public string Category => "Utility"; // NEW: Command categorization for help organization
+    
     public Task<int> ExecuteAsync(ShellExecutionContext ctx, string[] args, CancellationToken ct)
     {
         string who = args.Length > 0 ? args[0] : "world";
@@ -64,6 +66,36 @@ shell.Register(new GreetCommand());
 await shell.RunAsync();
 ```
 Return non-zero codes for failure; shell displays `(exit code X)` automatically.
+
+#### Command Categorization
+**NEW**: Commands now support categorization for organized help display. The `Category` property groups commands in the enhanced help system:
+
+- **Core**: Essential shell operations (built-in: help, history, cd, clear, etc.)
+- **Utility**: Text processing, file operations, system utilities
+- **Configuration**: Settings and environment management  
+- **General**: Default category (used when Category property omitted)
+- **Custom**: Define domain-specific categories for your commands
+
+Enhanced help commands:
+- `help` - Shows categorized command overview with essential categories
+- `help all` - Shows full categorized command index
+- `help <command>` - Shows detailed help for specific command
+
+Example categorized help output:
+```
+Available Commands
+
+Core:
+  help         Show help or detailed help for a command
+  history      Show recent command history
+  ... and 4 more
+
+Utility:
+  greet        Greets a user
+  echo         Print text to the console with optional styling
+
+Use 'help all' to see all commands organized by category
+```
 
 **IMPORTANT - Reserved Command Names**: EasyCLI protects built-in commands by preventing registration of commands with reserved names. The following names are reserved and will throw `CommandNamingException` if used:
 - `help` - Show help or detailed help for a command
