@@ -65,6 +65,11 @@ namespace EasyCLI.Shell
         public bool IsPlainOutput => HasFlag("plain") || HasFlag("p");
 
         /// <summary>
+        /// Gets a value indicating whether telemetry consent was requested.
+        /// </summary>
+        public bool IsTelemetryConsent => HasFlag("telemetry-consent");
+
+        /// <summary>
         /// Gets a value indicating whether non-interactive mode was requested.
         /// </summary>
         public bool IsNoInput => HasFlag("no-input") || HasFlag("non-interactive");

@@ -2006,6 +2006,87 @@ This project follows [Semantic Versioning](https://semver.org/) (SemVer):
 - **PowerShell Cmdlets**: ✅ **Stable** - API considered stable for 1.0+
 - **Shell Framework**: ⚠️ **Experimental** - API may change before 1.0 stabilization
 
+## 🔒 Privacy
+
+**EasyCLI respects your privacy and does not collect any data by default.**
+
+### No Data Collection by Default
+
+EasyCLI operates with a **privacy-by-design** approach:
+
+- ✅ **Zero data collection** unless explicitly enabled
+- ✅ **No telemetry** sent to external services
+- ✅ **No tracking** of usage patterns
+- ✅ **No personal information** accessed or stored
+- ✅ **Full local operation** - all processing happens on your machine
+
+### Optional Telemetry (Disabled by Default)
+
+EasyCLI includes a **completely disabled** telemetry framework that:
+
+- 🔒 **Requires explicit consent** before any data collection
+- 🔒 **Must be manually enabled** via `--telemetry-consent` flag or configuration
+- 🔒 **Provides full transparency** about what would be collected
+- 🔒 **Allows easy opt-out** at any time
+
+#### What Would Be Collected (Only if Enabled)
+
+If you choose to enable telemetry, only **anonymous usage statistics** would be collected:
+
+- ✅ Command names and execution status (success/failure)
+- ✅ Error types and frequencies (no personal data)
+- ✅ Feature usage patterns (no file names or content)
+- ✅ Performance metrics (execution times)
+- ✅ Environment information (OS, .NET version, CI detection)
+
+#### What Is Never Collected
+
+EasyCLI will **never** collect:
+
+- ❌ File names, paths, or file contents
+- ❌ Personal information or identifiers
+- ❌ Command arguments or input data
+- ❌ Configuration values or secrets
+- ❌ Network requests or API calls
+- ❌ Any data without explicit consent
+
+#### How to Enable Telemetry (Optional)
+
+If you want to help improve EasyCLI by sharing anonymous usage data:
+
+```bash
+# Enable for single command
+your-cli-app --telemetry-consent
+
+# Enable in configuration file
+echo '{"telemetry_consent": true}' > ~/.yourapp/config.json
+```
+
+#### Privacy Notice Display
+
+Use the built-in privacy notice in your CLI applications:
+
+```csharp
+using EasyCLI.Telemetry;
+
+// Display comprehensive privacy information
+PrivacyNotices.DisplayPrivacyNotice(writer, theme);
+
+// Get current telemetry status
+var status = PrivacyNotices.GetTelemetryStatus(isEnabled, hasConsent);
+writer.WriteLine(status);
+```
+
+### Data Protection Commitment
+
+- **Transparency**: Full disclosure of any data collection
+- **Control**: User has complete control over data sharing
+- **Minimization**: Only collect necessary anonymous data
+- **Security**: No sensitive information ever collected
+- **Respect**: Honor user privacy choices and preferences
+
+**Your privacy is paramount. EasyCLI is designed to be completely private by default.**
+
 ## 📄 License
 
 > 🔧 **Maintainer Information**: _Verify license terms and update as needed_

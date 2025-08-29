@@ -34,5 +34,10 @@ namespace EasyCLI.Configuration
         /// Gets or sets the source of the use colors setting.
         /// </summary>
         public string UseColorsSource { get; set; } = "default";
+
+        /// <summary>
+        /// Gets or sets the source of the telemetry consent setting.
+        /// </summary>
+        public string TelemetryConsentSource { get; set; } = "default";
     }
 }

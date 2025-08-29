@@ -20,6 +20,7 @@ namespace EasyCLI.Tests
             Assert.Equal("Info", config.LogLevel);
             Assert.Equal("console", config.OutputFormat);
             Assert.True(config.UseColors);
+            Assert.False(config.TelemetryConsent);
             Assert.NotNull(config.Source);
         }
 
@@ -34,6 +35,7 @@ namespace EasyCLI.Tests
             Assert.Equal("default", source.LogLevelSource);
             Assert.Equal("default", source.OutputFormatSource);
             Assert.Equal("default", source.UseColorsSource);
+            Assert.Equal("default", source.TelemetryConsentSource);
         }
 
         [Fact]

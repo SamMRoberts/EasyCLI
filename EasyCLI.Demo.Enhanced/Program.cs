@@ -20,6 +20,7 @@ var shell = new CliShell(reader, writer, new ShellOptions
 
 // Register demo commands
 await shell.RegisterAsync(new DeleteCommand());
+await shell.RegisterAsync(new PrivacyCommand());
 
 writer.WriteLine("");
 writer.WriteInfoLine("Enhanced CLI Shell with best practices features:");

@@ -44,6 +44,13 @@ namespace EasyCLI.Configuration
         public bool UseColors { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the user has consented to telemetry collection.
+        /// Telemetry is disabled by default and requires explicit user consent.
+        /// </summary>
+        [JsonPropertyName("telemetry_consent")]
+        public bool TelemetryConsent { get; set; } = false;
+
+        /// <summary>
         /// Gets configuration source information for tracking where values came from.
         /// </summary>
         [JsonIgnore]
