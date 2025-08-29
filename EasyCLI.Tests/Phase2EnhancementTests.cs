@@ -40,11 +40,78 @@ namespace EasyCLI.Tests
         public void ConfigManager_InitializesWithCorrectPaths()
         {
             var manager = new ConfigManager("testapp");
-            var (globalPath, localPath) = manager.GetConfigPaths();
+            var (systemPath, userPath, localPath) = manager.GetConfigPaths();
 
-            Assert.Contains(".testapp", globalPath);
-            Assert.Contains("config.json", globalPath);
+            // System path should be /etc/testapp/config.json (platform-normalized)
+            var expectedSystemPath = Path.Combine("/etc", "testapp", "config.json");
+            Assert.Equal(expectedSystemPath, systemPath);
+            
+            // User path should be XDG-compliant
+            Assert.Contains("testapp", userPath);
+            Assert.Contains("config.json", userPath);
+            Assert.True(userPath.Contains(".config") || userPath.Contains("XDG_CONFIG_HOME"));
+            
+            // Local path should be in current directory
             Assert.Contains(".testapp.json", localPath);
+        }
+
+        [Fact]
+        public void ConfigManager_RespectsXdgConfigHome()
+        {
+            var originalXdgConfigHome = System.Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+            try
+            {
+                // Set a custom XDG_CONFIG_HOME
+                System.Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", "/tmp/custom-config");
+                
+                var manager = new ConfigManager("testapp");
+                var configSourceInfo = manager.GetConfigSourceInfo();
+
+                Assert.Equal("/tmp/custom-config", configSourceInfo.XdgConfigHome);
+                var expectedUserPath = Path.Combine("/tmp/custom-config", "testapp", "config.json");
+                Assert.Equal(expectedUserPath, configSourceInfo.UserPath);
+            }
+            finally
+            {
+                // Restore original value
+                System.Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", originalXdgConfigHome);
+            }
+        }
+
+        [Fact]
+        public void ConfigManager_FallsBackToDefaultConfig()
+        {
+            var originalXdgConfigHome = System.Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+            try
+            {
+                // Unset XDG_CONFIG_HOME to test fallback
+                System.Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", null);
+                
+                var manager = new ConfigManager("testapp");
+                var configSourceInfo = manager.GetConfigSourceInfo();
+
+                Assert.Null(configSourceInfo.XdgConfigHome);
+                var expectedPathSegment = Path.Combine(".config", "testapp", "config.json");
+                Assert.Contains(expectedPathSegment, configSourceInfo.UserPath);
+            }
+            finally
+            {
+                // Restore original value
+                System.Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", originalXdgConfigHome);
+            }
+        }
+
+        [Fact]
+        public void ConfigSourceInfo_ProvidesCorrectPrecedenceOrder()
+        {
+            var precedenceOrder = ConfigSourceInfo.PrecedenceOrder;
+
+            Assert.Equal(5, precedenceOrder.Length);
+            Assert.Contains("Command-line flags", precedenceOrder[0]);
+            Assert.Contains("Environment variables", precedenceOrder[1]);
+            Assert.Contains("Local project config", precedenceOrder[2]);
+            Assert.Contains("User config", precedenceOrder[3]);
+            Assert.Contains("System config", precedenceOrder[4]);
         }
 
         [Fact]
@@ -142,6 +209,69 @@ namespace EasyCLI.Tests
 
             Assert.NotNull(config);
             Assert.Equal("https://api.example.com", config.ApiUrl); // Default value
+        }
+
+        [Fact]
+        public async Task ConfigManager_AppliesEnvironmentVariables()
+        {
+            var originalApiUrl = System.Environment.GetEnvironmentVariable("EASYCLI_API_URL");
+            var originalTimeout = System.Environment.GetEnvironmentVariable("EASYCLI_TIMEOUT");
+            var originalEnableLogging = System.Environment.GetEnvironmentVariable("EASYCLI_ENABLE_LOGGING");
+
+            try
+            {
+                // Set environment variables
+                System.Environment.SetEnvironmentVariable("EASYCLI_API_URL", "https://env.example.com");
+                System.Environment.SetEnvironmentVariable("EASYCLI_TIMEOUT", "60");
+                System.Environment.SetEnvironmentVariable("EASYCLI_ENABLE_LOGGING", "false");
+
+                var manager = new ConfigManager("env-test-app");
+                var config = await manager.LoadConfigAsync<AppConfig>();
+
+                Assert.Equal("https://env.example.com", config.ApiUrl);
+                Assert.Equal(60, config.Timeout);
+                Assert.False(config.EnableLogging);
+                
+                // Check source tracking
+                Assert.Equal("environment", config.Source.ApiUrlSource);
+                Assert.Equal("environment", config.Source.TimeoutSource);
+                Assert.Equal("environment", config.Source.EnableLoggingSource);
+            }
+            finally
+            {
+                // Restore original values
+                System.Environment.SetEnvironmentVariable("EASYCLI_API_URL", originalApiUrl);
+                System.Environment.SetEnvironmentVariable("EASYCLI_TIMEOUT", originalTimeout);
+                System.Environment.SetEnvironmentVariable("EASYCLI_ENABLE_LOGGING", originalEnableLogging);
+            }
+        }
+
+        [Theory]
+        [InlineData("true", true)]
+        [InlineData("false", false)]
+        [InlineData("1", true)]
+        [InlineData("0", false)]
+        [InlineData("yes", true)]
+        [InlineData("no", false)]
+        [InlineData("TRUE", true)]
+        [InlineData("FALSE", false)]
+        public async Task ConfigManager_ParsesBooleanEnvironmentVariables(string envValue, bool expected)
+        {
+            var originalValue = System.Environment.GetEnvironmentVariable("EASYCLI_ENABLE_LOGGING");
+
+            try
+            {
+                System.Environment.SetEnvironmentVariable("EASYCLI_ENABLE_LOGGING", envValue);
+
+                var manager = new ConfigManager("bool-test-app");
+                var config = await manager.LoadConfigAsync<AppConfig>();
+
+                Assert.Equal(expected, config.EnableLogging);
+            }
+            finally
+            {
+                System.Environment.SetEnvironmentVariable("EASYCLI_ENABLE_LOGGING", originalValue);
+            }
         }
 
         [Fact]

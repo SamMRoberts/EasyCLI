@@ -470,7 +470,7 @@ EasyCLI v0.2.0 introduces a comprehensive CLI enhancement framework that impleme
 
 ### Configuration Management
 
-EasyCLI provides hierarchical configuration management with support for global and local JSON configuration files.
+EasyCLI provides XDG Base Directory specification-compliant configuration management with support for system, user, and local configuration files, plus environment variable overrides.
 
 #### Basic Configuration Usage
 
@@ -480,12 +480,22 @@ using EasyCLI.Configuration;
 // Initialize configuration manager for your app
 var configManager = new ConfigManager("myapp");
 
-// Load configuration (merges global and local configs)
+// Load configuration (merges all sources with proper precedence)
 var config = await configManager.LoadConfigAsync<AppConfig>();
 
-// Configuration file locations:
-// Global: ~/.myapp/config.json  
-// Local:  ./.myapp.json (project-specific, overrides global)
+// View configuration paths and precedence
+var info = configManager.GetConfigSourceInfo();
+```
+
+#### XDG-Compliant Configuration Locations
+
+```text
+Configuration Precedence (highest to lowest):
+1. Command-line flags
+2. Environment variables (EASYCLI_*)
+3. Local project config (./.myapp.json)
+4. User config ($XDG_CONFIG_HOME/myapp/config.json or ~/.config/myapp/config.json)
+5. System config (/etc/myapp/config.json)
 ```
 
 #### Configuration Class Example
@@ -500,11 +510,32 @@ public class AppConfig
 }
 ```
 
-#### Configuration Sources and Precedence
+#### Environment Variable Configuration
 
-1. **Default values** (hardcoded in config class)
-2. **Global config** (`~/.appname/config.json`)
-3. **Local config** (`./.appname.json`) - highest priority
+```bash
+# Environment variables follow EASYCLI_* pattern
+export EASYCLI_API_URL="https://env.example.com"
+export EASYCLI_TIMEOUT="60"
+export EASYCLI_ENABLE_LOGGING="false"
+
+# XDG Base Directory support
+export XDG_CONFIG_HOME="/custom/config/path"
+```
+
+#### Configuration Management Commands
+
+```bash
+# View configuration file paths and precedence
+config paths
+
+# Show current merged configuration
+config show
+
+# Get/set specific values
+config get api_url
+config set api_url "https://new.api.com" --user
+config set timeout 45 --local
+```
 
 ### Environment Detection
 

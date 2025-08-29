@@ -1,3 +1,4 @@
+using EasyCLI.Configuration;
 using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell.Commands
@@ -34,19 +35,22 @@ namespace EasyCLI.Shell.Commands
             ArgumentNullException.ThrowIfNull(help);
 
             help.Usage = "config [subcommand] [options]";
-            help.Description = "Manage configuration files and display environment information. Supports global and local configuration files.";
+            help.Description = "Manage XDG-compliant configuration files and display environment information. Supports system, user, and local configuration files with proper precedence.";
 
-            help.Arguments.Add(new CommandArgument("subcommand", "The configuration subcommand: show, get, set, env", false));
+            help.Arguments.Add(new CommandArgument("subcommand", "The configuration subcommand: show, get, set, env, paths", false));
 
-            help.Options.Add(new CommandOption("global", "g", "Operate on global configuration"));
+            help.Options.Add(new CommandOption("global", "g", "Operate on global configuration (deprecated, use --user)"));
+            help.Options.Add(new CommandOption("user", "u", "Operate on user configuration (XDG-compliant)"));
             help.Options.Add(new CommandOption("local", "l", "Operate on local configuration"));
+            help.Options.Add(new CommandOption("system", "s", "Operate on system configuration"));
             help.Options.Add(new CommandOption("json", "j", "Output in JSON format"));
             help.Options.Add(new CommandOption("plain", "p", "Output in plain text format"));
 
             help.Examples.Add(new CommandExample("config show", "Show current configuration"));
+            help.Examples.Add(new CommandExample("config paths", "Show configuration file paths and precedence"));
             help.Examples.Add(new CommandExample("config env", "Show environment information"));
             help.Examples.Add(new CommandExample("config get api_url", "Get a specific configuration value"));
-            help.Examples.Add(new CommandExample("config set api_url https://api.prod.com --global", "Set a global configuration value"));
+            help.Examples.Add(new CommandExample("config set api_url https://api.prod.com --user", "Set a user configuration value"));
             help.Examples.Add(new CommandExample("config --json", "Show configuration in JSON format"));
             help.Examples.Add(new CommandExample("config --plain", "Show configuration in plain text format"));
         }
@@ -335,7 +339,7 @@ namespace EasyCLI.Shell.Commands
                 return Task.FromResult(ExitCodes.GeneralError);
             }
 
-            (string globalPath, string localPath) = ConfigManager.GetConfigPaths();
+            ConfigSourceInfo configSourceInfo = ConfigManager.GetConfigSourceInfo();
 
             context.Writer.WriteHeadingLine("Configuration File Paths", theme);
             context.Writer.WriteLine("");
@@ -343,8 +347,9 @@ namespace EasyCLI.Shell.Commands
             string[][] pathData =
             [
                 ["Type", "Path", "Exists"],
-                ["Global", globalPath, File.Exists(globalPath).ToString()],
-                ["Local", localPath, File.Exists(localPath).ToString()]
+                ["System", configSourceInfo.SystemPath, configSourceInfo.SystemExists.ToString()],
+                ["User", configSourceInfo.UserPath, configSourceInfo.UserExists.ToString()],
+                ["Local", configSourceInfo.LocalPath, configSourceInfo.LocalExists.ToString()],
             ];
 
             context.Writer.WriteTableSimple(
@@ -352,6 +357,28 @@ namespace EasyCLI.Shell.Commands
                 pathData[1..],
                 headerStyle: theme.Heading,
                 borderStyle: theme.Hint);
+
+            // Show XDG information if available
+            if (!string.IsNullOrEmpty(configSourceInfo.XdgConfigHome))
+            {
+                context.Writer.WriteLine("");
+                context.Writer.WriteInfoLine($"XDG_CONFIG_HOME: {configSourceInfo.XdgConfigHome}", theme);
+            }
+            else
+            {
+                context.Writer.WriteLine("");
+                context.Writer.WriteInfoLine("XDG_CONFIG_HOME: not set (using default ~/.config)", theme);
+            }
+
+            // Show configuration precedence
+            context.Writer.WriteLine("");
+            context.Writer.WriteHeadingLine("Configuration Precedence", theme);
+            context.Writer.WriteLine("");
+
+            foreach (string precedence in ConfigSourceInfo.PrecedenceOrder)
+            {
+                context.Writer.WriteInfoLine($"  {precedence}", theme);
+            }
 
             Logger?.LogDebug("Configuration paths displayed successfully");
             return Task.FromResult(ExitCodes.Success);
