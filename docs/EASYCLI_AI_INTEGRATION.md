@@ -65,6 +65,20 @@ await shell.RunAsync();
 ```
 Return non-zero codes for failure; shell displays `(exit code X)` automatically.
 
+**IMPORTANT - Reserved Command Names**: EasyCLI protects built-in commands by preventing registration of commands with reserved names. The following names are reserved and will throw `CommandNamingException` if used:
+- `help` - Show help or detailed help for a command
+- `history` - Show recent command history  
+- `pwd` - Print working directory
+- `cd` - Change working directory
+- `clear` - Clear the screen
+- `complete` - List completions for a prefix
+- `exit` - Exit the shell (implicit, not registered but reserved)
+- `quit` - Quit the shell (implicit, not registered but reserved)
+- `echo` - Built-in echo command with enhanced features
+- `config` - Built-in configuration management command
+
+Additionally, duplicate command names (case-insensitive) will throw `CommandNamingException`. Choose unique, non-reserved command names for your custom commands.
+
 Avoid: Async void, blocking waits inside handlers, manual Console.* calls (use injected writer).
 
 ---
