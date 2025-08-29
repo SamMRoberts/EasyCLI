@@ -55,6 +55,16 @@ namespace EasyCLI.Shell
         public bool IsYes => HasFlag("yes") || HasFlag("y");
 
         /// <summary>
+        /// Gets a value indicating whether JSON output was requested.
+        /// </summary>
+        public bool IsJsonOutput => HasFlag("json") || HasFlag("j");
+
+        /// <summary>
+        /// Gets a value indicating whether plain text output was requested.
+        /// </summary>
+        public bool IsPlainOutput => HasFlag("plain") || HasFlag("p");
+
+        /// <summary>
         /// Checks if a flag is present.
         /// </summary>
         /// <param name="name">The flag name (without dashes).</param>
