@@ -7,7 +7,6 @@ namespace EasyCLI.Shell.Commands
     /// </summary>
     public class ConfigCommand : EnhancedCliCommand
     {
-        private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
         /// <summary>
         /// Gets the command name.
@@ -42,12 +41,14 @@ namespace EasyCLI.Shell.Commands
             help.Options.Add(new CommandOption("global", "g", "Operate on global configuration"));
             help.Options.Add(new CommandOption("local", "l", "Operate on local configuration"));
             help.Options.Add(new CommandOption("json", "j", "Output in JSON format"));
+            help.Options.Add(new CommandOption("plain", "p", "Output in plain text format"));
 
             help.Examples.Add(new CommandExample("config show", "Show current configuration"));
             help.Examples.Add(new CommandExample("config env", "Show environment information"));
             help.Examples.Add(new CommandExample("config get api_url", "Get a specific configuration value"));
             help.Examples.Add(new CommandExample("config set api_url https://api.prod.com --global", "Set a global configuration value"));
             help.Examples.Add(new CommandExample("config --json", "Show configuration in JSON format"));
+            help.Examples.Add(new CommandExample("config --plain", "Show configuration in plain text format"));
         }
 
         /// <summary>
@@ -89,13 +90,33 @@ namespace EasyCLI.Shell.Commands
                 return Task.FromResult(ExitCodes.GeneralError);
             }
 
-            if (args.HasFlag("json"))
+            IStructuredOutputFormatter formatter = StructuredOutputFormatterFactory.CreateFormatter(args);
+
+            if (formatter.FormatName == "json")
             {
-                string json = System.Text.Json.JsonSerializer.Serialize(Config, JsonOptions);
+                string json = formatter.FormatObject(Config);
                 context.Writer.WriteLine(json);
                 return Task.FromResult(ExitCodes.Success);
             }
 
+            if (formatter.FormatName == "plain")
+            {
+                (string, string)[] keyValues =
+                [
+                    ("API URL", Config.ApiUrl),
+                    ("Timeout", Config.Timeout.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                    ("Enable Logging", Config.EnableLogging.ToString()),
+                    ("Log Level", Config.LogLevel),
+                    ("Output Format", Config.OutputFormat),
+                    ("Use Colors", Config.UseColors.ToString()),
+                ];
+
+                string plainOutput = formatter.FormatKeyValues(keyValues);
+                context.Writer.WriteLine(plainOutput);
+                return Task.FromResult(ExitCodes.Success);
+            }
+
+            // Table format (default)
             context.Writer.WriteHeadingLine("Current Configuration", theme);
             context.Writer.WriteLine("");
 
@@ -131,13 +152,54 @@ namespace EasyCLI.Shell.Commands
                 return Task.FromResult(ExitCodes.GeneralError);
             }
 
-            if (args.HasFlag("json"))
+            IStructuredOutputFormatter formatter = StructuredOutputFormatterFactory.CreateFormatter(args);
+
+            if (formatter.FormatName == "json")
             {
-                string json = System.Text.Json.JsonSerializer.Serialize(Environment, JsonOptions);
+                string json = formatter.FormatObject(Environment);
                 context.Writer.WriteLine(json);
                 return Task.FromResult(ExitCodes.Success);
             }
 
+            if (formatter.FormatName == "plain")
+            {
+                List<(string key, string value)> keyValues =
+                [
+                    ("Platform", Environment.Platform),
+                    ("Interactive", Environment.IsInteractive.ToString()),
+                    ("CI Environment", Environment.IsContinuousIntegration.ToString()),
+                ];
+
+                if (Environment.IsContinuousIntegration && !string.IsNullOrEmpty(Environment.CiProvider))
+                {
+                    keyValues.Add(("CI Provider", Environment.CiProvider));
+                }
+
+                if (Environment.IsGitRepository)
+                {
+                    keyValues.Add(("Git Repository", "Yes"));
+                    if (!string.IsNullOrEmpty(Environment.GitBranch))
+                    {
+                        keyValues.Add(("Git Branch", Environment.GitBranch));
+                    }
+                }
+
+                if (Environment.IsDockerEnvironment)
+                {
+                    keyValues.Add(("Docker Container", "Yes"));
+                }
+
+                if (Environment.HasConfigFile && !string.IsNullOrEmpty(Environment.ConfigFile))
+                {
+                    keyValues.Add(("Config File", Environment.ConfigFile));
+                }
+
+                string plainOutput = formatter.FormatKeyValues(keyValues);
+                context.Writer.WriteLine(plainOutput);
+                return Task.FromResult(ExitCodes.Success);
+            }
+
+            // Table format (default)
             context.Writer.WriteHeadingLine("Environment Information", theme);
             context.Writer.WriteLine("");
 
