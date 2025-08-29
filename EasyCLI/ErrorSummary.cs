@@ -8,9 +8,6 @@ namespace EasyCLI
     /// </remarks>
     /// <param name="category">The error category.</param>
     /// <param name="errors">The errors in this category.</param>
-    public class ErrorSummary(BatchErrorCategory category, IReadOnlyList<CollectedError> errors)
-    {
-
         /// <summary>
         /// Gets the error category.
         /// </summary>
