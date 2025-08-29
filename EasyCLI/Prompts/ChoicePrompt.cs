@@ -29,7 +29,7 @@ namespace EasyCLI.Prompts
         /// <param name="default">The default value to use if the user provides no input.</param>
         /// <param name="keyReader">The key reader for interactive selection. If null, text-based selection is used.</param>
         public ChoicePrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IKeyReader? keyReader = null)
-            : base(prompt, writer, reader, options, @default)
+            : base(prompt, writer, reader, options, @default, !EqualityComparer<T>.Default.Equals(@default, default))
         {
             _choices = [.. choices];
             if (_choices.Count == 0)

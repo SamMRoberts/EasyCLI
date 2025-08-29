@@ -63,5 +63,11 @@ namespace EasyCLI.Prompts
         /// Gets or sets a value indicating whether filtering should match from the start of choice labels (true) or anywhere within them (false).
         /// </summary>
         public bool FilterMatchStartsWith { get; set; } = false; // if true use startswith else substring
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the prompt is running in non-interactive mode.
+        /// When true, prompts will immediately return defaults or fail if no default is available.
+        /// </summary>
+        public bool NonInteractive { get; set; } = false;
     }
 }

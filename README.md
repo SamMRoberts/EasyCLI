@@ -949,6 +949,47 @@ var choice = new ChoicePrompt<string>("Select option", choices, writer, reader, 
     .GetValue();
 ```
 
+### Non-Interactive Mode
+
+EasyCLI supports non-interactive mode for automation and CI/CD environments. When `--no-input` or `--non-interactive` flags are used, or when stdin is redirected, prompts will:
+
+- Use default values when available
+- Throw `InvalidOperationException` when no defaults are provided
+
+```csharp
+using EasyCLI.Environment;
+
+// Parse command line arguments
+var args = new CommandLineArgs(Environment.GetCommandLineArgs().Skip(1).ToArray());
+
+// Create environment-aware prompt options
+var options = EnvironmentDetector.CreatePromptOptions(args);
+
+// Prompts with defaults work in both interactive and non-interactive modes
+var name = new StringPrompt("Name", writer, reader, options, @default: "Anonymous")
+    .GetValue();
+
+// Prompts without defaults only work in interactive mode
+if (!options.NonInteractive)
+{
+    var age = new IntPrompt("Age", writer, reader, options).GetValue();
+}
+```
+
+**Command line usage:**
+```bash
+# Interactive mode (default)
+myapp
+
+# Non-interactive mode (explicit)
+myapp --no-input
+myapp --non-interactive
+
+# Non-interactive mode (environment detection)
+echo "data" | myapp          # stdin redirected
+CI=1 myapp                   # CI environment detected
+```
+
 ### Error Handling
 
 ```csharp

@@ -22,7 +22,7 @@ namespace EasyCLI.Prompts
         /// <param name="reader">The console reader to use for input.</param>
         /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
         public MultiSelectPrompt(string prompt, IEnumerable<Choice<T>> choices, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null)
-            : base(prompt, writer, reader, options, @default: null)
+            : base(prompt, writer, reader, options, @default: null, false)
         {
             _choices = [.. choices];
             if (_choices.Count == 0)
