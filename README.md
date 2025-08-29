@@ -28,6 +28,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 
 ### Core Framework
 - **🎨 ANSI Styling**: Rich console output with colors, themes, and environment-aware formatting
+- **⏳ Progress Indicators**: Progress bars, spinners, and early feedback patterns for long-running operations
 - **💬 Interactive Prompts**: String, integer, yes/no, hidden input, choice, and multi-select prompts with validation
 - **⚡ PowerShell Integration**: Ready-to-use cmdlets (`Write-Message`, `Write-Rule`, `Write-TitledBox`, `Read-Choice`)
 - **🐚 Persistent Shell**: Experimental interactive shell with custom command support and external process delegation
@@ -56,6 +57,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [ANSI Styling](#-ansi-styling)
+- [Progress Indicators](#-progress-indicators)
 - [Plain Mode](#-plain-mode)
 - [Interactive Prompts](#-interactive-prompts)
 - [CLI Enhancement Features](#-cli-enhancement-features)
@@ -378,6 +380,208 @@ if (writer.SupportsColor)
 else
 {
     writer.WriteLine("Running without colors");
+}
+```
+
+## ⏳ Progress Indicators
+
+EasyCLI provides comprehensive progress utilities for long-running operations, including progress bars, spinners, and early feedback patterns that follow CLI best practices.
+
+### Early Feedback Pattern
+
+Always provide feedback within 100ms for long-running operations:
+
+```csharp
+using EasyCLI.Extensions;
+
+// Immediate feedback (< 100ms)
+writer.WriteStarting("database backup");
+
+// ... perform long operation ...
+
+writer.WriteCompleted("database backup");
+// Or on failure:
+writer.WriteFailed("database backup", "Connection timeout");
+```
+
+### Progress Bars
+
+Use progress bars for determinate operations where you know the total progress:
+
+```csharp
+// Basic progress bar
+for (int i = 0; i <= totalFiles; i++)
+{
+    writer.Write("\r"); // Carriage return to overwrite
+    writer.WriteProgressBar(i, totalFiles);
+    
+    // Process file...
+    await ProcessFileAsync(files[i]);
+}
+writer.WriteLine(); // New line after completion
+
+// Custom progress bar
+writer.WriteProgressBarLine(75, 100, 
+    width: 50,
+    filledChar: '#',
+    emptyChar: '-',
+    showPercentage: true,
+    showFraction: true);
+// Output: [#######################-------------] 75% 75/100
+```
+
+### Spinner Animations
+
+Use spinners for indeterminate operations with unknown duration:
+
+```csharp
+// Basic spinner with automatic cleanup
+using (var scope = writer.CreateProgressScope("processing data"))
+{
+    await LongRunningOperationAsync();
+    scope.Complete(); // Shows success message
+}
+
+// Advanced spinner with message updates
+using (var scope = writer.CreateProgressScope("downloading files", 
+    ProgressScope.BrailleSpinnerChars)) // Smoother animation
+{
+    await DownloadAsync();
+    scope.UpdateMessage("verifying checksums");
+    await VerifyAsync();
+    scope.UpdateMessage("extracting files");
+    await ExtractAsync();
+    scope.Complete("All files processed successfully");
+}
+
+// Error handling
+using (var scope = writer.CreateProgressScope("connecting to server"))
+{
+    try
+    {
+        await ConnectAsync();
+        scope.Complete();
+    }
+    catch (Exception ex)
+    {
+        scope.Fail($"Connection failed: {ex.Message}");
+        throw;
+    }
+}
+```
+
+### Spinner Styles
+
+Choose from multiple built-in spinner styles:
+
+```csharp
+// Classic spinner: | / - \
+ProgressScope.DefaultSpinnerChars
+
+// Braille dots (smooth): ⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏
+ProgressScope.BrailleSpinnerChars
+
+// Dots: ⠁ ⠂ ⠄ ⡀ ⢀ ⠠ ⠐ ⠈
+ProgressScope.DotsSpinnerChars
+
+// Custom spinner
+var customChars = new[] { '◐', '◓', '◑', '◒' };
+using var scope = writer.CreateProgressScope("loading", customChars);
+```
+
+### Combined Patterns
+
+Start with indeterminate progress, then switch to determinate:
+
+```csharp
+// Phase 1: Unknown total (spinner)
+using (var scope = writer.CreateProgressScope("analyzing files"))
+{
+    var files = await DiscoverFilesAsync();
+    scope.Complete($"Found {files.Count} files to process");
+}
+
+// Phase 2: Known total (progress bar)
+for (int i = 0; i < files.Count; i++)
+{
+    writer.Write($"\rProcessing: ");
+    writer.WriteProgressBar(i + 1, files.Count, showFraction: true);
+    await ProcessFileAsync(files[i]);
+}
+writer.WriteLine();
+writer.WriteCompleted("file processing");
+```
+
+### Theming and Styling
+
+Progress indicators respect the same theming system as other EasyCLI components:
+
+```csharp
+var theme = ConsoleThemes.Dark;
+
+// Themed progress indicators
+writer.WriteStarting("deployment", theme);
+writer.WriteProgressBar(50, 100, theme: theme);
+using var scope = writer.CreateProgressScope("validation", theme: theme);
+
+// Automatic plain mode support
+// Progress indicators automatically adapt to NO_COLOR and --plain mode
+```
+
+### Best Practices
+
+1. **Early Feedback**: Always show starting message within 100ms
+2. **Choose Appropriate Indicator**: 
+   - Use progress bars when you know the total
+   - Use spinners for indeterminate operations
+3. **Meaningful Messages**: Provide clear, actionable status messages
+4. **Graceful Completion**: Always call `Complete()` or `Fail()` on spinners
+5. **Respect Environment**: Support NO_COLOR and automation detection
+6. **Cancellation Support**: Honor CancellationToken in long operations
+
+```csharp
+// Complete example following best practices
+public async Task DeployApplicationAsync(CancellationToken cancellationToken = default)
+{
+    var theme = ConsoleThemes.Dark;
+    
+    // Early feedback
+    writer.WriteStarting("deployment", theme);
+    
+    try
+    {
+        // Indeterminate phase
+        using (var scope = writer.CreateProgressScope("preparing deployment", theme: theme, cancellationToken: cancellationToken))
+        {
+            var packages = await PreparePackagesAsync(cancellationToken);
+            scope.Complete($"Prepared {packages.Count} packages");
+        }
+        
+        // Determinate phase
+        writer.WriteInfoLine("Uploading packages:", theme);
+        for (int i = 0; i < packages.Count; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            writer.Write("\r");
+            writer.WriteProgressBar(i + 1, packages.Count, showFraction: true, theme: theme);
+            
+            await UploadPackageAsync(packages[i], cancellationToken);
+        }
+        writer.WriteLine();
+        
+        writer.WriteCompleted("deployment", theme);
+    }
+    catch (OperationCanceledException)
+    {
+        writer.WriteFailed("deployment", "Operation was cancelled", theme);
+        throw;
+    }
+    catch (Exception ex)
+    {
+        writer.WriteFailed("deployment", ex.Message, theme);
+        throw;
+    }
 }
 ```
 
