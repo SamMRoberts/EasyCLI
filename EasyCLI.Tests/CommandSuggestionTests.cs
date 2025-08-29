@@ -1,4 +1,5 @@
 using EasyCLI.Console;
+using EasyCLI.Extensions;
 using EasyCLI.Shell;
 using Xunit;
 
