@@ -42,8 +42,9 @@ namespace EasyCLI.Tests
             var manager = new ConfigManager("testapp");
             var (systemPath, userPath, localPath) = manager.GetConfigPaths();
 
-            // System path should be /etc/testapp/config.json
-            Assert.Contains("/etc/testapp/config.json", systemPath);
+            // System path should be /etc/testapp/config.json (platform-normalized)
+            var expectedSystemPath = Path.Combine("/etc", "testapp", "config.json");
+            Assert.Equal(expectedSystemPath, systemPath);
             
             // User path should be XDG-compliant
             Assert.Contains("testapp", userPath);
@@ -67,7 +68,8 @@ namespace EasyCLI.Tests
                 var configSourceInfo = manager.GetConfigSourceInfo();
 
                 Assert.Equal("/tmp/custom-config", configSourceInfo.XdgConfigHome);
-                Assert.Contains("/tmp/custom-config/testapp/config.json", configSourceInfo.UserPath);
+                var expectedUserPath = Path.Combine("/tmp/custom-config", "testapp", "config.json");
+                Assert.Equal(expectedUserPath, configSourceInfo.UserPath);
             }
             finally
             {
@@ -89,7 +91,8 @@ namespace EasyCLI.Tests
                 var configSourceInfo = manager.GetConfigSourceInfo();
 
                 Assert.Null(configSourceInfo.XdgConfigHome);
-                Assert.Contains(".config/testapp/config.json", configSourceInfo.UserPath);
+                var expectedPathSegment = Path.Combine(".config", "testapp", "config.json");
+                Assert.Contains(expectedPathSegment, configSourceInfo.UserPath);
             }
             finally
             {
