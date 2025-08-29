@@ -1,5 +1,6 @@
 ﻿using EasyCLI;
 using EasyCLI.Console;
+using EasyCLI.Demo;
 using EasyCLI.Environment;
 using EasyCLI.Extensions;
 using EasyCLI.Formatting;
@@ -161,6 +162,11 @@ else
 	w.WriteTitleRule("Plain Mode Info", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
 	w.WriteInfoLine("💡 Try running this demo with --plain or -p flag to see plain output mode.");
 	w.WriteHintLine("Example: dotnet run --project EasyCLI.Demo --plain");
+	
+	// Demo ErrorCollector
+	w.WriteLine("");
+	w.WriteTitleRule("Error Collector Demo", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
+	ErrorCollectorDemo.Run();
 	
 	// Demo progress utilities
 	w.WriteLine("");

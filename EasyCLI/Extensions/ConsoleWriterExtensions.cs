@@ -153,5 +153,28 @@ namespace EasyCLI.Extensions
             ArgumentNullException.ThrowIfNull(w);
             w.WriteLine(message, (theme ?? DefaultTheme).Hint);
         }
+
+        /// <summary>
+        /// Writes an empty line to the console.
+        /// </summary>
+        /// <param name="w">The console writer to write to.</param>
+        public static void WriteLine(this IConsoleWriter w)
+        {
+            ArgumentNullException.ThrowIfNull(w);
+            w.WriteLine(string.Empty);
+        }
+
+        /// <summary>
+        /// Writes a horizontal rule line with a title to the console, styled appropriately.
+        /// </summary>
+        /// <param name="w">The console writer to write to.</param>
+        /// <param name="title">The title text to display.</param>
+        /// <param name="filler">The character to use for the rule portion.</param>
+        /// <param name="titleStyle">The style to apply to the title.</param>
+        public static void WriteRule(this IConsoleWriter w, string title, char filler = '─', ConsoleStyle? titleStyle = null)
+        {
+            ArgumentNullException.ThrowIfNull(w);
+            w.WriteTitleRule(title, filler: filler, titleStyle: titleStyle);
+        }
     }
 }
