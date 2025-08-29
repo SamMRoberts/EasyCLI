@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using EasyCLI.Console;
+using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell
 {
@@ -270,6 +271,16 @@ namespace EasyCLI.Shell
             {
                 return await cmd.ExecuteAsync(ctx, args, ct).ConfigureAwait(false);
             }
+
+            // Check if it might be a mistyped command and suggest alternatives
+            string? suggestion = LevenshteinDistance.FindBestMatch(name, _commands.Keys);
+            if (suggestion != null)
+            {
+                _writer.WriteLine($"Unknown command '{name}'", ConsoleStyles.FgRed);
+                _writer.WriteLine($"💡 Did you mean '{suggestion}'?", ConsoleStyles.FgYellow);
+                return ExitCodes.CommandNotFound;
+            }
+
             // External process fallback
             return await RunExternalAsync(name, args, ct).ConfigureAwait(false);
         }

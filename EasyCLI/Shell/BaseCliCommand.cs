@@ -1,3 +1,5 @@
+using EasyCLI.Shell.Utilities;
+
 namespace EasyCLI.Shell
 {
     /// <summary>
@@ -344,6 +346,38 @@ namespace EasyCLI.Shell
         protected virtual string[] GetCustomCompletions(ShellExecutionContext context, string prefix)
         {
             return [];
+        }
+
+        /// <summary>
+        /// Suggests similar valid options for a mistyped or unknown option.
+        /// </summary>
+        /// <param name="unknownOption">The unknown option that was provided.</param>
+        /// <param name="context">The execution context.</param>
+        /// <param name="availableOptions">Optional list of available options. If null, uses common CLI options.</param>
+        protected virtual void SuggestSimilarOption(string unknownOption, ShellExecutionContext context, IEnumerable<string>? availableOptions = null)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+
+            if (string.IsNullOrEmpty(unknownOption))
+            {
+                return;
+            }
+
+            // Default to common CLI options if no specific options provided
+            availableOptions ??= ["--help", "--verbose", "--quiet", "--dry-run", "--force", "--yes", "--config", "--output"];
+
+            string? suggestion = LevenshteinDistance.FindBestMatch(unknownOption, availableOptions);
+
+            if (!string.IsNullOrEmpty(suggestion))
+            {
+                ShowSuggestion(context, $"Did you mean '{suggestion}'?");
+            }
+            else
+            {
+                // If no close match found, show available options
+                IEnumerable<string> sortedOptions = availableOptions.OrderBy(o => o).Take(5);
+                ShowSuggestion(context, $"Available options: {string.Join(", ", sortedOptions)}");
+            }
         }
 
         /// <summary>

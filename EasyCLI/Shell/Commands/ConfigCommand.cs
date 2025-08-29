@@ -1,3 +1,5 @@
+using EasyCLI.Shell.Utilities;
+
 namespace EasyCLI.Shell.Commands
 {
     /// <summary>
@@ -297,7 +299,7 @@ namespace EasyCLI.Shell.Commands
             context.Writer.WriteErrorLine($"Unknown subcommand: {subcommand}", theme);
 
             string[] suggestions = ["show", "env", "get", "set", "paths"];
-            string? closest = suggestions.FirstOrDefault(s => s.StartsWith(subcommand.Length >= 2 ? subcommand[..2] : subcommand, StringComparison.Ordinal));
+            string? closest = LevenshteinDistance.FindBestMatch(subcommand, suggestions);
 
             if (!string.IsNullOrEmpty(closest))
             {
