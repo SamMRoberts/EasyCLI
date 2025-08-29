@@ -13,7 +13,7 @@ namespace EasyCLI.Tests
         {
             // Verify that all expected reserved names are present
             var reservedNames = CliShell.ReservedCommandNames;
-            
+
             Assert.Contains("help", reservedNames);
             Assert.Contains("history", reservedNames);
             Assert.Contains("pwd", reservedNames);
@@ -49,7 +49,7 @@ namespace EasyCLI.Tests
 
             // Act & Assert
             var exception = Assert.Throws<CommandNamingException>(() => shell.Register(testCommand));
-            
+
             Assert.Contains($"Command name '{reservedName}' is reserved", exception.Message);
             Assert.Contains("Reserved names:", exception.Message);
         }
@@ -76,7 +76,7 @@ namespace EasyCLI.Tests
             // Act & Assert
             var exception = await Assert.ThrowsAsync<CommandNamingException>(
                 async () => await shell.RegisterAsync(testCommand));
-            
+
             Assert.Contains($"Command name '{reservedName}' is reserved", exception.Message);
             Assert.Contains("Reserved names:", exception.Message);
         }
@@ -96,7 +96,7 @@ namespace EasyCLI.Tests
 
             // Assert - Second registration should fail
             var exception = Assert.Throws<CommandNamingException>(() => shell.Register(testCommand2));
-            
+
             Assert.Contains("Command 'test' is already registered", exception.Message);
             Assert.Contains("Each command name must be unique", exception.Message);
         }
@@ -117,7 +117,7 @@ namespace EasyCLI.Tests
             // Assert - Second registration should fail
             var exception = await Assert.ThrowsAsync<CommandNamingException>(
                 async () => await shell.RegisterAsync(testCommand2));
-            
+
             Assert.Contains("Command 'test' is already registered", exception.Message);
             Assert.Contains("Each command name must be unique", exception.Message);
         }
@@ -137,7 +137,7 @@ namespace EasyCLI.Tests
 
             // Assert - Second registration should fail due to case-insensitive comparison
             var exception = Assert.Throws<CommandNamingException>(() => shell.Register(testCommand2));
-            
+
             Assert.Contains("Command 'TEST' is already registered", exception.Message);
         }
 
@@ -157,7 +157,7 @@ namespace EasyCLI.Tests
 
             // Act & Assert
             var exception = Assert.Throws<CommandNamingException>(() => shell.Register(testCommand));
-            
+
             Assert.Contains("Command name cannot be null, empty, or whitespace", exception.Message);
         }
 
@@ -172,7 +172,7 @@ namespace EasyCLI.Tests
 
             // Act & Assert - Should not throw
             shell.Register(testCommand);
-            
+
             // Verify command was registered
             Assert.Contains("valid-command", shell.CommandNames);
         }
@@ -188,7 +188,7 @@ namespace EasyCLI.Tests
 
             // Act & Assert - Should not throw
             await shell.RegisterAsync(testCommand);
-            
+
             // Verify command was registered
             Assert.Contains("valid-command-async", shell.CommandNames);
         }

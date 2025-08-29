@@ -1,3 +1,4 @@
+using System.Reflection;
 using EasyCLI.Console;
 using EasyCLI.Shell;
 
@@ -54,10 +55,17 @@ namespace EasyCLI.Tests
             // Create a test command
             var testCommand = new TestCommand();
             var output = new StringWriter();
-            var context = new ShellExecutionContext(
-                new ConsoleReader(new StringReader("")),
-                new ConsoleWriter(enableColors: false, output)
-            );
+            var reader = new ConsoleReader(new StringReader(""));
+            var writer = new ConsoleWriter(enableColors: false, output);
+            var shell = new CliShell(reader, writer);
+
+            // Use reflection to create the internal ShellExecutionContext
+            var constructor = typeof(ShellExecutionContext).GetConstructor(
+                BindingFlags.NonPublic | BindingFlags.Instance,
+                null,
+                new[] { typeof(CliShell), typeof(IConsoleWriter), typeof(IConsoleReader) },
+                null);
+            var context = (ShellExecutionContext)constructor!.Invoke(new object[] { shell, writer, reader });
 
             // Execute with help flag
             int result = await testCommand.ExecuteAsync(context, new[] { "--help" }, CancellationToken.None);
@@ -73,7 +81,7 @@ namespace EasyCLI.Tests
         }
 
         // Simple test command for help footer testing
-        private class TestCommand : BaseCliCommand
+        private sealed class TestCommand : BaseCliCommand
         {
             public override string Name => "test";
             public override string Description => "A test command for footer verification";

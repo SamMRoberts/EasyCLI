@@ -1,7 +1,7 @@
+using System.Reflection;
 using EasyCLI.Console;
 using EasyCLI.Shell;
 using EasyCLI.Tests.Fakes;
-using System.Reflection;
 using Xunit;
 
 namespace EasyCLI.Tests
