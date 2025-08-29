@@ -44,7 +44,7 @@ namespace EasyCLI.Tests
         public void FindBestMatch_WithNullOrEmptyInput_ReturnsNull()
         {
             // Arrange
-            string[] candidates = ["help", "history"];
+            string[] candidates = new[] { "help", "history" };
 
             // Act & Assert
             Assert.Null(LevenshteinDistance.FindBestMatch(null, candidates));
