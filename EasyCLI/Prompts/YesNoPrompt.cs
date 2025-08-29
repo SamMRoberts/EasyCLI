@@ -5,7 +5,7 @@ namespace EasyCLI.Prompts
     /// <summary>
     /// A prompt that accepts yes/no input from the user, returning a boolean value.
     /// </summary>
-    public sealed class YesNoPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, bool? @default = null) : BasePrompt<bool>(prompt + " (y/n)", writer, reader, options, @default ?? default)
+    public sealed class YesNoPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, bool? @default = null) : BasePrompt<bool>(prompt + " (y/n)", writer, reader, options, @default ?? default, @default.HasValue)
     {
         /// <summary>
         /// Attempts to convert the raw user input to a boolean value based on yes/no responses.

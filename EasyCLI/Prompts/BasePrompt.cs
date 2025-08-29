@@ -14,8 +14,9 @@ namespace EasyCLI.Prompts
     /// <param name="reader">The console reader to use for input.</param>
     /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
     /// <param name="default">The default value to use if the user provides no input.</param>
+    /// <param name="hasDefault">Whether a default value was explicitly provided.</param>
     /// <param name="validator">The validator to use for validating user input.</param>
-    public abstract class BasePrompt<T>(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, IPromptValidator<T>? validator = null) : IUserPrompt<T>
+    public abstract class BasePrompt<T>(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, T? @default = default, bool hasDefault = false, IPromptValidator<T>? validator = null) : IUserPrompt<T>
     {
 
         // Exposed to derived prompts as protected read-only properties (preferred over protected fields per analyzers CA1051/SA1401)
@@ -51,11 +52,31 @@ namespace EasyCLI.Prompts
         public T? Default { get; } = @default;
 
         /// <summary>
+        /// Gets a value indicating whether a default value was explicitly provided.
+        /// </summary>
+        public bool HasDefault { get; } = hasDefault;
+
+        /// <summary>
         /// Prompts the user for input and returns the validated value.
         /// </summary>
         /// <returns>The validated value provided by the user.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when in non-interactive mode and no default value is available.</exception>
         public T GetValue()
         {
+            // Handle non-interactive mode
+            if (Options.NonInteractive)
+            {
+                if (HasDefault)
+                {
+                    return Default!;
+                }
+
+                // No default available in non-interactive mode - fail with clear error
+                throw new InvalidOperationException(
+                    $"Cannot prompt for '{Prompt}' in non-interactive mode. " +
+                    "Use --no-input only when all prompts have default values, or provide values via command-line arguments.");
+            }
+
             while (true)
             {
                 RenderPrompt();
@@ -71,7 +92,7 @@ namespace EasyCLI.Prompts
 
                 if (string.IsNullOrEmpty(raw))
                 {
-                    if (Default is not null)
+                    if (HasDefault)
                     {
                         return Default!;
                     }
@@ -114,7 +135,7 @@ namespace EasyCLI.Prompts
         {
             if (Options.CancelBehavior == PromptCancelBehavior.ReturnDefault)
             {
-                if (Default is not null)
+                if (HasDefault)
                 {
                     return Default!;
                 }
@@ -141,7 +162,7 @@ namespace EasyCLI.Prompts
                 Writer.Write(Prompt);
             }
 
-            if (Default is not null)
+            if (HasDefault)
             {
                 string defText = $"[{Default}]";
                 if (Options.DefaultStyle != null)

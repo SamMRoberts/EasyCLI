@@ -15,7 +15,7 @@ namespace EasyCLI.Prompts
     /// <param name="options">Options controlling prompt behavior. If null, default options are used.</param>
     /// <param name="default">The default value to use if the user provides no input.</param>
     /// <param name="validator">The validator to use for validating user input.</param>
-    public sealed class IntPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, int? @default = null, IPromptValidator<int>? validator = null) : BasePrompt<int>(prompt, writer, reader, options, @default ?? default, validator)
+    public sealed class IntPrompt(string prompt, IConsoleWriter writer, IConsoleReader reader, PromptOptions? options = null, int? @default = null, IPromptValidator<int>? validator = null) : BasePrompt<int>(prompt, writer, reader, options, @default ?? default, @default.HasValue, validator)
     {
 
         /// <summary>

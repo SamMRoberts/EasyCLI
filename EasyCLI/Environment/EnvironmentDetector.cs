@@ -271,5 +271,36 @@ namespace EasyCLI.Environment
                 }
             }
         }
+
+        /// <summary>
+        /// Determines if the application should run in non-interactive mode.
+        /// This considers both environment factors and explicit command-line flags.
+        /// </summary>
+        /// <param name="args">Command line arguments to check for explicit flags.</param>
+        /// <returns>True if the application should run in non-interactive mode.</returns>
+        public static bool IsNonInteractiveMode(Shell.CommandLineArgs? args = null)
+        {
+            // Check for explicit command-line flag first
+            if (args?.IsNoInput == true)
+            {
+                return true;
+            }
+
+            // Fall back to environment-based detection
+            return !IsInteractiveSession();
+        }
+
+        /// <summary>
+        /// Creates PromptOptions configured for the current environment.
+        /// </summary>
+        /// <param name="args">Command line arguments to check for explicit flags.</param>
+        /// <param name="baseOptions">Base options to extend, or null to use defaults.</param>
+        /// <returns>PromptOptions configured for non-interactive mode if applicable.</returns>
+        public static Prompts.PromptOptions CreatePromptOptions(Shell.CommandLineArgs? args = null, Prompts.PromptOptions? baseOptions = null)
+        {
+            Prompts.PromptOptions options = baseOptions ?? new Prompts.PromptOptions();
+            options.NonInteractive = IsNonInteractiveMode(args);
+            return options;
+        }
     }
 }

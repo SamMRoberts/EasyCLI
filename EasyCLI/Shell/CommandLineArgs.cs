@@ -65,6 +65,11 @@ namespace EasyCLI.Shell
         public bool IsPlainOutput => HasFlag("plain") || HasFlag("p");
 
         /// <summary>
+        /// Gets a value indicating whether non-interactive mode was requested.
+        /// </summary>
+        public bool IsNoInput => HasFlag("no-input") || HasFlag("non-interactive");
+
+        /// <summary>
         /// Checks if a flag is present.
         /// </summary>
         /// <param name="name">The flag name (without dashes).</param>

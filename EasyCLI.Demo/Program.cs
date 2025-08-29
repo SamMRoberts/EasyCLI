@@ -1,5 +1,6 @@
 ﻿using EasyCLI;
 using EasyCLI.Console;
+using EasyCLI.Environment;
 using EasyCLI.Extensions;
 using EasyCLI.Formatting;
 using EasyCLI.Prompts;
@@ -63,16 +64,70 @@ foreach (var (label, theme) in themes)
 	w.WriteLine("");
 }
 
-// Simple interactive prompt demo (only runs if input is interactive)
-if (!Console.IsInputRedirected)
-{
-	w.WriteTitleRule("Prompts", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
-	var reader = new ConsoleReader();
-	var namePrompt = new StringPrompt("Enter your name", w, reader, @default: "Anon");
-	var agePrompt = new IntPrompt("Enter age", w, reader, validator: new IntRangeValidator(1,120));
-	var confirmPrompt = new YesNoPrompt("Proceed", w, reader, @default: true);
-	var hidden = new HiddenInputPrompt("Enter secret (ESC to cancel)", w, reader, hiddenSource: new ConsoleHiddenInputSource(), @default: "***");
+// Enhanced prompt demo with non-interactive support
+w.WriteTitleRule("Prompts", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
+var reader = new ConsoleReader();
 
+// Create prompts with environment-aware options
+var promptOptions = EnvironmentDetector.CreatePromptOptions(parsedArgs);
+
+// Show the mode being used
+if (promptOptions.NonInteractive)
+{
+	w.WriteInfoLine("Non-interactive mode detected - using default values where available");
+}
+else
+{
+	w.WriteInfoLine("Interactive mode - prompts will ask for user input");
+}
+
+// Prompts with defaults - work in both modes
+var namePrompt = new StringPrompt("Enter your name", w, reader, promptOptions, @default: "Anon");
+var confirmPrompt = new YesNoPrompt("Proceed", w, reader, promptOptions, @default: true);
+var hidden = new HiddenInputPrompt("Enter secret", w, reader, hiddenSource: new ConsoleHiddenInputSource(), promptOptions, @default: "***");
+
+// Prompt without default - only works in interactive mode
+IntPrompt? agePrompt = null;
+if (!promptOptions.NonInteractive)
+{
+	agePrompt = new IntPrompt("Enter age", w, reader, promptOptions, validator: new IntRangeValidator(1, 120));
+}
+
+try
+{
+	string name = namePrompt.GetValue();
+	bool proceed = confirmPrompt.GetValue();
+	string secret = hidden.GetValue();
+	
+	int age = 25; // Default for non-interactive
+	if (agePrompt != null)
+	{
+		age = agePrompt.GetValue();
+	}
+	else if (promptOptions.NonInteractive)
+	{
+		w.WriteInfoLine("Age prompt skipped in non-interactive mode - using default: 25");
+	}
+	
+	if (proceed)
+	{
+		w.WriteSuccessLine($"Hello {name}, age {age}, secret received!");
+	}
+	else
+	{
+		w.WriteInfoLine("User declined to proceed");
+	}
+}
+catch (InvalidOperationException ex) when (ex.Message.Contains("non-interactive mode"))
+{
+	w.WriteErrorLine("Error in non-interactive mode:");
+	w.WriteErrorLine(ex.Message);
+	w.WriteHintLine("Tip: Use --no-input only when all prompts have default values, or provide input via command-line arguments");
+}
+
+// Only run complex prompts in interactive mode
+if (!promptOptions.NonInteractive)
+{
 	// Large choice list to show paging + filtering (provide key reader for interactive filtering)
 	var fruits = new List<Choice<string>>();
 	var fruitNames = new [] {"Apple","Apricot","Avocado","Banana","Blackberry","Blueberry","Cherry","Coconut","Cranberry","Date","Dragonfruit","Fig","Grape","Grapefruit","Guava","Kiwi","Lemon","Lime","Mango","Melon","Nectarine","Orange","Papaya","Peach","Pear","Pineapple","Plum","Pomegranate","Raspberry","Strawberry","Tangerine","Watermelon"};
@@ -83,13 +138,9 @@ if (!Console.IsInputRedirected)
 	var multiNumbers = new [] { new Choice<int>("One",1), new Choice<int>("Two",2), new Choice<int>("Three",3), new Choice<int>("Four",4) };
 	var multiPrompt = new MultiSelectPrompt<int>("Select numbers", multiNumbers, w, reader, options: new PromptOptions { EnablePaging = false });
 
-	string name = namePrompt.GetValue();
-	int age = agePrompt.GetValue();
-	bool proceed = confirmPrompt.GetValue();
-	string secret = hidden.GetValue();
 	string fruit = fruitPrompt.GetValue();
 	var nums = multiPrompt.GetValue();
-	w.WriteInfoLine($"Hello {name}, age {age}, proceed={proceed}, fruit={fruit}, secret={secret}, nums=[{string.Join(',', nums)}]");
+	w.WriteInfoLine($"Advanced prompts completed: fruit={fruit}, nums=[{string.Join(',', nums)}]");
 }
 
 // Plain mode demonstration
