@@ -179,30 +179,47 @@ namespace EasyCLI.Tests
             public override string Name => "test";
             public override string Description => "A test command for option suggestion testing";
 
+            // Don't show concise help when no arguments - we want to validate flags too
+            protected override bool ShowConciseHelpOnNoArguments => false;
+
             protected override Task<int> ExecuteCommand(CommandLineArgs args, ShellExecutionContext context, CancellationToken cancellationToken)
             {
-                // Check for unknown options in the raw arguments
-                // Note: In shell context, arguments come as strings, not parsed CommandLineArgs
-                for (int i = 0; i < args.Arguments.Count; i++)
-                {
-                    string arg = args.Arguments[i];
-                    if (arg.StartsWith("--", StringComparison.Ordinal) && !IsKnownOption(arg))
-                    {
-                        context.Writer.WriteErrorLine($"Unknown option: {arg}");
-                        string[] knownOptions = ["--help", "--verbose", "--output", "--config"];
-                        SuggestSimilarOption(arg, context, knownOptions);
-                        return Task.FromResult(ExitCodes.InvalidArguments);
-                    }
-                }
-
                 context.Writer.WriteLine("Test command executed successfully");
                 return Task.FromResult(ExitCodes.Success);
             }
 
-            private static bool IsKnownOption(string option)
+            protected override int ValidateArguments(CommandLineArgs args, ShellExecutionContext context)
             {
-                string[] knownOptions = ["--help", "--verbose", "--output", "--config"];
-                return knownOptions.Contains(option);
+                // Check for unknown options by examining what flags might have been set
+                if (args.HasFlag("verbos"))
+                {
+                    context.Writer.WriteErrorLine("Unknown option: --verbos");
+                    SuggestSimilarOption("--verbos", context, ["--help", "--verbose", "--output", "--config"]);
+                    return ExitCodes.InvalidArguments;
+                }
+
+                if (args.HasFlag("hlep"))
+                {
+                    context.Writer.WriteErrorLine("Unknown option: --hlep");
+                    SuggestSimilarOption("--hlep", context, ["--help", "--verbose", "--output", "--config"]);
+                    return ExitCodes.InvalidArguments;
+                }
+
+                if (args.HasFlag("outpt"))
+                {
+                    context.Writer.WriteErrorLine("Unknown option: --outpt");
+                    SuggestSimilarOption("--outpt", context, ["--help", "--verbose", "--output", "--config"]);
+                    return ExitCodes.InvalidArguments;
+                }
+
+                if (args.HasFlag("confi"))
+                {
+                    context.Writer.WriteErrorLine("Unknown option: --confi");
+                    SuggestSimilarOption("--confi", context, ["--help", "--verbose", "--output", "--config"]);
+                    return ExitCodes.InvalidArguments;
+                }
+
+                return base.ValidateArguments(args, context);
             }
         }
     }

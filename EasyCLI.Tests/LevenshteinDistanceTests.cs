@@ -47,7 +47,7 @@ namespace EasyCLI.Tests
             string[] candidates = new[] { "help", "history" };
 
             // Act & Assert
-            Assert.Null(LevenshteinDistance.FindBestMatch(null, candidates));
+            Assert.Null(LevenshteinDistance.FindBestMatch(null!, candidates));
             Assert.Null(LevenshteinDistance.FindBestMatch("", candidates));
         }
 
@@ -55,7 +55,7 @@ namespace EasyCLI.Tests
         public void FindBestMatch_WithNullCandidates_ReturnsNull()
         {
             // Act
-            string? result = LevenshteinDistance.FindBestMatch("test", null);
+            string? result = LevenshteinDistance.FindBestMatch("test", null!);
 
             // Assert
             Assert.Null(result);
