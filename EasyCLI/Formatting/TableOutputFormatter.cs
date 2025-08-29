@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 
 namespace EasyCLI.Formatting
@@ -29,7 +26,7 @@ namespace EasyCLI.Formatting
                 return string.Empty;
             }
 
-            var lines = ConsoleFormatting.BuildKeyValues(items);
+            IEnumerable<string> lines = ConsoleFormatting.BuildKeyValues(items);
             return string.Join("\n", lines);
         }
 
@@ -46,7 +43,7 @@ namespace EasyCLI.Formatting
                 return string.Empty;
             }
 
-            var lines = ConsoleFormatting.BuildSimpleTable(headers, rows ?? Enumerable.Empty<IReadOnlyList<string>>());
+            IEnumerable<string> lines = ConsoleFormatting.BuildSimpleTable(headers, rows ?? []);
             return string.Join("\n", lines);
         }
 
@@ -63,10 +60,10 @@ namespace EasyCLI.Formatting
             }
 
             // Try to convert to key-value pairs using reflection
-            var properties = data.GetType().GetProperties();
-            var keyValues = properties.Select(prop =>
+            System.Reflection.PropertyInfo[] properties = data.GetType().GetProperties();
+            IEnumerable<(string Name, string value)> keyValues = properties.Select(prop =>
             {
-                var value = prop.GetValue(data)?.ToString() ?? string.Empty;
+                string value = prop.GetValue(data)?.ToString() ?? string.Empty;
                 return (prop.Name, value);
             });
 

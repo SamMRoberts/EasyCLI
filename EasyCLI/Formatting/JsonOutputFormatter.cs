@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 
 namespace EasyCLI.Formatting
@@ -28,7 +26,7 @@ namespace EasyCLI.Formatting
                 return "{}";
             }
 
-            var dictionary = items.ToDictionary(
+            Dictionary<string, string> dictionary = items.ToDictionary(
                 item => item.key ?? string.Empty,
                 item => item.value ?? string.Empty);
 
@@ -48,12 +46,12 @@ namespace EasyCLI.Formatting
                 return "[]";
             }
 
-            var rowList = rows?.ToList() ?? new List<IReadOnlyList<string>>();
-            var result = new List<Dictionary<string, string>>();
+            List<IReadOnlyList<string>> rowList = rows?.ToList() ?? [];
+            List<Dictionary<string, string>> result = [];
 
-            foreach (var row in rowList)
+            foreach (IReadOnlyList<string>? row in rowList)
             {
-                var rowDict = new Dictionary<string, string>();
+                Dictionary<string, string> rowDict = [];
                 for (int i = 0; i < headers.Count && i < (row?.Count ?? 0); i++)
                 {
                     rowDict[headers[i]] = row?[i] ?? string.Empty;
@@ -71,12 +69,7 @@ namespace EasyCLI.Formatting
         /// <returns>JSON formatted output.</returns>
         public string FormatObject(object data)
         {
-            if (data == null)
-            {
-                return "null";
-            }
-
-            return JsonSerializer.Serialize(data, JsonOptions);
+            return data == null ? "null" : JsonSerializer.Serialize(data, JsonOptions);
         }
     }
 }

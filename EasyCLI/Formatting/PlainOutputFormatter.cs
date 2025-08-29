@@ -1,8 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-
 namespace EasyCLI.Formatting
 {
     /// <summary>
@@ -27,10 +22,10 @@ namespace EasyCLI.Formatting
                 return string.Empty;
             }
 
-            var sb = new StringBuilder();
-            foreach (var (key, value) in items)
+            StringBuilder sb = new();
+            foreach ((string key, string value) in items)
             {
-                sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"{key}: {value}");
+                _ = sb.AppendLine(System.Globalization.CultureInfo.InvariantCulture, $"{key}: {value}");
             }
 
             return sb.ToString().TrimEnd();
@@ -49,21 +44,21 @@ namespace EasyCLI.Formatting
                 return string.Empty;
             }
 
-            var sb = new StringBuilder();
-            var rowList = rows?.ToList() ?? new List<IReadOnlyList<string>>();
+            StringBuilder sb = new();
+            List<IReadOnlyList<string>> rowList = rows?.ToList() ?? [];
 
             // Calculate column widths
-            var columnWidths = new int[headers.Count];
+            int[] columnWidths = new int[headers.Count];
             for (int i = 0; i < headers.Count; i++)
             {
                 columnWidths[i] = headers[i]?.Length ?? 0;
             }
 
-            foreach (var row in rowList)
+            foreach (IReadOnlyList<string>? row in rowList)
             {
                 for (int i = 0; i < headers.Count && i < (row?.Count ?? 0); i++)
                 {
-                    var cellValue = row?[i] ?? string.Empty;
+                    string cellValue = row?[i] ?? string.Empty;
                     if (cellValue.Length > columnWidths[i])
                     {
                         columnWidths[i] = cellValue.Length;
@@ -74,21 +69,29 @@ namespace EasyCLI.Formatting
             // Format headers
             for (int i = 0; i < headers.Count; i++)
             {
-                if (i > 0) sb.Append("  ");
-                sb.Append((headers[i] ?? string.Empty).PadRight(columnWidths[i]));
+                if (i > 0)
+                {
+                    _ = sb.Append("  ");
+                }
+
+                _ = sb.Append((headers[i] ?? string.Empty).PadRight(columnWidths[i]));
             }
-            sb.AppendLine();
+            _ = sb.AppendLine();
 
             // Format rows
-            foreach (var row in rowList)
+            foreach (IReadOnlyList<string>? row in rowList)
             {
                 for (int i = 0; i < headers.Count; i++)
                 {
-                    if (i > 0) sb.Append("  ");
-                    var cellValue = (i < (row?.Count ?? 0)) ? (row?[i] ?? string.Empty) : string.Empty;
-                    sb.Append(cellValue.PadRight(columnWidths[i]));
+                    if (i > 0)
+                    {
+                        _ = sb.Append("  ");
+                    }
+
+                    string cellValue = (i < (row?.Count ?? 0)) ? (row?[i] ?? string.Empty) : string.Empty;
+                    _ = sb.Append(cellValue.PadRight(columnWidths[i]));
                 }
-                sb.AppendLine();
+                _ = sb.AppendLine();
             }
 
             return sb.ToString().TrimEnd();
@@ -107,10 +110,10 @@ namespace EasyCLI.Formatting
             }
 
             // Try to convert to key-value pairs using reflection
-            var properties = data.GetType().GetProperties();
-            var keyValues = properties.Select(prop =>
+            System.Reflection.PropertyInfo[] properties = data.GetType().GetProperties();
+            IEnumerable<(string Name, string value)> keyValues = properties.Select(prop =>
             {
-                var value = prop.GetValue(data)?.ToString() ?? string.Empty;
+                string value = prop.GetValue(data)?.ToString() ?? string.Empty;
                 return (prop.Name, value);
             });
 

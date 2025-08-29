@@ -1,4 +1,3 @@
-using EasyCLI.Formatting;
 using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell.Commands
@@ -91,7 +90,7 @@ namespace EasyCLI.Shell.Commands
                 return Task.FromResult(ExitCodes.GeneralError);
             }
 
-            var formatter = StructuredOutputFormatterFactory.CreateFormatter(args);
+            IStructuredOutputFormatter formatter = StructuredOutputFormatterFactory.CreateFormatter(args);
 
             if (formatter.FormatName == "json")
             {
@@ -102,15 +101,15 @@ namespace EasyCLI.Shell.Commands
 
             if (formatter.FormatName == "plain")
             {
-                var keyValues = new[]
-                {
+                (string, string)[] keyValues =
+                [
                     ("API URL", Config.ApiUrl),
                     ("Timeout", Config.Timeout.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                     ("Enable Logging", Config.EnableLogging.ToString()),
                     ("Log Level", Config.LogLevel),
                     ("Output Format", Config.OutputFormat),
                     ("Use Colors", Config.UseColors.ToString()),
-                };
+                ];
 
                 string plainOutput = formatter.FormatKeyValues(keyValues);
                 context.Writer.WriteLine(plainOutput);
@@ -153,7 +152,7 @@ namespace EasyCLI.Shell.Commands
                 return Task.FromResult(ExitCodes.GeneralError);
             }
 
-            var formatter = StructuredOutputFormatterFactory.CreateFormatter(args);
+            IStructuredOutputFormatter formatter = StructuredOutputFormatterFactory.CreateFormatter(args);
 
             if (formatter.FormatName == "json")
             {
@@ -164,12 +163,12 @@ namespace EasyCLI.Shell.Commands
 
             if (formatter.FormatName == "plain")
             {
-                var keyValues = new List<(string key, string value)>
-                {
+                List<(string key, string value)> keyValues =
+                [
                     ("Platform", Environment.Platform),
                     ("Interactive", Environment.IsInteractive.ToString()),
                     ("CI Environment", Environment.IsContinuousIntegration.ToString()),
-                };
+                ];
 
                 if (Environment.IsContinuousIntegration && !string.IsNullOrEmpty(Environment.CiProvider))
                 {
