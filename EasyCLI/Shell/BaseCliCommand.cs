@@ -252,6 +252,9 @@ namespace EasyCLI.Shell
                 }
             }
 
+            // Scripting guidance section
+            WriteScriptingGuidance(context, theme);
+
             // Standard footer with support paths and version
             HelpFooter.WriteFooter(context.Writer, theme);
         }
@@ -309,6 +312,30 @@ namespace EasyCLI.Shell
 
             ConsoleTheme theme = GetTheme(context);
             context.Writer.WriteHintLine($"💡 {suggestion}", theme);
+        }
+
+        /// <summary>
+        /// Writes scripting guidance section to help output.
+        /// </summary>
+        /// <param name="context">The execution context.</param>
+        /// <param name="theme">The console theme to use.</param>
+        protected virtual void WriteScriptingGuidance(ShellExecutionContext context, ConsoleTheme theme)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+
+            context.Writer.WriteInfoLine("SCRIPTING:", theme);
+            context.Writer.WriteLine("  For automation and scripts, use explicit output formats:");
+            context.Writer.WriteLine($"    {Name} --json    # Machine-readable JSON output");
+            context.Writer.WriteLine($"    {Name} --plain   # Script-friendly plain text");
+            context.Writer.WriteLine("");
+            context.Writer.WriteLine("  Handle errors properly in scripts:");
+            context.Writer.WriteLine($"    if ! result=$({Name} --json 2>/dev/null); then");
+            context.Writer.WriteLine("      echo \"Command failed with exit code $?\"");
+            context.Writer.WriteLine("      exit 1");
+            context.Writer.WriteLine("    fi");
+            context.Writer.WriteLine("");
+            context.Writer.WriteHintLine("  Default table format may change between versions - avoid in scripts", theme);
+            context.Writer.WriteLine("");
         }
 
         /// <summary>
