@@ -865,15 +865,75 @@ EasyCLI includes an experimental persistent shell that allows users to enter an 
 
 The shell includes essential commands out of the box:
 
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `help` | `?` | List commands or show command details |
-| `history` | `hist` | Display recent command history |
-| `pwd` | | Print current working directory |
-| `cd <dir>` | | Change working directory |
-| `clear` | `cls` | Clear the screen |
-| `complete <prefix>` | | List command name completions |
-| `exit` / `quit` | | Leave the shell (Ctrl+D also works) |
+| Command | Category | Description |
+|---------|----------|-------------|
+| `help` | Core | **Enhanced categorized help system** - Shows commands organized by category |
+| `help all` | Core | Show comprehensive categorized command index |
+| `help <command>` | Core | Display detailed help for specific command |
+| `history` | Core | Display recent command history |
+| `pwd` | Core | Print current working directory |
+| `cd <dir>` | Core | Change working directory |
+| `clear` | Core | Clear the screen |
+| `complete <prefix>` | Core | List command name completions |
+| `exit` / `quit` | Core | Leave the shell (Ctrl+D also works) |
+
+### Command Categorization
+
+EasyCLI now supports **command categorization** for better organization and discoverability:
+
+#### Category System
+- **Core**: Essential shell commands (help, history, cd, etc.)
+- **Utility**: Text processing and utility commands (echo, etc.)
+- **Configuration**: Settings and environment management
+- **General**: Default category for custom commands
+- **Custom Categories**: Commands can define their own categories
+
+#### Enhanced Help System
+The help system has been redesigned with categorization:
+
+```bash
+# Compact categorized view
+myapp> help
+Available Commands
+
+Core:
+  help         Show help or detailed help for a command
+  history      Show recent command history
+  cd           Change working directory
+  ... and 3 more
+
+Utility:
+  echo         Print text to the console with optional styling
+
+Use 'help all' to see all commands organized by category
+Use 'help <command>' for detailed information about a specific command
+
+# Full categorized index
+myapp> help all
+Command Index - All Categories
+
+Core:
+  help         Show help or detailed help for a command
+  history      Show recent command history
+  pwd          Print working directory
+  cd           Change working directory
+  clear        Clear the screen
+  complete     List completions for a prefix
+
+Utility:
+  echo         Print text to the console with optional styling
+
+Configuration:
+  config       Manage application configuration and show environment information
+
+# Specific command help
+myapp> help echo
+echo - Print text to the console with optional styling
+
+USAGE:
+  echo [options] <text...>
+...
+```
 
 ### Quick Start
 
@@ -1022,6 +1082,7 @@ public class StatusCommand : ICliCommand
 {
     public string Name => "status";
     public string Description => "Show application status";
+    public string Category => "Utility"; // NEW: Command categorization
 
     public Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken ct)
     {
@@ -1041,6 +1102,17 @@ public class StatusCommand : ICliCommand
     }
 }
 ```
+
+#### Command Categories
+Commands can specify their category for organized help display:
+
+- **Core**: Essential shell operations (help, history, cd)
+- **Utility**: Text processing, file operations, system tools
+- **Configuration**: Settings and environment management
+- **General**: Default category (can be omitted)
+- **Custom**: Define your own categories for domain-specific commands
+
+The enhanced help system automatically groups commands by category, making large command sets more discoverable and user-friendly.
 
 ### External Process Integration
 

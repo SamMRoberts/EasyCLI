@@ -99,6 +99,59 @@ namespace EasyCLI.Shell
         }
 
         /// <summary>
+        /// Shows commands for a specific category.
+        /// </summary>
+        /// <param name="context">The shell execution context.</param>
+        /// <param name="categoryName">The name of the category.</param>
+        /// <param name="commands">The commands in the category.</param>
+        /// <param name="theme">The console theme to use.</param>
+        /// <param name="compact">Whether to use compact display format.</param>
+        private static void ShowCategoryCommands(ShellExecutionContext context, string categoryName, IEnumerable<ICliCommand> commands, ConsoleTheme theme, bool compact)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+            ArgumentNullException.ThrowIfNull(commands);
+
+            List<ICliCommand> commandList = [.. commands.OrderBy(c => c.Name)];
+            if (commandList.Count == 0)
+            {
+                return;
+            }
+
+            context.Writer.WriteInfoLine($"{categoryName}:", theme);
+
+            if (compact && commandList.Count > 6)
+            {
+                // Show first few commands with "and X more" hint
+                List<ICliCommand> displayed = [.. commandList.Take(4)];
+                foreach (ICliCommand? cmd in displayed)
+                {
+                    context.Writer.WriteLine($"  {cmd.Name,-12} {cmd.Description}");
+                }
+                context.Writer.WriteHintLine($"  ... and {commandList.Count - 4} more", theme);
+            }
+            else
+            {
+                // Show all commands, potentially in table format for better organization
+                if (commandList.Count <= 8)
+                {
+                    // Simple list for small categories
+                    foreach (ICliCommand? cmd in commandList)
+                    {
+                        context.Writer.WriteLine($"  {cmd.Name,-12} {cmd.Description}");
+                    }
+                }
+                else
+                {
+                    // Table format for larger categories
+                    string[] headers = ["Command", "Description"];
+                    string[][] rows = [.. commandList.Select(cmd => new[] { cmd.Name, cmd.Description })];
+
+                    context.Writer.WriteTableSimple(headers, rows, headerStyle: theme.Heading, borderStyle: theme.Hint);
+                }
+            }
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="CliShell"/> class.
         /// </summary>
         /// <param name="reader">The console reader used for input.</param>
@@ -433,23 +486,39 @@ namespace EasyCLI.Shell
             {
                 if (args.Length == 0)
                 {
-                    foreach (string name in _commands.Keys.OrderBy(k => k))
-                    {
-                        ICliCommand c = _commands[name];
-                        ctx.Writer.WriteLine($"{c.Name}\t{c.Description}");
-                    }
-
-                    // Add standard footer to general help
-                    HelpFooter.WriteFooter(ctx.Writer, ConsoleThemes.Dark);
+                    ShowCategorizedHelp(ctx);
                     return Task.FromResult(0);
                 }
+
                 string cmd = args[0];
+
+                // Handle "help all" for full categorized index
+                if (string.Equals(cmd, "all", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowFullCategorizedHelp(ctx);
+                    return Task.FromResult(0);
+                }
+
+                // Handle specific command help
                 if (_commands.TryGetValue(cmd, out ICliCommand? target))
                 {
-                    ctx.Writer.WriteLine($"{target.Name}: {target.Description}");
-                    return Task.FromResult(0);
+                    // Try to trigger help via ExecuteAsync with --help flag
+                    return target.ExecuteAsync(ctx, ["--help"], ct);
                 }
+
                 ctx.Writer.WriteLine($"Unknown command '{cmd}'", ConsoleStyles.FgRed);
+
+                // Suggest similar commands
+                string[] suggestions = [.. _commands.Keys
+                    .Where(k => LevenshteinDistance.Calculate(k, cmd) <= 2)
+                    .OrderBy(k => LevenshteinDistance.Calculate(k, cmd))
+                    .Take(3)];
+
+                if (suggestions.Length > 0)
+                {
+                    ctx.Writer.WriteLine($"Did you mean: {string.Join(", ", suggestions)}");
+                }
+
                 return Task.FromResult(1);
             }),
                 cancellationToken).ConfigureAwait(false);
@@ -531,11 +600,99 @@ namespace EasyCLI.Shell
             await RegisterBuiltInAsync(new Commands.ConfigCommand(), cancellationToken).ConfigureAwait(false);
         }
 
-        private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler) : ICliCommand
+        /// <summary>
+        /// Shows a categorized, compact help display.
+        /// </summary>
+        /// <param name="context">The shell execution context.</param>
+        private void ShowCategorizedHelp(ShellExecutionContext context)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+
+            ConsoleTheme theme = ConsoleThemes.Dark;
+            context.Writer.WriteHeadingLine("Available Commands", theme);
+            context.Writer.WriteLine("");
+
+            // Group commands by category
+            List<IGrouping<string, ICliCommand>> categorizedCommands = [.. _commands.Values
+                .GroupBy(c => c.Category)
+                .OrderBy(g => g.Key)];
+
+            // Show essential categories first, then others if there aren't too many total
+            string[] essentialCategories = ["Core", "General", "Utility"];
+            HashSet<string> shownCategories = [];
+
+            // Show essential categories that exist
+            foreach (string category in essentialCategories)
+            {
+                IGrouping<string, ICliCommand>? categoryGroup = categorizedCommands.FirstOrDefault(g => g.Key == category);
+                if (categoryGroup != null)
+                {
+                    ShowCategoryCommands(context, categoryGroup.Key, categoryGroup, theme, compact: true);
+                    _ = shownCategories.Add(category);
+                }
+            }
+
+            // Show remaining categories if total count is reasonable (≤ 5 categories)
+            if (categorizedCommands.Count <= 5)
+            {
+                foreach (IGrouping<string, ICliCommand> categoryGroup in categorizedCommands)
+                {
+                    if (!shownCategories.Contains(categoryGroup.Key))
+                    {
+                        ShowCategoryCommands(context, categoryGroup.Key, categoryGroup, theme, compact: true);
+                    }
+                }
+            }
+
+            // Show hint for full help
+            context.Writer.WriteLine("");
+            context.Writer.WriteHintLine("Use 'help all' to see all commands organized by category", theme);
+            context.Writer.WriteHintLine("Use 'help <command>' for detailed information about a specific command", theme);
+
+            // Add standard footer
+            HelpFooter.WriteFooter(context.Writer, theme);
+        }
+
+        /// <summary>
+        /// Shows the full categorized help index.
+        /// </summary>
+        /// <param name="context">The shell execution context.</param>
+        private void ShowFullCategorizedHelp(ShellExecutionContext context)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+
+            ConsoleTheme theme = ConsoleThemes.Dark;
+            context.Writer.WriteHeadingLine("Command Index - All Categories", theme);
+            context.Writer.WriteLine("");
+
+            // Group commands by category
+            List<IGrouping<string, ICliCommand>> categorizedCommands = [.. _commands.Values
+                .GroupBy(c => c.Category)
+                .OrderBy(g => g.Key)];
+
+            // Show all categories
+            bool first = true;
+            foreach (IGrouping<string, ICliCommand>? categoryGroup in categorizedCommands)
+            {
+                if (!first)
+                {
+                    context.Writer.WriteLine("");
+                }
+                ShowCategoryCommands(context, categoryGroup.Key, categoryGroup, theme, compact: false);
+                first = false;
+            }
+
+            // Add standard footer
+            context.Writer.WriteLine("");
+            HelpFooter.WriteFooter(context.Writer, theme);
+        }
+
+        private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler, string category = "Core") : ICliCommand
         {
             private readonly Func<ShellExecutionContext, string[], CancellationToken, Task<int>> _handler = handler;
             public string Name { get; } = name;
             public string Description { get; } = description;
+            public string Category { get; } = category;
             public Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken)
             {
                 return _handler(context, args, cancellationToken);

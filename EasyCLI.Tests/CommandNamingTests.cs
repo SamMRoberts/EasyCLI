@@ -251,6 +251,7 @@ namespace EasyCLI.Tests
 
             public string Name { get; }
             public string Description { get; }
+            public string Category => "Test";
 
             public Task<int> ExecuteAsync(ShellExecutionContext context, string[] args, CancellationToken cancellationToken)
             {
