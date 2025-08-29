@@ -121,5 +121,44 @@ namespace EasyCLI.Tests
             Assert.Contains("Issues:  https://github.com/SamMRoberts/EasyCLI/issues", all);
             Assert.Contains("Docs:    https://github.com/SamMRoberts/EasyCLI", all);
         }
+
+        [Fact]
+        public async Task EchoCommand_NoArguments_ShowsConciseHelp()
+        {
+            var input = new StringReader("echo\nexit\n");
+            var output = new StringWriter();
+            var shell = new CliShell(new ConsoleReader(input), new ConsoleWriter(enableColors: false, output), new ShellOptions { Prompt = "test>" });
+
+            int code = await shell.RunAsync();
+            Assert.Equal(0, code);
+            string all = output.ToString();
+
+            // Should show concise help instead of error
+            Assert.DoesNotContain("Error: No text specified to echo", all);
+            Assert.Contains("echo - Print text to the console with optional styling", all);
+            Assert.Contains("USAGE:", all);
+            Assert.Contains("echo [options] <text...>", all);
+            Assert.Contains("EXAMPLES:", all);
+            Assert.Contains("For more information, run: echo --help", all);
+        }
+
+        [Fact]
+        public async Task ConfigCommand_NoArguments_ShowsConciseHelp()
+        {
+            var input = new StringReader("config\nexit\n");
+            var output = new StringWriter();
+            var shell = new CliShell(new ConsoleReader(input), new ConsoleWriter(enableColors: false, output), new ShellOptions { Prompt = "test>" });
+
+            int code = await shell.RunAsync();
+            Assert.Equal(0, code);
+            string all = output.ToString();
+
+            // Should show concise help for config command
+            Assert.Contains("config - Manage application configuration and show environment information", all);
+            Assert.Contains("USAGE:", all);
+            Assert.Contains("config [subcommand] [options]", all);
+            Assert.Contains("EXAMPLES:", all);
+            Assert.Contains("For more information, run: config --help", all);
+        }
     }
 }

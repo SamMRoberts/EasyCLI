@@ -16,6 +16,12 @@ namespace EasyCLI.Shell
         public abstract string Description { get; }
 
         /// <summary>
+        /// Gets a value indicating whether to show concise help when no arguments are provided
+        /// instead of validation errors. Default is true for better CLI UX.
+        /// </summary>
+        protected virtual bool ShowConciseHelpOnNoArguments => true;
+
+        /// <summary>
         /// Confirms a dangerous operation with the user, respecting automation flags and environment context.
         /// </summary>
         /// <param name="operation">Description of the operation to be performed.</param>
@@ -81,6 +87,14 @@ namespace EasyCLI.Shell
                 if (parsedArgs.IsHelpRequested)
                 {
                     ShowHelp(context);
+                    return ExitCodes.Success;
+                }
+
+                // Check for no arguments and show concise help if enabled
+                // Show concise help when there are no positional arguments
+                if (ShowConciseHelpOnNoArguments && parsedArgs.Arguments.Count == 0)
+                {
+                    ShowConciseHelp(context);
                     return ExitCodes.Success;
                 }
 
@@ -232,6 +246,48 @@ namespace EasyCLI.Shell
 
             // Standard footer with support paths and version
             HelpFooter.WriteFooter(context.Writer, theme);
+        }
+
+        /// <summary>
+        /// Shows concise help when no arguments are provided.
+        /// </summary>
+        /// <param name="context">The execution context.</param>
+        protected virtual void ShowConciseHelp(ShellExecutionContext context)
+        {
+            ArgumentNullException.ThrowIfNull(context);
+
+            CommandHelp help = GetHelp();
+            ConsoleTheme theme = GetTheme(context);
+
+            // Brief description
+            context.Writer.WriteLine($"{Name} - {Description}");
+            context.Writer.WriteLine("");
+
+            // Usage
+            context.Writer.WriteInfoLine("USAGE:", theme);
+            context.Writer.WriteLine($"  {help.Usage}");
+            context.Writer.WriteLine("");
+
+            // Show first 1-2 examples if available
+            if (help.Examples.Count > 0)
+            {
+                context.Writer.WriteInfoLine("EXAMPLES:", theme);
+                int exampleCount = Math.Min(2, help.Examples.Count);
+                for (int i = 0; i < exampleCount; i++)
+                {
+                    CommandExample example = help.Examples[i];
+                    context.Writer.WriteLine($"  {example.Command}");
+                    context.Writer.WriteHintLine($"    {example.Description}", theme);
+                    if (i < exampleCount - 1)
+                    {
+                        context.Writer.WriteLine("");
+                    }
+                }
+                context.Writer.WriteLine("");
+            }
+
+            // Pointer to full help
+            context.Writer.WriteHintLine($"For more information, run: {Name} --help", theme);
         }
 
         /// <summary>
