@@ -90,7 +90,7 @@ namespace EasyCLI
         /// <returns>An enumerable of error summaries for the specified categories.</returns>
         public IEnumerable<ErrorSummary> GetSummaries(params BatchErrorCategory[] categories)
         {
-            HashSet<BatchErrorCategory> categorySet = new(categories);
+            HashSet<BatchErrorCategory> categorySet = [.. categories];
             return GetSummaries().Where(s => categorySet.Contains(s.Category));
         }
 
@@ -109,7 +109,7 @@ namespace EasyCLI
             _writer.WriteHeadingLine($"Error Summary ({TotalCount} total)", _theme);
             _writer.WriteLine();
 
-            List<ErrorSummary> summaries = GetSummaries().ToList();
+            List<ErrorSummary> summaries = [.. GetSummaries()];
 
             // Print category counts table
             PrintCategorySummaryTable(summaries);
@@ -132,7 +132,7 @@ namespace EasyCLI
         /// <param name="category">The category to print details for.</param>
         public void PrintCategoryDetails(BatchErrorCategory category)
         {
-            List<CollectedError> categoryErrors = _errors.Where(e => e.Category == category).ToList();
+            List<CollectedError> categoryErrors = [.. _errors.Where(e => e.Category == category)];
             if (categoryErrors.Count == 0)
             {
                 _writer.WriteInfoLine($"No errors in category: {category}", _theme);
@@ -169,12 +169,12 @@ namespace EasyCLI
         private void PrintCategorySummaryTable(IList<ErrorSummary> summaries)
         {
             string[] headers = ["Category", "Count", "%"];
-            List<string[]> rows = summaries.Select(s => new[]
+            List<string[]> rows = [.. summaries.Select(s => new[]
             {
                 s.CategoryDisplayName,
                 s.Count.ToString(CultureInfo.InvariantCulture),
                 $"{s.Count * 100.0 / TotalCount:F1}%",
-            }).ToList();
+            })];
 
             IEnumerable<string> tableLines = ConsoleFormatting.BuildSimpleTable(headers, rows, padding: 1);
             foreach (string line in tableLines)
