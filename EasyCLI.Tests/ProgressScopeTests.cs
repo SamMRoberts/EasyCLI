@@ -27,7 +27,7 @@ namespace EasyCLI.Tests
         public void ProgressScope_Constructor_WithTheme_AppliesTheme()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output: output);
+            var writer = new ConsoleWriter(enableColors: true, output: output);
             var theme = ConsoleThemes.Dark;
 
             using var scope = new ProgressScope(writer, "test operation", theme: theme);
@@ -256,7 +256,7 @@ namespace EasyCLI.Tests
         public void ConsoleWriter_EarlyFeedbackMethods_WithTheme_ApplyTheme()
         {
             using var output = new StringWriter();
-            var writer = new ConsoleWriter(output: output);
+            var writer = new ConsoleWriter(enableColors: true, output: output);
             var theme = ConsoleThemes.Dark;
 
             writer.WriteStarting("test", theme);

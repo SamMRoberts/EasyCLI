@@ -100,7 +100,7 @@ namespace EasyCLI.Progress
 
             if (_showPercentage)
             {
-                suffixes.Add($"{percentage:P0}");
+                suffixes.Add($"{percentage * 100:F0}%");
             }
 
             if (_showFraction && current.HasValue && total.HasValue)

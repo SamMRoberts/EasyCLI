@@ -136,7 +136,7 @@ namespace EasyCLI.Tests
             using var output = new StringWriter();
             var writer = new ConsoleWriter(output: output);
 
-            writer.WriteProgressBar(50, 100);
+            writer.WriteProgressBar(50L, 100L);
 
             var result = output.ToString();
             Assert.Contains("[", result);
@@ -150,11 +150,11 @@ namespace EasyCLI.Tests
             using var output = new StringWriter();
             var writer = new ConsoleWriter(output: output);
 
-            writer.WriteProgressBarLine(25, 100);
+            writer.WriteProgressBarLine(25L, 100L);
 
             var result = output.ToString();
             Assert.Contains("25%", result);
-            Assert.EndsWith(Environment.NewLine, result);
+            Assert.EndsWith(System.Environment.NewLine, result);
         }
 
         [Fact]
@@ -164,7 +164,7 @@ namespace EasyCLI.Tests
             var writer = new ConsoleWriter(output: output);
             var theme = ConsoleThemes.Dark;
 
-            writer.WriteProgressBar(50, 100, theme: theme);
+            writer.WriteProgressBar(50L, 100L, theme: theme);
 
             var result = output.ToString();
             Assert.Contains("50%", result);
