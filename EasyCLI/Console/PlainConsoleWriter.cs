@@ -6,9 +6,13 @@ namespace EasyCLI.Console
     /// A decorator for IConsoleWriter that strips all colors, symbols, and decorative padding to provide plain text output.
     /// This class implements the --plain flag functionality by normalizing styled output to simple text.
     /// </summary>
-    public partial class PlainConsoleWriter : IConsoleWriter
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="PlainConsoleWriter"/> class.
+    /// </remarks>
+    /// <param name="inner">The underlying console writer to decorate.</param>
+    public partial class PlainConsoleWriter(IConsoleWriter inner) : IConsoleWriter
     {
-        private readonly IConsoleWriter _inner;
+        private readonly IConsoleWriter _inner = inner ?? throw new ArgumentNullException(nameof(inner));
 
         // Regex patterns for stripping decorative elements
         [GeneratedRegex(@"\u001b\[[0-9;]*m")] // ANSI escape sequences
@@ -19,15 +23,6 @@ namespace EasyCLI.Console
 
         [GeneratedRegex(@"[─━┌┐└┘├┤┬┴┼│┃╔╗╚╝╠╣╦╩╬║═╒╓╕╖╘╙╛╜╞╟╡╢╤╥╧╨╪╫╬]+", RegexOptions.Compiled)] // Box drawing characters
         private static partial Regex BoxDrawingRegex();
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PlainConsoleWriter"/> class.
-        /// </summary>
-        /// <param name="inner">The underlying console writer to decorate.</param>
-        public PlainConsoleWriter(IConsoleWriter inner)
-        {
-            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-        }
 
         /// <summary>
         /// Writes the specified message to the console without a newline, with all styling stripped.
@@ -92,12 +87,7 @@ namespace EasyCLI.Console
             text = text.Trim();
 
             // Remove empty lines that might be left from decorative elements
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return string.Empty;
-            }
-
-            return text;
+            return string.IsNullOrWhiteSpace(text) ? string.Empty : text;
         }
     }
 }
