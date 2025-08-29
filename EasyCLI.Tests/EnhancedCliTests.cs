@@ -47,5 +47,41 @@ namespace EasyCLI.Tests
             Assert.Equal(4, ExitCodes.InvalidArguments);
             Assert.Equal(127, ExitCodes.CommandNotFound);
         }
+
+        [Fact]
+        public async Task BaseCliCommand_ShowHelp_IncludesStandardFooter()
+        {
+            // Create a test command
+            var testCommand = new TestCommand();
+            var output = new StringWriter();
+            var context = new ShellExecutionContext(
+                new ConsoleReader(new StringReader("")),
+                new ConsoleWriter(enableColors: false, output)
+            );
+
+            // Execute with help flag
+            int result = await testCommand.ExecuteAsync(context, new[] { "--help" }, CancellationToken.None);
+
+            Assert.Equal(0, result);
+            string helpOutput = output.ToString();
+
+            // Verify standard footer is present
+            Assert.Contains("SUPPORT:", helpOutput);
+            Assert.Contains("Version:", helpOutput);
+            Assert.Contains("Issues:  https://github.com/SamMRoberts/EasyCLI/issues", helpOutput);
+            Assert.Contains("Docs:    https://github.com/SamMRoberts/EasyCLI", helpOutput);
+        }
+
+        // Simple test command for help footer testing
+        private class TestCommand : BaseCliCommand
+        {
+            public override string Name => "test";
+            public override string Description => "A test command for footer verification";
+
+            protected override Task<int> ExecuteCommand(CommandLineArgs args, ShellExecutionContext context, CancellationToken cancellationToken)
+            {
+                return Task.FromResult(ExitCodes.Success);
+            }
+        }
     }
 }
