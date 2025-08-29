@@ -641,6 +641,31 @@ The framework automatically detects automation contexts and blocks dangerous ope
 | **Cancelled** | `6` | User declined or automation blocked |
 | **Error** | `1` | Operation failed after confirmation |
 
+### Structured Output for Scripts and Automation
+
+EasyCLI provides stable output formats for reliable scripting and automation:
+
+- **JSON Format** (`--json`, `-j`) - Machine-readable, structured data
+- **Plain Format** (`--plain`, `-p`) - Script-friendly, parseable text
+- **Table Format** (default) - Human-readable with colors and styling
+
+#### Script Usage Examples
+
+```bash
+# JSON for structured data processing
+mycli status --json | jq '.api_status'
+
+# Plain text for shell scripting  
+API_URL=$(mycli config show --plain | grep "API URL" | cut -d: -f2 | xargs)
+
+# Default table format for interactive use
+mycli config show
+```
+
+**For automation and scripts, always use `--plain` or `--json` flags.** The default table format may change between versions.
+
+📋 **Complete Output Contract**: See [docs/output-contract.md](docs/output-contract.md) for detailed stability guarantees, parsing examples, and migration guidance.
+
 ## 💬 Interactive Prompts
 
 EasyCLI provides a comprehensive prompting framework for building interactive console applications with built-in validation, theming, and user-friendly error handling.

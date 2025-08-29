@@ -31,7 +31,10 @@ namespace EasyCLI.Shell
                 "SUPPORT:",
                 $"  Version: {GetVersion()}",
                 "  Issues:  https://github.com/SamMRoberts/EasyCLI/issues",
-                "  Docs:    https://github.com/SamMRoberts/EasyCLI"
+                "  Docs:    https://github.com/SamMRoberts/EasyCLI",
+                "",
+                "For scripts, use --plain or --json for stable output.",
+                "See: https://github.com/SamMRoberts/EasyCLI/blob/main/docs/output-contract.md"
             ];
         }
 
