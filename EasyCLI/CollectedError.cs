@@ -41,7 +41,7 @@ namespace EasyCLI
         /// <inheritdoc />
         public override string ToString()
         {
-            List<string> parts = new List<string> { Message };
+            List<string> parts = [Message];
             if (!string.IsNullOrEmpty(Source))
             {
                 parts.Add($"Source: {Source}");

@@ -42,7 +42,7 @@ namespace EasyCLI
         /// <param name="details">Additional error details.</param>
         public void AddError(BatchErrorCategory category, string message, string? source = null, string? details = null)
         {
-            CollectedError error = new CollectedError(category, message, source, details);
+            CollectedError error = new(category, message, source, details);
             _errors.Add(error);
         }
 
@@ -90,7 +90,7 @@ namespace EasyCLI
         /// <returns>An enumerable of error summaries for the specified categories.</returns>
         public IEnumerable<ErrorSummary> GetSummaries(params BatchErrorCategory[] categories)
         {
-            HashSet<BatchErrorCategory> categorySet = new HashSet<BatchErrorCategory>(categories);
+            HashSet<BatchErrorCategory> categorySet = new(categories);
             return GetSummaries().Where(s => categorySet.Contains(s.Category));
         }
 
@@ -139,7 +139,7 @@ namespace EasyCLI
                 return;
             }
 
-            ErrorSummary summary = new ErrorSummary(category, categoryErrors);
+            ErrorSummary summary = new(category, categoryErrors);
             _writer.WriteHeadingLine($"{summary.CategoryDisplayName} Errors ({summary.Count})", _theme);
             _writer.WriteLine();
 
@@ -168,7 +168,7 @@ namespace EasyCLI
 
         private void PrintCategorySummaryTable(IList<ErrorSummary> summaries)
         {
-            string[] headers = new[] { "Category", "Count", "%" };
+            string[] headers = ["Category", "Count", "%"];
             List<string[]> rows = summaries.Select(s => new[]
             {
                 s.CategoryDisplayName,

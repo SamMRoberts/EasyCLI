@@ -34,6 +34,11 @@ namespace EasyCLI
             BatchErrorCategory.FileSystem => "File System",
             BatchErrorCategory.ExternalService => "External Service",
             BatchErrorCategory.InvalidArgument => "Invalid Argument",
+            BatchErrorCategory.General => "General",
+            BatchErrorCategory.Network => "Network",
+            BatchErrorCategory.Validation => "Validation",
+            BatchErrorCategory.Security => "Security",
+            BatchErrorCategory.Configuration => "Configuration",
             _ => Category.ToString(),
         };
     }
