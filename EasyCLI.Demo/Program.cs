@@ -161,4 +161,31 @@ else
 	w.WriteTitleRule("Plain Mode Info", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
 	w.WriteInfoLine("💡 Try running this demo with --plain or -p flag to see plain output mode.");
 	w.WriteHintLine("Example: dotnet run --project EasyCLI.Demo --plain");
+	
+	// Demo progress utilities
+	w.WriteLine("");
+	w.WriteTitleRule("Progress Utilities Demo", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
+	
+	// Early feedback demo
+	w.WriteStarting("progress demo initialization");
+	await Task.Delay(500);
+	w.WriteCompleted("progress demo initialization");
+	
+	// Progress bar demo
+	w.WriteInfoLine("Progress bar example:");
+	for (int i = 0; i <= 20; i++)
+	{
+		w.Write("\r");
+		w.WriteProgressBar(i, 20, width: 30);
+		await Task.Delay(50);
+	}
+	w.WriteLine("");
+	
+	// Spinner demo
+	w.WriteInfoLine("Spinner example:");
+	using (var scope = w.CreateProgressScope("processing demo data"))
+	{
+		await Task.Delay(1000);
+		scope.Complete("Demo data processed successfully");
+	}
 }

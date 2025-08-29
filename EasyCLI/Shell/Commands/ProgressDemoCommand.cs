@@ -1,9 +1,4 @@
-using EasyCLI.Console;
-using EasyCLI.Extensions;
 using EasyCLI.Progress;
-using EasyCLI.Shell;
-using EasyCLI.Shell.Utilities;
-using EasyCLI.Styling;
 
 namespace EasyCLI.Shell.Commands
 {
@@ -34,7 +29,7 @@ namespace EasyCLI.Shell.Commands
         /// <returns>Command help information.</returns>
         public override CommandHelp GetHelp()
         {
-            var help = new CommandHelp
+            CommandHelp help = new()
             {
                 Usage = "progress-demo [--spinner-only] [--progress-only] [--fast]",
                 Description = Description,
@@ -62,7 +57,7 @@ namespace EasyCLI.Shell.Commands
         {
             ArgumentNullException.ThrowIfNull(args);
             ArgumentNullException.ThrowIfNull(context);
-            var theme = GetTheme(context);
+            ConsoleTheme theme = GetTheme(context);
             bool spinnerOnly = args.HasFlag("spinner-only");
             bool progressOnly = args.HasFlag("progress-only");
             bool fastMode = args.HasFlag("fast");
@@ -97,7 +92,7 @@ namespace EasyCLI.Shell.Commands
             // Demo 3: Progress Bar
             if (!spinnerOnly)
             {
-                await DemoProgressBar(context, theme, longDelay, shortDelay, cancellationToken);
+                await DemoProgressBar(context, theme, shortDelay, cancellationToken);
                 context.Writer.WriteLine("");
             }
 
@@ -138,7 +133,7 @@ namespace EasyCLI.Shell.Commands
             context.Writer.WriteLine("");
 
             // Basic spinner
-            using (var scope = context.Writer.CreateProgressScope("processing data", ProgressScope.DefaultSpinnerChars, theme, cancellationToken: cancellationToken))
+            using (ProgressScope scope = context.Writer.CreateProgressScope("processing data", ProgressScope.DefaultSpinnerChars, theme, cancellationToken: cancellationToken))
             {
                 await Task.Delay(longDelay * 2, cancellationToken);
                 scope.Complete();
@@ -147,7 +142,7 @@ namespace EasyCLI.Shell.Commands
             await Task.Delay(shortDelay, cancellationToken);
 
             // Braille spinner with message updates
-            using (var scope = context.Writer.CreateProgressScope("downloading files", ProgressScope.BrailleSpinnerChars, theme, cancellationToken: cancellationToken))
+            using (ProgressScope scope = context.Writer.CreateProgressScope("downloading files", ProgressScope.BrailleSpinnerChars, theme, cancellationToken: cancellationToken))
             {
                 await Task.Delay(longDelay, cancellationToken);
                 scope.UpdateMessage("verifying checksums");
@@ -160,14 +155,14 @@ namespace EasyCLI.Shell.Commands
             await Task.Delay(shortDelay, cancellationToken);
 
             // Error scenario
-            using (var scope = context.Writer.CreateProgressScope("connecting to remote server", ProgressScope.DotsSpinnerChars, theme, cancellationToken: cancellationToken))
+            using (ProgressScope scope = context.Writer.CreateProgressScope("connecting to remote server", ProgressScope.DotsSpinnerChars, theme, cancellationToken: cancellationToken))
             {
                 await Task.Delay(longDelay, cancellationToken);
                 scope.Fail("Connection timeout");
             }
         }
 
-        private static async Task DemoProgressBar(ShellExecutionContext context, ConsoleTheme theme, int longDelay, int shortDelay, CancellationToken cancellationToken)
+        private static async Task DemoProgressBar(ShellExecutionContext context, ConsoleTheme theme, int shortDelay, CancellationToken cancellationToken)
         {
             context.Writer.WriteInfoLine("3. Progress Bar for Determinate Operations", theme);
             context.Writer.WriteHintLine("Use progress bars when you know total progress", theme);
@@ -180,7 +175,7 @@ namespace EasyCLI.Shell.Commands
             for (int i = 0; i <= totalFiles; i++)
             {
                 context.Writer.Write("\r");
-                context.Writer.WriteProgressBar((long)i, (long)totalFiles, theme: theme);
+                context.Writer.WriteProgressBar(i, (long)totalFiles, theme: theme);
 
                 if (i < totalFiles)
                 {
@@ -214,7 +209,7 @@ namespace EasyCLI.Shell.Commands
             context.Writer.WriteLine("");
 
             // Start with indeterminate spinner
-            using (var scope = context.Writer.CreateProgressScope("analyzing files", theme: theme, cancellationToken: cancellationToken))
+            using (ProgressScope scope = context.Writer.CreateProgressScope("analyzing files", theme: theme, cancellationToken: cancellationToken))
             {
                 await Task.Delay(longDelay, cancellationToken);
                 scope.Complete("Found 25 files to process");
@@ -229,7 +224,7 @@ namespace EasyCLI.Shell.Commands
             for (int i = 0; i <= totalSteps; i++)
             {
                 context.Writer.Write("\r");
-                context.Writer.WriteProgressBar((long)i, (long)totalSteps, showFraction: true, theme: theme);
+                context.Writer.WriteProgressBar(i, totalSteps, showFraction: true, theme: theme);
 
                 if (i < totalSteps)
                 {

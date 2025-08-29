@@ -1,12 +1,23 @@
-using EasyCLI.Styling;
-
 namespace EasyCLI.Progress
 {
     /// <summary>
     /// Generates customizable progress bar strings for long-running operations.
     /// This is a pure formatter that builds strings; rendering is handled by IConsoleWriter.
     /// </summary>
-    public class ProgressBar
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="ProgressBar"/> class.
+    /// </remarks>
+    /// <param name="width">The width of the progress bar in characters.</param>
+    /// <param name="filledChar">The character to use for filled portions.</param>
+    /// <param name="emptyChar">The character to use for empty portions.</param>
+    /// <param name="showPercentage">Whether to show percentage text.</param>
+    /// <param name="showFraction">Whether to show current/total fraction.</param>
+    public class ProgressBar(
+        int width = ProgressBar.DefaultWidth,
+        char filledChar = ProgressBar.DefaultFilledChar,
+        char emptyChar = ProgressBar.DefaultEmptyChar,
+        bool showPercentage = true,
+        bool showFraction = false)
     {
         /// <summary>
         /// Default progress bar width in characters.
@@ -23,33 +34,11 @@ namespace EasyCLI.Progress
         /// </summary>
         public const char DefaultEmptyChar = '░';
 
-        private readonly int _width;
-        private readonly char _filledChar;
-        private readonly char _emptyChar;
-        private readonly bool _showPercentage;
-        private readonly bool _showFraction;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ProgressBar"/> class.
-        /// </summary>
-        /// <param name="width">The width of the progress bar in characters.</param>
-        /// <param name="filledChar">The character to use for filled portions.</param>
-        /// <param name="emptyChar">The character to use for empty portions.</param>
-        /// <param name="showPercentage">Whether to show percentage text.</param>
-        /// <param name="showFraction">Whether to show current/total fraction.</param>
-        public ProgressBar(
-            int width = DefaultWidth,
-            char filledChar = DefaultFilledChar,
-            char emptyChar = DefaultEmptyChar,
-            bool showPercentage = true,
-            bool showFraction = false)
-        {
-            _width = Math.Max(1, width);
-            _filledChar = filledChar;
-            _emptyChar = emptyChar;
-            _showPercentage = showPercentage;
-            _showFraction = showFraction;
-        }
+        private readonly int _width = Math.Max(1, width);
+        private readonly char _filledChar = filledChar;
+        private readonly char _emptyChar = emptyChar;
+        private readonly bool _showPercentage = showPercentage;
+        private readonly bool _showFraction = showFraction;
 
         /// <summary>
         /// Generates a progress bar string for the specified progress value.
@@ -86,8 +75,8 @@ namespace EasyCLI.Progress
         public string RenderIndeterminate()
         {
             // For indeterminate progress, show a pattern that suggests motion
-            var bar = new string(_emptyChar, _width);
-            var result = $"[{bar}]";
+            string bar = new(_emptyChar, _width);
+            string result = $"[{bar}]";
 
             if (_showPercentage)
             {
@@ -103,11 +92,11 @@ namespace EasyCLI.Progress
             filledCount = Math.Clamp(filledCount, 0, _width);
             int emptyCount = _width - filledCount;
 
-            var filledPart = new string(_filledChar, filledCount);
-            var emptyPart = new string(_emptyChar, emptyCount);
-            var bar = $"[{filledPart}{emptyPart}]";
+            string filledPart = new(_filledChar, filledCount);
+            string emptyPart = new(_emptyChar, emptyCount);
+            string bar = $"[{filledPart}{emptyPart}]";
 
-            var suffixes = new List<string>();
+            List<string> suffixes = [];
 
             if (_showPercentage)
             {

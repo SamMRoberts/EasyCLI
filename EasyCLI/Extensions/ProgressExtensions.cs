@@ -1,6 +1,5 @@
 using EasyCLI.Console;
 using EasyCLI.Progress;
-using EasyCLI.Styling;
 
 namespace EasyCLI.Extensions
 {
@@ -34,8 +33,8 @@ namespace EasyCLI.Extensions
         {
             ArgumentNullException.ThrowIfNull(writer);
 
-            var progressBar = new ProgressBar(width, filledChar, emptyChar, showPercentage, showFraction);
-            var progressString = progressBar.Render(current, total);
+            ProgressBar progressBar = new(width, filledChar, emptyChar, showPercentage, showFraction);
+            string progressString = progressBar.Render(current, total);
 
             if (theme != null)
             {
@@ -95,8 +94,8 @@ namespace EasyCLI.Extensions
         {
             ArgumentNullException.ThrowIfNull(writer);
 
-            var progressBar = new ProgressBar(width, filledChar, emptyChar, showPercentage, false);
-            var progressString = progressBar.Render(percentage);
+            ProgressBar progressBar = new(width, filledChar, emptyChar, showPercentage, false);
+            string progressString = progressBar.Render(percentage);
 
             if (theme != null)
             {
@@ -165,7 +164,7 @@ namespace EasyCLI.Extensions
             ArgumentNullException.ThrowIfNull(writer);
             ArgumentException.ThrowIfNullOrWhiteSpace(operationName);
 
-            var message = $"Starting {operationName}...";
+            string message = $"Starting {operationName}...";
             if (theme != null)
             {
                 writer.WriteLine(message, theme.Info);
@@ -187,7 +186,7 @@ namespace EasyCLI.Extensions
             ArgumentNullException.ThrowIfNull(writer);
             ArgumentException.ThrowIfNullOrWhiteSpace(operationName);
 
-            var message = $"✓ {operationName} completed";
+            string message = $"✓ {operationName} completed";
             if (theme != null)
             {
                 writer.WriteLine(message, theme.Success);
@@ -210,7 +209,7 @@ namespace EasyCLI.Extensions
             ArgumentNullException.ThrowIfNull(writer);
             ArgumentException.ThrowIfNullOrWhiteSpace(operationName);
 
-            var message = $"✗ {operationName} failed";
+            string message = $"✗ {operationName} failed";
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
                 message += $": {errorMessage}";

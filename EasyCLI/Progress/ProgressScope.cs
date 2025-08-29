@@ -1,5 +1,4 @@
 using EasyCLI.Console;
-using EasyCLI.Styling;
 
 namespace EasyCLI.Progress
 {
@@ -30,7 +29,7 @@ namespace EasyCLI.Progress
         private readonly ConsoleTheme? _theme;
         private readonly Timer? _timer;
         private readonly CancellationToken _cancellationToken;
-        private readonly object _lock = new object();
+        private readonly Lock _lock = new();
         private int _currentFrame;
         private bool _disposed;
 
@@ -81,7 +80,7 @@ namespace EasyCLI.Progress
         /// </summary>
         private void ShowStartingMessage()
         {
-            var startingMessage = $"Starting {_message}...";
+            string startingMessage = $"Starting {_message}...";
             if (_theme != null)
             {
                 _writer.WriteLine(startingMessage, _theme.Info);
@@ -111,7 +110,7 @@ namespace EasyCLI.Progress
                 }
 
                 char currentChar = _spinnerChars[_currentFrame % _spinnerChars.Length];
-                var spinnerLine = $"\r{currentChar} {_message}...";
+                string spinnerLine = $"\r{currentChar} {_message}...";
 
                 if (_theme != null)
                 {
@@ -142,10 +141,10 @@ namespace EasyCLI.Progress
                 }
 
                 // Clear current line and show new message
-                var clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
+                string clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
                 _writer.Write(clearLine);
 
-                var updatedLine = $"⟳ {newMessage}...";
+                string updatedLine = $"⟳ {newMessage}...";
                 if (_theme != null)
                 {
                     _writer.Write(updatedLine, _theme.Info);
@@ -179,11 +178,11 @@ namespace EasyCLI.Progress
                 _timer?.Dispose();
 
                 // Clear the spinner line
-                var clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
+                string clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
                 _writer.Write(clearLine);
 
                 // Show completion message
-                var finalMessage = completionMessage ?? $"✓ {_message} completed";
+                string finalMessage = completionMessage ?? $"✓ {_message} completed";
                 if (_theme != null)
                 {
                     _writer.WriteLine(finalMessage, _theme.Success);
@@ -217,11 +216,11 @@ namespace EasyCLI.Progress
                 _timer?.Dispose();
 
                 // Clear the spinner line
-                var clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
+                string clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
                 _writer.Write(clearLine);
 
                 // Show error message
-                var finalMessage = errorMessage ?? $"✗ {_message} failed";
+                string finalMessage = errorMessage ?? $"✗ {_message} failed";
                 if (_theme != null)
                 {
                     _writer.WriteLine(finalMessage, _theme.Error);
@@ -258,7 +257,7 @@ namespace EasyCLI.Progress
                     _timer?.Dispose();
 
                     // Clear the spinner line if still active
-                    var clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
+                    string clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
                     _writer.Write(clearLine);
                 }
             }
