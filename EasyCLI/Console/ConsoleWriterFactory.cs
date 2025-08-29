@@ -18,9 +18,9 @@ namespace EasyCLI.Console
         {
             bool usePlainMode = ShouldUsePlainMode(args);
 
-            // Create base writer - if plain mode is requested, we'll wrap it
+            // Create base writer - use the compatibility wrapper EasyCLI.ConsoleWriter
             // If NO_COLOR is set, the base writer will already disable colors
-            ConsoleWriter baseWriter = new(enableColors: !usePlainMode, output: output);
+            EasyCLI.ConsoleWriter baseWriter = new(enableColors: !usePlainMode, output: output);
 
             // If --plain flag is explicitly requested, wrap with PlainConsoleWriter for symbol/decoration stripping
             return args?.IsPlainOutput == true ? new PlainConsoleWriter(baseWriter) : baseWriter;
@@ -34,7 +34,7 @@ namespace EasyCLI.Console
         /// <returns>A plain console writer if plainMode is true, otherwise a regular console writer.</returns>
         public static IConsoleWriter Create(bool plainMode, TextWriter? output = null)
         {
-            ConsoleWriter baseWriter = new(enableColors: !plainMode, output: output);
+            EasyCLI.ConsoleWriter baseWriter = new(enableColors: !plainMode, output: output);
 
             return plainMode ? new PlainConsoleWriter(baseWriter) : baseWriter;
         }
