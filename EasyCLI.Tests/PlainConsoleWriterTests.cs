@@ -99,15 +99,31 @@ namespace EasyCLI.Tests
         }
 
         [Fact]
-        public void PlainConsoleWriter_Write_HandlesEmptyAndNullStrings()
+        public void PlainConsoleWriter_Write_HandlesEmptyString()
         {
             var sw = new StringWriter();
             var innerWriter = new ConsoleWriter(enableColors: false, output: sw);
             var plainWriter = new PlainConsoleWriter(innerWriter);
 
             plainWriter.Write("");
-            plainWriter.Write(null!);
 
+            var result = sw.ToString();
+            Assert.Equal("", result);
+        }
+
+        [Fact]
+        public void PlainConsoleWriter_Write_HandlesNullString()
+        {
+            var sw = new StringWriter();
+            var innerWriter = new ConsoleWriter(enableColors: false, output: sw);
+            var plainWriter = new PlainConsoleWriter(innerWriter);
+
+            // If Write does not accept null, this should throw. Otherwise, check the result.
+            // Uncomment the following line if Write should throw an ArgumentNullException:
+            // Assert.Throws<ArgumentNullException>(() => plainWriter.Write(null));
+
+            // If Write should handle null gracefully, use:
+            plainWriter.Write((string?)null);
             var result = sw.ToString();
             Assert.Equal("", result);
         }
