@@ -3,34 +3,28 @@ namespace EasyCLI
     /// <summary>
     /// Represents a summary of errors grouped by category.
     /// </summary>
-    public class ErrorSummary
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="ErrorSummary"/> class.
+    /// </remarks>
+    /// <param name="category">The error category.</param>
+    /// <param name="errors">The errors in this category.</param>
+    public class ErrorSummary(BatchErrorCategory category, IReadOnlyList<CollectedError> errors)
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ErrorSummary"/> class.
-        /// </summary>
-        /// <param name="category">The error category.</param>
-        /// <param name="errors">The errors in this category.</param>
-        public ErrorSummary(BatchErrorCategory category, IReadOnlyList<CollectedError> errors)
-        {
-            Category = category;
-            Errors = errors ?? throw new ArgumentNullException(nameof(errors));
-            Count = errors.Count;
-        }
 
         /// <summary>
         /// Gets the error category.
         /// </summary>
-        public BatchErrorCategory Category { get; }
+        public BatchErrorCategory Category { get; } = category;
 
         /// <summary>
         /// Gets the errors in this category.
         /// </summary>
-        public IReadOnlyList<CollectedError> Errors { get; }
+        public IReadOnlyList<CollectedError> Errors { get; } = errors ?? throw new ArgumentNullException(nameof(errors));
 
         /// <summary>
         /// Gets the count of errors in this category.
         /// </summary>
-        public int Count { get; }
+        public int Count { get; } = errors.Count;
 
         /// <summary>
         /// Gets a display name for the category.

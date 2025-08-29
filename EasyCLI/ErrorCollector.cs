@@ -1,30 +1,22 @@
 using System.Globalization;
 using System.Security;
 using EasyCLI.Console;
-using EasyCLI.Extensions;
-using EasyCLI.Formatting;
 
 namespace EasyCLI
 {
     /// <summary>
     /// Collects and aggregates errors for batch processing scenarios, providing grouped summaries.
     /// </summary>
-    public class ErrorCollector
+    /// <remarks>
+    /// Initializes a new instance of the <see cref="ErrorCollector"/> class.
+    /// </remarks>
+    /// <param name="writer">The console writer for output.</param>
+    /// <param name="theme">The console theme for styling.</param>
+    public class ErrorCollector(IConsoleWriter writer, ConsoleTheme? theme = null)
     {
         private readonly List<CollectedError> _errors = [];
-        private readonly IConsoleWriter _writer;
-        private readonly ConsoleTheme _theme;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ErrorCollector"/> class.
-        /// </summary>
-        /// <param name="writer">The console writer for output.</param>
-        /// <param name="theme">The console theme for styling.</param>
-        public ErrorCollector(IConsoleWriter writer, ConsoleTheme? theme = null)
-        {
-            _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-            _theme = theme ?? ConsoleThemes.Dark;
-        }
+        private readonly IConsoleWriter _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+        private readonly ConsoleTheme _theme = theme ?? ConsoleThemes.Dark;
 
         /// <summary>
         /// Gets the total count of collected errors.
@@ -50,7 +42,7 @@ namespace EasyCLI
         /// <param name="details">Additional error details.</param>
         public void AddError(BatchErrorCategory category, string message, string? source = null, string? details = null)
         {
-            var error = new CollectedError(category, message, source, details);
+            CollectedError error = new CollectedError(category, message, source, details);
             _errors.Add(error);
         }
 
@@ -88,7 +80,7 @@ namespace EasyCLI
             return _errors
                 .GroupBy(e => e.Category)
                 .OrderBy(g => g.Key)
-                .Select(g => new ErrorSummary(g.Key, g.ToList()));
+                .Select(g => new ErrorSummary(g.Key, [.. g]));
         }
 
         /// <summary>
@@ -98,7 +90,7 @@ namespace EasyCLI
         /// <returns>An enumerable of error summaries for the specified categories.</returns>
         public IEnumerable<ErrorSummary> GetSummaries(params BatchErrorCategory[] categories)
         {
-            var categorySet = new HashSet<BatchErrorCategory>(categories);
+            HashSet<BatchErrorCategory> categorySet = new HashSet<BatchErrorCategory>(categories);
             return GetSummaries().Where(s => categorySet.Contains(s.Category));
         }
 
@@ -117,7 +109,7 @@ namespace EasyCLI
             _writer.WriteHeadingLine($"Error Summary ({TotalCount} total)", _theme);
             _writer.WriteLine();
 
-            var summaries = GetSummaries().ToList();
+            List<ErrorSummary> summaries = GetSummaries().ToList();
 
             // Print category counts table
             PrintCategorySummaryTable(summaries);
@@ -140,14 +132,14 @@ namespace EasyCLI
         /// <param name="category">The category to print details for.</param>
         public void PrintCategoryDetails(BatchErrorCategory category)
         {
-            var categoryErrors = _errors.Where(e => e.Category == category).ToList();
+            List<CollectedError> categoryErrors = _errors.Where(e => e.Category == category).ToList();
             if (categoryErrors.Count == 0)
             {
                 _writer.WriteInfoLine($"No errors in category: {category}", _theme);
                 return;
             }
 
-            var summary = new ErrorSummary(category, categoryErrors);
+            ErrorSummary summary = new ErrorSummary(category, categoryErrors);
             _writer.WriteHeadingLine($"{summary.CategoryDisplayName} Errors ({summary.Count})", _theme);
             _writer.WriteLine();
 
@@ -176,16 +168,16 @@ namespace EasyCLI
 
         private void PrintCategorySummaryTable(IList<ErrorSummary> summaries)
         {
-            var headers = new[] { "Category", "Count", "%" };
-            var rows = summaries.Select(s => new[]
+            string[] headers = new[] { "Category", "Count", "%" };
+            List<string[]> rows = summaries.Select(s => new[]
             {
                 s.CategoryDisplayName,
                 s.Count.ToString(CultureInfo.InvariantCulture),
-                $"{(s.Count * 100.0 / TotalCount):F1}%",
+                $"{s.Count * 100.0 / TotalCount:F1}%",
             }).ToList();
 
-            var tableLines = ConsoleFormatting.BuildSimpleTable(headers, rows, padding: 1);
-            foreach (var line in tableLines)
+            IEnumerable<string> tableLines = ConsoleFormatting.BuildSimpleTable(headers, rows, padding: 1);
+            foreach (string line in tableLines)
             {
                 _writer.WriteLine(line, _theme.Info);
             }
@@ -193,7 +185,7 @@ namespace EasyCLI
 
         private void PrintDetailedErrors(IList<ErrorSummary> summaries)
         {
-            foreach (var summary in summaries)
+            foreach (ErrorSummary summary in summaries)
             {
                 _writer.WriteRule($"{summary.CategoryDisplayName} ({summary.Count})", '─', _theme.Heading);
                 PrintErrorList(summary.Errors);
@@ -205,8 +197,8 @@ namespace EasyCLI
         {
             for (int i = 0; i < errors.Count; i++)
             {
-                var error = errors[i];
-                var prefix = $"{i + 1:D2}.";
+                CollectedError error = errors[i];
+                string prefix = $"{i + 1:D2}.";
 
                 _writer.Write(prefix.PadRight(4), _theme.Hint);
                 _writer.WriteErrorLine(error.Message, _theme);
