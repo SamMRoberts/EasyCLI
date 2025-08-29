@@ -83,8 +83,8 @@ namespace EasyCLI.Configuration
                 }
             }
 
-            // 4. Apply environment variable overrides
-            config = ApplyEnvironmentVariables(config);
+            // 4. Apply environment variable overrides (with validation warnings)
+            config = ApplyEnvironmentVariables(config, writer);
 
             // Note: Flag overrides are handled at the application level
             return config;
@@ -193,11 +193,23 @@ namespace EasyCLI.Configuration
         /// </summary>
         /// <typeparam name="T">The configuration type.</typeparam>
         /// <param name="config">The configuration to update.</param>
+        /// <param name="writer">Optional console writer for validation warnings.</param>
         /// <returns>The updated configuration.</returns>
-        private static T ApplyEnvironmentVariables<T>(T config)
+        private static T ApplyEnvironmentVariables<T>(T config, IConsoleWriter? writer = null)
             where T : class
         {
             System.Reflection.PropertyInfo[] properties = typeof(T).GetProperties();
+
+            // Get all valid EASYCLI_* environment variable names for this config type
+            HashSet<string> validEnvVars = [];
+            foreach (System.Reflection.PropertyInfo? property in properties.Where(p => p.CanWrite))
+            {
+                string envVarName = $"EASYCLI_{ConvertToSnakeCase(property.Name).ToUpperInvariant()}";
+                _ = validEnvVars.Add(envVarName);
+            }
+
+            // Check for unknown EASYCLI_* environment variables and warn about them
+            ValidateEasyCLIEnvironmentVariables(validEnvVars, writer);
 
             foreach (System.Reflection.PropertyInfo? property in properties.Where(p => p.CanWrite))
             {
@@ -287,6 +299,120 @@ namespace EasyCLI.Configuration
 
             // Add more type conversions as needed
             return null;
+        }
+
+        /// <summary>
+        /// Validates EASYCLI_* environment variables and warns about unknown ones.
+        /// </summary>
+        /// <param name="validEnvVars">Set of valid environment variable names.</param>
+        /// <param name="writer">Optional console writer for warnings.</param>
+        private static void ValidateEasyCLIEnvironmentVariables(HashSet<string> validEnvVars, IConsoleWriter? writer)
+        {
+            // Skip validation if no writer is provided or if warnings should be suppressed
+            if (writer == null)
+            {
+                return;
+            }
+
+            // Get all environment variables that start with EASYCLI_
+            Dictionary<string, string?> allEnvVars = System.Environment.GetEnvironmentVariables()
+                .Cast<System.Collections.DictionaryEntry>()
+                .Where(entry => entry.Key.ToString()?.StartsWith("EASYCLI_", StringComparison.OrdinalIgnoreCase) == true)
+                .ToDictionary(entry => entry.Key.ToString()!, entry => entry.Value?.ToString());
+
+            foreach (string envVar in allEnvVars.Keys)
+            {
+                if (!validEnvVars.Contains(envVar))
+                {
+                    // Find the closest match for suggestions
+                    string? suggestion = FindClosestEnvironmentVariable(envVar, validEnvVars);
+
+                    if (!string.IsNullOrEmpty(suggestion))
+                    {
+                        writer.WriteWarningLine($"Unknown environment variable '{envVar}'. Did you mean '{suggestion}'?");
+                        writer.WriteHintLine($"For a complete list of supported variables, see: docs/env-vars.md");
+                    }
+                    else
+                    {
+                        writer.WriteWarningLine($"Unknown environment variable '{envVar}'.");
+                        writer.WriteHintLine($"Valid EASYCLI_* variables: {string.Join(", ", validEnvVars.OrderBy(v => v))}");
+                        writer.WriteHintLine($"For more information, see: docs/env-vars.md");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Finds the closest matching environment variable name using Levenshtein distance.
+        /// </summary>
+        /// <param name="input">The input environment variable name.</param>
+        /// <param name="validNames">Set of valid environment variable names.</param>
+        /// <returns>The closest match or null if no good match is found.</returns>
+        private static string? FindClosestEnvironmentVariable(string input, HashSet<string> validNames)
+        {
+            const int maxDistance = 3; // Maximum edit distance for suggestions
+            string? bestMatch = null;
+            int bestDistance = int.MaxValue;
+
+            foreach (string validName in validNames)
+            {
+                int distance = CalculateLevenshteinDistance(input, validName);
+                if (distance < bestDistance && distance <= maxDistance)
+                {
+                    bestDistance = distance;
+                    bestMatch = validName;
+                }
+            }
+
+            return bestMatch;
+        }
+
+        /// <summary>
+        /// Calculates the Levenshtein distance between two strings.
+        /// </summary>
+        /// <param name="a">First string.</param>
+        /// <param name="b">Second string.</param>
+        /// <returns>The Levenshtein distance.</returns>
+        private static int CalculateLevenshteinDistance(string a, string b)
+        {
+            if (string.IsNullOrEmpty(a))
+            {
+                return string.IsNullOrEmpty(b) ? 0 : b.Length;
+            }
+
+            if (string.IsNullOrEmpty(b))
+            {
+                return a.Length;
+            }
+
+            int[,] matrix = new int[a.Length + 1, b.Length + 1];
+
+            // Initialize first row and column
+            for (int i = 0; i <= a.Length; i++)
+            {
+                matrix[i, 0] = i;
+            }
+
+            for (int j = 0; j <= b.Length; j++)
+            {
+                matrix[0, j] = j;
+            }
+
+            // Fill the matrix
+            for (int i = 1; i <= a.Length; i++)
+            {
+                for (int j = 1; j <= b.Length; j++)
+                {
+                    int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                    matrix[i, j] = Math.Min(
+                        Math.Min(
+                            matrix[i - 1, j] + 1,     // deletion
+                            matrix[i, j - 1] + 1),    // insertion
+                        matrix[i - 1, j - 1] + cost); // substitution
+                }
+            }
+
+            return matrix[a.Length, b.Length];
         }
     }
 }
