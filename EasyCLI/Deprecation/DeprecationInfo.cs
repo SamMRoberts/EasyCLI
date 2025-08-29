@@ -103,7 +103,7 @@ namespace EasyCLI.Deprecation
         {
             ArgumentException.ThrowIfNullOrEmpty(featureName);
 
-            var parts = new List<string>
+            List<string> parts = new List<string>
             {
                 $"'{featureName}' is deprecated",
             };
@@ -118,7 +118,7 @@ namespace EasyCLI.Deprecation
                 parts.Add($"and will be removed in version {RemovalVersion}");
             }
 
-            var result = string.Join(" ", parts) + ".";
+            string result = string.Join(" ", parts) + ".";
 
             if (!string.IsNullOrEmpty(Alternative))
             {

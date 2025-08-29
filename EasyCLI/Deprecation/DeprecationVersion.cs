@@ -29,12 +29,9 @@ namespace EasyCLI.Deprecation
             ArgumentException.ThrowIfNullOrEmpty(currentVersion);
 
             string[] parts = currentVersion.Split('.');
-            if (parts.Length == 0)
-            {
-                throw new ArgumentException("Invalid version format", nameof(currentVersion));
-            }
-
-            return int.TryParse(parts[0], out int major)
+            return parts.Length == 0
+                ? throw new ArgumentException("Invalid version format", nameof(currentVersion))
+                : int.TryParse(parts[0], out int major)
                 ? new DeprecationVersion($"{major + 1}.0.0")
                 : throw new ArgumentException("Invalid version format", nameof(currentVersion));
         }
@@ -49,12 +46,9 @@ namespace EasyCLI.Deprecation
             ArgumentException.ThrowIfNullOrEmpty(currentVersion);
 
             string[] parts = currentVersion.Split('.');
-            if (parts.Length < 2)
-            {
-                throw new ArgumentException("Invalid version format", nameof(currentVersion));
-            }
-
-            return int.TryParse(parts[0], out int major) && int.TryParse(parts[1], out int minor)
+            return parts.Length < 2
+                ? throw new ArgumentException("Invalid version format", nameof(currentVersion))
+                : int.TryParse(parts[0], out int major) && int.TryParse(parts[1], out int minor)
                 ? new DeprecationVersion($"{major}.{minor + 1}.0")
                 : throw new ArgumentException("Invalid version format", nameof(currentVersion));
         }
