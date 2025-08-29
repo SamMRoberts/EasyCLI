@@ -4,11 +4,24 @@ using EasyCLI.Extensions;
 using EasyCLI.Formatting;
 using EasyCLI.Prompts;
 using EasyCLI.Prompts.Validators;
+using EasyCLI.Shell;
 using EasyCLI.Styling;
 
-var w = new EasyCLI.Console.ConsoleWriter();
+// Parse command line arguments for --plain flag support
+var parsedArgs = new CommandLineArgs(Environment.GetCommandLineArgs().Skip(1).ToArray());
 
-w.WriteCenterTitleRule("EasyCLI Demo", width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
+// Create console writer using factory that respects --plain flag and NO_COLOR
+var w = ConsoleWriterFactory.Create(parsedArgs);
+
+// Show current mode in demo
+if (parsedArgs.IsPlainOutput)
+{
+    w.WriteLine("=== EasyCLI Demo (PLAIN MODE) ===");
+}
+else
+{
+    w.WriteCenterTitleRule("EasyCLI Demo", width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
+}
 
 var lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur quis orci vitae leo consequat.";
 w.WriteWrapped(lorem, width: 0, indent: 2, style: ConsoleStyles.Dim);
@@ -77,4 +90,24 @@ if (!Console.IsInputRedirected)
 	string fruit = fruitPrompt.GetValue();
 	var nums = multiPrompt.GetValue();
 	w.WriteInfoLine($"Hello {name}, age {age}, proceed={proceed}, fruit={fruit}, secret={secret}, nums=[{string.Join(',', nums)}]");
+}
+
+// Plain mode demonstration
+if (parsedArgs.IsPlainOutput)
+{
+	w.WriteLine("");
+	w.WriteLine("=== PLAIN MODE ACTIVE ===");
+	w.WriteLine("All colors, symbols, and decorations have been stripped.");
+	w.WriteLine("This output is optimized for:");
+	w.WriteLine("• Script parsing and automation");
+	w.WriteLine("• Text processing tools");
+	w.WriteLine("• Accessibility and screen readers");
+	w.WriteLine("• Environments with limited display capabilities");
+}
+else
+{
+	w.WriteLine("");
+	w.WriteTitleRule("Plain Mode Info", filler: '-', width: 0, titleStyle: ConsoleStyles.Heading, fillerStyle: ConsoleStyles.Hint);
+	w.WriteInfoLine("💡 Try running this demo with --plain or -p flag to see plain output mode.");
+	w.WriteHintLine("Example: dotnet run --project EasyCLI.Demo --plain");
 }

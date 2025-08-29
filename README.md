@@ -34,6 +34,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - **📊 Rich Formatting**: Tables, titled boxes, rules, key-value pairs, and wrapped text
 - **🌗 Theme Support**: Built-in themes (Dark, Light, HighContrast) with customizable styles
 - **🌍 Environment Aware**: Respects `NO_COLOR`, `FORCE_COLOR`, and output redirection
+- **📄 Plain Mode**: Global `--plain` flag to strip all colors, symbols, and decorative formatting for scripts and automation
 - **🔧 Extensible**: Plugin-friendly architecture with `ICliCommand` interface
 
 ### CLI Enhancement Features (v0.2.0+)
@@ -44,7 +45,8 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - **🏃‍♂️ Dry-Run Support**: Built-in `--dry-run` mode for safe operation previews
 - **🛡️ Dangerous Operation Confirmation**: Safety framework for destructive operations with automation detection (`--yes`, `--force`)
 - **⚠️ Smart Error Handling**: Intelligent error suggestions and recovery with proper exit codes
-- **🎯 Professional CLI Patterns**: Standard flag support (`--help`, `--verbose`, `--quiet`, `--dry-run`) following CLI conventions
+- **🎯 Professional CLI Patterns**: Standard flag support (`--help`, `--verbose`, `--quiet`, `--dry-run`, `--plain`) following CLI conventions
+- **📄 Plain Mode Integration**: `ConsoleWriterFactory` for unified plain mode support across all CLI components
 
 ## 📚 Table of Contents
 
@@ -53,6 +55,7 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [ANSI Styling](#-ansi-styling)
+- [Plain Mode](#-plain-mode)
 - [Interactive Prompts](#-interactive-prompts)
 - [CLI Enhancement Features](#-cli-enhancement-features)
   - [Configuration Management](#configuration-management)
@@ -362,6 +365,87 @@ else
 {
     writer.WriteLine("Running without colors");
 }
+```
+
+## 📄 Plain Mode
+
+EasyCLI supports a global `--plain` mode that strips all colors, symbols, and decorative formatting to provide clean, parseable text output optimized for scripts and automation.
+
+### Plain Mode vs NO_COLOR
+
+Plain mode provides more comprehensive output normalization than the standard `NO_COLOR` environment variable:
+
+| Feature | NO_COLOR | --plain flag |
+|---------|----------|--------------|
+| ANSI colors | ❌ Disabled | ❌ Disabled |
+| Decorative symbols (✓⚠✗💡) | ✅ Preserved | ❌ Stripped |
+| Unicode box characters (┌─┐) | ✅ Preserved | ❌ Replaced with `-` |
+| Decorative padding | ✅ Preserved | ❌ Minimized |
+
+### Using Plain Mode
+
+```csharp
+using EasyCLI.Console;
+using EasyCLI.Shell;
+
+// Parse command line arguments
+var args = new CommandLineArgs(Environment.GetCommandLineArgs().Skip(1).ToArray());
+
+// Create writer with plain mode support
+var writer = ConsoleWriterFactory.Create(args);
+
+// This output will be plain if --plain flag is used
+writer.WriteSuccessLine("✓ Operation completed successfully");
+writer.WriteErrorLine("✗ An error occurred");
+```
+
+### Command Line Usage
+
+```bash
+# Normal styled output
+myapp status
+
+# Plain output for scripts
+myapp status --plain
+myapp status -p
+
+# Also works with NO_COLOR (colors only)
+NO_COLOR=1 myapp status
+```
+
+### Output Comparison
+
+**Styled Output:**
+```
+───────────── Status Report ─────────────
+✓ Database connected
+⚠ Cache at 90% capacity  
+✗ Service unavailable
+┌─────────────────────────┐
+│ System Status: Warning │
+└─────────────────────────┘
+```
+
+**Plain Output (`--plain`):**
+```
+Status Report
+Database connected
+Cache at 90% capacity
+Service unavailable
+System Status: Warning
+```
+
+### Integration with Existing Code
+
+The `PlainConsoleWriter` decorator automatically handles style normalization:
+
+```csharp
+// Wrap any IConsoleWriter with plain mode
+var baseWriter = new ConsoleWriter();
+var plainWriter = new PlainConsoleWriter(baseWriter);
+
+// All decorative elements will be stripped
+plainWriter.WriteLine("✓ Success", ConsoleStyles.FgGreen); // Output: "Success"
 ```
 
 ## 🔧 CLI Enhancement Features
