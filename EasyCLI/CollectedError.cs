@@ -10,9 +10,6 @@ namespace EasyCLI
     /// <param name="message">The error message.</param>
     /// <param name="source">The source or context where the error occurred.</param>
     /// <param name="details">Additional error details.</param>
-    public class CollectedError(BatchErrorCategory category, string message, string? source = null, string? details = null)
-    {
-
         /// <summary>
         /// Gets the error category.
         /// </summary>
