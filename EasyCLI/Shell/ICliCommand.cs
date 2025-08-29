@@ -16,6 +16,11 @@ namespace EasyCLI.Shell
         string Description { get; }
 
         /// <summary>
+        /// Gets the category of the command for help organization.
+        /// </summary>
+        string Category { get; }
+
+        /// <summary>
         /// Executes the command.
         /// </summary>
         /// <param name="context">The shell execution context.</param>

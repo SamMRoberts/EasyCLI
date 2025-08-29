@@ -16,6 +16,11 @@ namespace EasyCLI.Shell.Commands
         public override string Description => "Print text to the console with optional styling";
 
         /// <summary>
+        /// Gets the category of the command for help organization.
+        /// </summary>
+        public override string Category => "Utility";
+
+        /// <summary>
         /// Configures the help information for this command.
         /// </summary>
         /// <param name="help">The help information to configure.</param>

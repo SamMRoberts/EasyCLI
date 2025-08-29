@@ -18,6 +18,12 @@ namespace EasyCLI.Shell
         public abstract string Description { get; }
 
         /// <summary>
+        /// Gets the category of the command for help organization.
+        /// Override in derived classes to specify a custom category.
+        /// </summary>
+        public virtual string Category => "General";
+
+        /// <summary>
         /// Gets a value indicating whether to show concise help when no arguments are provided
         /// instead of validation errors. Default is true for better CLI UX.
         /// </summary>

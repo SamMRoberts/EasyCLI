@@ -19,6 +19,11 @@ namespace EasyCLI.Shell.Commands
         /// </summary>
         public override string Description => "Manage application configuration and show environment information";
 
+        /// <summary>
+        /// Gets the category of the command for help organization.
+        /// </summary>
+        public override string Category => "Configuration";
+
         private static readonly string[] Item = ["Property", "Value"];
 
         /// <summary>
