@@ -1,3 +1,4 @@
+using EasyCLI.Deprecation;
 using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell
@@ -113,6 +114,9 @@ namespace EasyCLI.Shell
                     return validationResult;
                 }
 
+                // Check for deprecated features and display warnings
+                CheckDeprecatedFeatures(parsedArgs, context);
+
                 // Execute the command
                 return await ExecuteCommand(parsedArgs, context, cancellationToken);
             }
@@ -219,7 +223,22 @@ namespace EasyCLI.Shell
                 foreach (CommandArgument arg in help.Arguments)
                 {
                     string required = arg.IsRequired ? " (required)" : " (optional)";
-                    context.Writer.WriteLine($"  {arg.Name,-20} {arg.Description}{required}");
+
+                    // Add deprecation indicator to the description if the argument is deprecated
+                    string description = arg.Description;
+                    if (arg.IsDeprecated)
+                    {
+                        description += " [DEPRECATED]";
+                    }
+
+                    context.Writer.WriteLine($"  {arg.Name,-20} {description}{required}");
+
+                    // Show deprecation warning details indented under the argument
+                    if (arg.IsDeprecated && arg.DeprecationInfo != null)
+                    {
+                        string warningMessage = arg.DeprecationInfo.GetFormattedMessage(arg.Name);
+                        context.Writer.WriteWarningLine($"    ⚠ {warningMessage}", theme);
+                    }
                 }
 
                 context.Writer.WriteLine("");
@@ -234,7 +253,22 @@ namespace EasyCLI.Shell
                     string shortForm = !string.IsNullOrEmpty(opt.ShortName) ? $"-{opt.ShortName}, " : "    ";
                     string longForm = $"--{opt.LongName}";
                     string defaultInfo = !string.IsNullOrEmpty(opt.DefaultValue) ? $" (default: {opt.DefaultValue})" : "";
-                    context.Writer.WriteLine($"  {shortForm}{longForm,-18} {opt.Description}{defaultInfo}");
+
+                    // Add deprecation indicator to the description if the option is deprecated
+                    string description = opt.Description;
+                    if (opt.IsDeprecated)
+                    {
+                        description += " [DEPRECATED]";
+                    }
+
+                    context.Writer.WriteLine($"  {shortForm}{longForm,-18} {description}{defaultInfo}");
+
+                    // Show deprecation warning details indented under the option
+                    if (opt.IsDeprecated && opt.DeprecationInfo != null)
+                    {
+                        string warningMessage = opt.DeprecationInfo.GetFormattedMessage($"--{opt.LongName}");
+                        context.Writer.WriteWarningLine($"    ⚠ {warningMessage}", theme);
+                    }
                 }
 
                 context.Writer.WriteLine("");
@@ -359,6 +393,27 @@ namespace EasyCLI.Shell
         {
             // Default implementation - derived classes can override
             return ExitCodes.Success;
+        }
+
+        /// <summary>
+        /// Checks for deprecated features and displays appropriate warnings.
+        /// </summary>
+        /// <param name="args">The parsed command line arguments.</param>
+        /// <param name="context">The execution context.</param>
+        protected virtual void CheckDeprecatedFeatures(CommandLineArgs args, ShellExecutionContext context)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+            ArgumentNullException.ThrowIfNull(context);
+
+            // Get command help information for deprecation checking
+            CommandHelp help = GetHelp();
+            ConsoleTheme theme = GetTheme(context);
+
+            // Check if this command itself is deprecated
+            _ = DeprecationChecker.CheckAndWarnDeprecatedCommand(this, context.Writer, theme);
+
+            // Check for deprecated options and arguments
+            _ = DeprecationChecker.PerformComprehensiveDeprecationCheck(this, args, help, context.Writer, theme);
         }
 
         /// <summary>

@@ -21,6 +21,7 @@ var shell = new CliShell(reader, writer, new ShellOptions
 // Register demo commands
 await shell.RegisterAsync(new DeleteCommand());
 await shell.RegisterAsync(new PrivacyCommand());
+await shell.RegisterAsync(new DeprecatedCommand());
 
 writer.WriteLine("");
 writer.WriteInfoLine("Enhanced CLI Shell with best practices features:");
