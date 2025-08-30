@@ -128,18 +128,19 @@ namespace EasyCLI.Console
             ];
 
             /// <summary>Combined set of all CLI symbols for efficient lookup.</summary>
-            public static readonly HashSet<string> AllSymbols = new(
-                StatusSymbols
-                .Concat(BulletSymbols)
-                .Concat(DirectionalSymbols)
-                .Concat(EffectSymbols)
-                .Concat(AchievementSymbols)
-                .Concat(DocumentSymbols)
-                .Concat(ToolSymbols)
-                .Concat(CreativeSymbols)
-                .Concat(TimeSymbols)
-                .Concat(CelebrationSymbols)
-                .Concat(NotificationSymbols));
+            public static readonly HashSet<string> AllSymbols = [
+                ..StatusSymbols,
+                ..BulletSymbols,
+                ..DirectionalSymbols,
+                ..EffectSymbols,
+                ..AchievementSymbols,
+                ..DocumentSymbols,
+                ..ToolSymbols,
+                ..CreativeSymbols,
+                ..TimeSymbols,
+                ..CelebrationSymbols,
+                ..NotificationSymbols
+            ];
         }
 
         /// <summary>
