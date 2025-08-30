@@ -1,5 +1,3 @@
-using System.Collections.Concurrent;
-
 namespace EasyCLI.Shell.SignalHandling
 {
     /// <summary>
@@ -7,11 +5,21 @@ namespace EasyCLI.Shell.SignalHandling
     /// </summary>
     public class CleanupManager : ICleanupManager
     {
-        private readonly ConcurrentDictionary<Guid, CleanupRegistration> _cleanupActions = new();
+        private readonly List<CleanupRegistration> _cleanupActions = [];
+        private readonly Lock _lock = new();
         private volatile bool _disposed;
 
         /// <inheritdoc />
-        public int RegisteredCleanupCount => _cleanupActions.Count;
+        public int RegisteredCleanupCount
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _cleanupActions.Count;
+                }
+            }
+        }
 
         /// <inheritdoc />
         public ICleanupHandle RegisterCleanup(Func<CancellationToken, Task> cleanup, string? name = null)
@@ -21,7 +29,11 @@ namespace EasyCLI.Shell.SignalHandling
 
             Guid id = Guid.NewGuid();
             CleanupRegistration registration = new(id, cleanup, name, this);
-            _cleanupActions[id] = registration;
+
+            lock (_lock)
+            {
+                _cleanupActions.Add(registration);
+            }
 
             return new CleanupHandle(registration);
         }
@@ -47,7 +59,11 @@ namespace EasyCLI.Shell.SignalHandling
             ThrowIfDisposed();
 
             // Get all registrations in reverse order (LIFO - Last In, First Out)
-            CleanupRegistration[] registrations = [.. _cleanupActions.Values.ToArray().Reverse()];
+            CleanupRegistration[] registrations;
+            lock (_lock)
+            {
+                registrations = [.. _cleanupActions.AsEnumerable().Reverse()];
+            }
 
             if (registrations.Length == 0)
             {
@@ -87,7 +103,10 @@ namespace EasyCLI.Shell.SignalHandling
         /// <param name="id">The ID of the cleanup action to unregister.</param>
         internal void UnregisterCleanup(Guid id)
         {
-            _ = _cleanupActions.TryRemove(id, out _);
+            lock (_lock)
+            {
+                _ = _cleanupActions.RemoveAll(r => r.Id == id);
+            }
         }
 
         private void ThrowIfDisposed()
@@ -105,7 +124,10 @@ namespace EasyCLI.Shell.SignalHandling
 
             // Don't execute cleanup actions during dispose - they should be executed
             // explicitly via ExecuteCleanupAsync during shutdown
-            _cleanupActions.Clear();
+            lock (_lock)
+            {
+                _cleanupActions.Clear();
+            }
             _disposed = true;
             GC.SuppressFinalize(this);
         }
@@ -122,7 +144,21 @@ namespace EasyCLI.Shell.SignalHandling
             public string? Name => _registration.Name;
 
             /// <inheritdoc />
-            public bool IsRegistered => !_disposed && _registration.Manager._cleanupActions.ContainsKey(_registration.Id);
+            public bool IsRegistered
+            {
+                get
+                {
+                    if (_disposed)
+                    {
+                        return false;
+                    }
+
+                    lock (_registration.Manager._lock)
+                    {
+                        return _registration.Manager._cleanupActions.Any(r => r.Id == _registration.Id);
+                    }
+                }
+            }
 
             /// <inheritdoc />
             public void Unregister()

@@ -1,6 +1,7 @@
 using System.Reflection;
 using EasyCLI.Console;
 using EasyCLI.Shell;
+using EasyCLI.Shell.SignalHandling;
 using EasyCLI.Tests.Fakes;
 using Xunit;
 
@@ -26,9 +27,9 @@ namespace EasyCLI.Tests
             var constructor = typeof(ShellExecutionContext).GetConstructor(
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
                 null,
-                new[] { typeof(CliShell), typeof(IConsoleWriter), typeof(IConsoleReader) },
+                new[] { typeof(CliShell), typeof(IConsoleWriter), typeof(IConsoleReader), typeof(ICleanupManager) },
                 null);
-            var context = (ShellExecutionContext)constructor!.Invoke(new object[] { shell, writer, reader });
+            var context = (ShellExecutionContext)constructor!.Invoke(new object[] { shell, writer, reader, null });
             return (context, writer);
         }
 

@@ -148,6 +148,13 @@ namespace EasyCLI.Shell.SignalHandling
 
             Stop();
             System.Console.CancelKeyPress -= OnCancelKeyPress;
+
+            // Cancel the token before disposing to ensure tests can verify cancellation
+            if (!_shutdownTokenSource.Token.IsCancellationRequested)
+            {
+                _shutdownTokenSource.Cancel();
+            }
+
             _shutdownTokenSource.Dispose();
             _disposed = true;
             GC.SuppressFinalize(this);
