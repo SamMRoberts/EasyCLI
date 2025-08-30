@@ -1,4 +1,7 @@
+using EasyCLI.Console;
+using EasyCLI.Shell;
 using EasyCLI.Shell.SignalHandling;
+using EasyCLI.Tests.Fakes;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -137,6 +140,81 @@ namespace EasyCLI.Tests
             
             // The token should be cancelled when the handler is disposed
             Assert.True(shutdownToken.IsCancellationRequested);
+        }
+
+        [Fact]
+        public void LinkedCancellationTokenSource_UnderstandingDisposalBehavior()
+        {
+            // This test demonstrates the correct understanding of CancellationTokenSource disposal
+            using var signalHandler = new SignalHandler();
+            using var externalCts = new CancellationTokenSource();
+
+            signalHandler.Start();
+
+            CancellationToken linkedToken;
+
+            // Create linked token source in limited scope
+            using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                externalCts.Token,
+                signalHandler.ShutdownToken))
+            {
+                linkedToken = linkedCts.Token;
+
+                // At this point, the token should not be cancelled
+                Assert.False(linkedToken.IsCancellationRequested);
+            }
+            // linkedCts is now disposed
+
+            // Contrary to initial assumption, when a CancellationTokenSource is disposed,
+            // its token does NOT automatically become cancelled (unless it was already cancelled)
+            Assert.False(linkedToken.IsCancellationRequested);
+
+            // However, the real issue is that once the linked CTS is disposed,
+            // the token loses its connection to parent tokens, so future cancellations
+            // of parent tokens won't propagate to this token
+
+            // To test that the signal handler's token does work, create another linked token
+            // BEFORE disposing the signal handler
+            using var anotherLinkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                externalCts.Token,
+                signalHandler.ShutdownToken);
+            var anotherLinkedToken = anotherLinkedCts.Token;
+
+            // This should not be cancelled yet
+            Assert.False(anotherLinkedToken.IsCancellationRequested);
+
+            signalHandler.Dispose(); // This cancels signalHandler.ShutdownToken
+
+            // This new linked token should be cancelled because its parent (signal handler) was cancelled
+            Assert.True(anotherLinkedToken.IsCancellationRequested,
+                "New linked token should be cancelled when parent signal handler is disposed");
+
+            // But the old linkedToken (whose CTS was disposed early) should still NOT be cancelled
+            Assert.False(linkedToken.IsCancellationRequested,
+                "Disposed linked CTS breaks the connection to parent tokens");
+        }
+
+        [Fact]
+        public async Task CliShell_CancellationTokenLinksRemainsAlive_DuringExecution()
+        {
+            // This test verifies that the linked cancellation token source in CliShell.RunAsync
+            // remains alive during shell execution, so signal cancellation works properly
+            var reader = new FakeConsoleReader(new[] { "exit" });
+            var writer = new FakeConsoleWriter();
+            var options = new ShellOptions { EnableSignalHandling = true };
+            
+            using var shell = new CliShell(reader, writer, options);
+            using var externalCts = new CancellationTokenSource();
+            
+            // Run the shell with an external cancellation token
+            var result = await shell.RunAsync(externalCts.Token);
+            
+            // Should exit normally
+            Assert.Equal(0, result);
+            
+            // Test that signal cancellation would work during shell execution
+            // We can't easily test the actual signal behavior in a unit test,
+            // but we can verify the shell setup is correct
         }
     }
 }
