@@ -1063,6 +1063,45 @@ var secret = new HiddenInputPrompt("API Key", writer, reader,
     @default: "test-key-123").GetValue();
 ```
 
+```
+
+#### Secure String Input (Enhanced Security)
+```csharp
+using System.Runtime.InteropServices;
+using System.Security;
+using EasyCLI.Prompts;
+
+// SecureString for enhanced password security
+var securePassword = new SecureStringPrompt("Password", writer, reader,
+    hiddenSource: new ConsoleHiddenInputSource()).GetValue();
+
+// Secure handling - dispose properly after use
+try
+{
+    // Use securePassword with APIs that accept SecureString
+    // Or convert to string only when necessary:
+    IntPtr ptr = Marshal.SecureStringToGlobalAllocUnicode(securePassword);
+    try
+    {
+        string password = Marshal.PtrToStringUni(ptr);
+        // Use password here briefly
+    }
+    finally
+    {
+        Marshal.ZeroFreeGlobalAllocUnicode(ptr);
+    }
+}
+finally
+{
+    securePassword.Dispose();
+}
+
+// Simple usage for testing/development
+var testPassword = new SecureStringPrompt("Test Password", writer, reader,
+    hiddenSource: new ConsoleHiddenInputSource(),
+    mask: '*').GetValue();
+```
+
 ### Choice Prompts
 
 #### Single Choice Selection
