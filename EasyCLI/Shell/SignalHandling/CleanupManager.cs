@@ -47,7 +47,7 @@ namespace EasyCLI.Shell.SignalHandling
             ThrowIfDisposed();
 
             // Get all registrations in reverse order (LIFO - Last In, First Out)
-            CleanupRegistration[] registrations = _cleanupActions.Values.ToArray().Reverse().ToArray();
+            CleanupRegistration[] registrations = [.. _cleanupActions.Values.ToArray().Reverse()];
 
             if (registrations.Length == 0)
             {
