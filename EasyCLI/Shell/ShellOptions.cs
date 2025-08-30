@@ -38,6 +38,6 @@ namespace EasyCLI.Shell
         /// When enabled, the shell will handle SIGINT (Ctrl+C) and SIGTERM signals gracefully,
         /// executing cleanup actions and restoring terminal state before exiting.
         /// </summary>
-        public bool EnableSignalHandling { get; set; } = true;
+        public bool EnableSignalHandling { get; set; } = false;
     }
 }

@@ -10,6 +10,8 @@ namespace EasyCLI.Shell.SignalHandling
         private volatile bool _isActive;
         private volatile bool _disposed;
 
+
+
         /// <summary>
         /// Initializes a new instance of the <see cref="SignalHandler"/> class.
         /// </summary>
