@@ -55,6 +55,13 @@ These enhancements make EasyCLI suitable for building production-grade CLI tools
 - [What's New in v0.2.0](#-whats-new-in-v020---phase-2-cli-enhancement)
 - [Requirements](#-requirements)
 - [Installation](#-installation)
+- [Distribution](#-distribution)
+  - [.NET Global Tool](#-net-global-tool)
+  - [Single-file Executables](#-single-file-executables)
+  - [Homebrew (macOS)](#-homebrew-macos)
+  - [Package from Source](#-package-from-source)
+  - [Automated Distribution](#-automated-distribution)
+  - [Uninstall](#-uninstall)
 - [Quick Start](#-quick-start)
 - [ANSI Styling](#-ansi-styling)
 - [Progress Indicators](#-progress-indicators)
@@ -137,6 +144,229 @@ Authenticate once:
 ```sh
 dotnet nuget add source https://nuget.pkg.github.com/SamMRoberts/index.json \
   --name github --username "SamMRoberts" --password "$GITHUB_TOKEN" --store-password-in-clear-text
+```
+
+## 📦 Distribution
+
+EasyCLI provides comprehensive distribution options for deploying CLI applications built with the framework. Choose the method that best fits your deployment needs.
+
+### 📋 Distribution Methods
+
+| Method | Description | Best For | Requirements |
+|--------|-------------|----------|--------------|
+| **🔧 .NET Global Tool** | Install via `dotnet tool install` | .NET developers, easy installation | .NET Runtime |
+| **🚀 Single-file Executable** | Standalone executable, no runtime required | End users, deployment simplicity | None (self-contained) |
+| **🍺 Homebrew Formula** | macOS package manager integration | macOS users, package management | macOS with Homebrew |
+| **📦 Manual Installation** | Direct download and setup | Custom environments | Platform-specific |
+
+### 🔧 .NET Global Tool
+
+Install EasyCLI demo applications as global .NET tools:
+
+```bash
+# Install the EasyCLI demo tool globally
+dotnet tool install -g EasyCLI.Demo.Tool
+
+# Run the tool from anywhere
+easycli-demo
+
+# Update to latest version
+dotnet tool update -g EasyCLI.Demo.Tool
+
+# Uninstall
+dotnet tool uninstall -g EasyCLI.Demo.Tool
+```
+
+**Advantages:**
+- ✅ Easy installation and updates via .NET CLI
+- ✅ Automatic PATH integration
+- ✅ Version management built-in
+- ✅ Works on all platforms with .NET runtime
+
+### 🚀 Single-file Executables
+
+Download and run standalone executables with no runtime dependencies:
+
+#### Windows
+```bash
+# Download and run (replace with actual release URL)
+curl -L -o easycli-demo.exe https://github.com/SamMRoberts/EasyCLI/releases/latest/download/easycli-demo-win-x64.exe
+easycli-demo.exe
+```
+
+#### macOS
+```bash
+# Download and run
+curl -L -o easycli-demo https://github.com/SamMRoberts/EasyCLI/releases/latest/download/easycli-demo-osx-x64
+chmod +x easycli-demo
+./easycli-demo
+```
+
+#### Linux
+```bash
+# Download and run
+curl -L -o easycli-demo https://github.com/SamMRoberts/EasyCLI/releases/latest/download/easycli-demo-linux-x64
+chmod +x easycli-demo
+./easycli-demo
+```
+
+**Advantages:**
+- ✅ No .NET runtime required
+- ✅ Single file deployment
+- ✅ Faster startup time
+- ✅ Perfect for CI/CD and containers
+
+### 🍺 Homebrew (macOS)
+
+Install via Homebrew package manager:
+
+```bash
+# Add the EasyCLI tap (once the formula is published)
+brew tap SamMRoberts/easycli
+
+# Install EasyCLI demo
+brew install easycli-demo
+
+# Run the tool
+easycli-demo
+
+# Update
+brew upgrade easycli-demo
+
+# Uninstall
+brew uninstall easycli-demo
+```
+
+**Advantages:**
+- ✅ Native macOS package management
+- ✅ Automatic dependency handling
+- ✅ Easy updates via `brew upgrade`
+- ✅ Integrates with system PATH
+
+### 📦 Package from Source
+
+Build your own distribution packages:
+
+#### PowerShell (Recommended - Cross-platform)
+```powershell
+# Package everything (Windows, macOS, Linux)
+./scripts/package-all.ps1
+
+# Package specific components
+./scripts/package-dotnet-tool.ps1
+./scripts/publish-single-file.ps1 -Platforms "linux-x64,win-x64"
+./scripts/generate-homebrew-formula.ps1
+
+# Custom output directory and version
+./scripts/package-all.ps1 -OutputDir "./custom-dist" -Version "1.2.3"
+```
+
+#### Bash (Unix/Linux alternative)
+```bash
+# Basic packaging for Linux environments
+./scripts/package-basic.sh
+
+# Custom output directory
+./scripts/package-basic.sh --output-dir "./custom-dist" --version "1.2.3"
+```
+
+### 🔄 Automated Distribution
+
+GitHub Actions workflow automatically creates distribution packages:
+
+```yaml
+# Manually trigger distribution packaging
+name: Distribution Packaging
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package'
+        required: false
+      platforms:
+        description: 'Platforms (comma-separated)'
+        default: 'win-x64,osx-x64,linux-x64'
+```
+
+**Triggers:**
+- 🔄 Manual workflow dispatch with custom parameters
+- 🏷️ Automatic on GitHub releases (uploads assets)
+- 📋 Artifacts retained for 30 days
+
+### 📋 Requirements by Distribution Method
+
+| Method | .NET Runtime | Platform | Size | Installation |
+|--------|--------------|----------|------|--------------|
+| Global Tool | ✅ Required | Cross-platform | ~23MB | `dotnet tool install` |
+| Single-file | ❌ Not required | Platform-specific | ~111MB | Direct download |
+| Homebrew | ❌ Not required | macOS only | ~44MB compressed | `brew install` |
+
+### 🔍 Verification
+
+Verify your installation:
+
+```bash
+# Check version and help
+easycli-demo --help
+easycli-demo --version
+
+# Test basic functionality
+echo "test" | easycli-demo process
+
+# Run interactive mode
+easycli-demo
+```
+
+## 🗑️ Uninstall
+
+### .NET Global Tool
+```bash
+# Remove global tool
+dotnet tool uninstall -g EasyCLI.Demo.Tool
+
+# Verify removal
+dotnet tool list -g | grep -i easycli
+```
+
+### Single-file Executable
+```bash
+# Simply delete the executable
+rm easycli-demo  # Linux/macOS
+del easycli-demo.exe  # Windows
+
+# Remove from PATH if added manually
+```
+
+### Homebrew (macOS)
+```bash
+# Uninstall via Homebrew
+brew uninstall easycli-demo
+
+# Remove tap if no longer needed
+brew untap SamMRoberts/easycli
+
+# Verify removal
+brew list | grep -i easycli
+```
+
+### Manual Installation
+```bash
+# Remove installation directory
+rm -rf /usr/local/bin/easycli-demo  # Linux/macOS
+rmdir /d /s "C:\Program Files\EasyCLI"  # Windows
+
+# Remove from PATH environment variable if added
+```
+
+### Verify Complete Removal
+```bash
+# Check if command is still available
+which easycli-demo  # Should return nothing
+easycli-demo --version  # Should show "command not found"
+
+# Check for remaining files
+find / -name "*easycli*" 2>/dev/null  # Linux/macOS
+dir /s C:\ | findstr easycli  # Windows
 ```
 
 ## 🚀 Quick Start
