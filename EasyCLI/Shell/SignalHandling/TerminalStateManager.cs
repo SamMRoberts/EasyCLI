@@ -1,64 +1,6 @@
 namespace EasyCLI.Shell.SignalHandling
 {
     /// <summary>
-    /// Manages terminal state and provides restoration capabilities during shutdown.
-    /// Handles cursor visibility, terminal modes, and other console state that may
-    /// need to be restored when a CLI application is interrupted.
-    /// </summary>
-    public interface ITerminalStateManager : IDisposable
-    {
-        /// <summary>
-        /// Captures the current terminal state for later restoration.
-        /// </summary>
-        void CaptureState();
-
-        /// <summary>
-        /// Restores the terminal to its previously captured state.
-        /// </summary>
-        /// <param name="cancellationToken">Cancellation token for the restore operation.</param>
-        /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
-        Task RestoreStateAsync(CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets a value indicating whether terminal state has been captured.
-        /// </summary>
-        bool HasCapturedState { get; }
-
-        /// <summary>
-        /// Temporarily modifies terminal state (e.g., hide cursor) with automatic restoration.
-        /// </summary>
-        /// <param name="modification">The modification to apply.</param>
-        /// <returns>A disposable that will restore the state when disposed.</returns>
-        IDisposable TemporaryModification(TerminalModification modification);
-    }
-
-    /// <summary>
-    /// Represents types of terminal modifications that can be applied.
-    /// </summary>
-    public enum TerminalModification
-    {
-        /// <summary>
-        /// Hide the cursor.
-        /// </summary>
-        HideCursor,
-
-        /// <summary>
-        /// Show the cursor.
-        /// </summary>
-        ShowCursor,
-
-        /// <summary>
-        /// Enter raw mode (disable line buffering and echo).
-        /// </summary>
-        RawMode,
-
-        /// <summary>
-        /// Enter normal mode (enable line buffering and echo).
-        /// </summary>
-        NormalMode,
-    }
-
-    /// <summary>
     /// Default implementation of <see cref="ITerminalStateManager"/> that manages
     /// basic console state like cursor visibility and position.
     /// </summary>
@@ -81,7 +23,16 @@ namespace EasyCLI.Shell.SignalHandling
             try
             {
                 // Capture current console state
-                _cursorVisible = System.Console.CursorVisible;
+                try
+                {
+#pragma warning disable CA1416 // Validate platform compatibility
+                    _cursorVisible = System.Console.CursorVisible;
+#pragma warning restore CA1416 // Validate platform compatibility
+                }
+                catch (PlatformNotSupportedException)
+                {
+                    _cursorVisible = true; // Default value if not supported
+                }
                 _cursorLeft = System.Console.CursorLeft;
                 _cursorTop = System.Console.CursorTop;
                 _hasCapturedState = true;
@@ -112,7 +63,14 @@ namespace EasyCLI.Shell.SignalHandling
                 cancellationToken.ThrowIfCancellationRequested();
 
                 // Restore cursor visibility
-                System.Console.CursorVisible = _cursorVisible;
+                try
+                {
+                    System.Console.CursorVisible = _cursorVisible;
+                }
+                catch (PlatformNotSupportedException)
+                {
+                    // Cursor visibility not supported on this platform
+                }
 
                 // Only restore cursor position if we can determine current buffer state
                 try
@@ -196,16 +154,39 @@ namespace EasyCLI.Shell.SignalHandling
 
                 try
                 {
-                    _originalCursorVisible = System.Console.CursorVisible;
+                    try
+                    {
+#pragma warning disable CA1416 // Validate platform compatibility
+                        _originalCursorVisible = System.Console.CursorVisible;
+#pragma warning restore CA1416 // Validate platform compatibility
+                    }
+                    catch (PlatformNotSupportedException)
+                    {
+                        _originalCursorVisible = true; // Default value if not supported
+                    }
 
                     // Apply the modification
                     switch (modification)
                     {
                         case TerminalModification.HideCursor:
-                            System.Console.CursorVisible = false;
+                            try
+                            {
+                                System.Console.CursorVisible = false;
+                            }
+                            catch (PlatformNotSupportedException)
+                            {
+                                // Cursor visibility not supported on this platform
+                            }
                             break;
                         case TerminalModification.ShowCursor:
-                            System.Console.CursorVisible = true;
+                            try
+                            {
+                                System.Console.CursorVisible = true;
+                            }
+                            catch (PlatformNotSupportedException)
+                            {
+                                // Cursor visibility not supported on this platform
+                            }
                             break;
                         case TerminalModification.RawMode:
                         case TerminalModification.NormalMode:
@@ -237,7 +218,14 @@ namespace EasyCLI.Shell.SignalHandling
                     {
                         case TerminalModification.HideCursor:
                         case TerminalModification.ShowCursor:
-                            System.Console.CursorVisible = _originalCursorVisible;
+                            try
+                            {
+                                System.Console.CursorVisible = _originalCursorVisible;
+                            }
+                            catch (PlatformNotSupportedException)
+                            {
+                                // Cursor visibility not supported on this platform
+                            }
                             break;
                         case TerminalModification.RawMode:
                         case TerminalModification.NormalMode:

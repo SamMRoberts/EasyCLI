@@ -10,7 +10,31 @@ namespace EasyCLI.Shell.SignalHandling
         private volatile bool _isActive;
         private volatile bool _disposed;
 
+        /// <summary>
+        /// Registers Unix signal handlers for SIGTERM and SIGHUP.
+        /// </summary>
+        private static void RegisterUnixSignalHandlers()
+        {
+            // Note: In .NET 6+, we could use PosixSignalRegistration
+            // For broader compatibility, we use a simpler approach here
+            // that focuses on the console cancel events which are cross-platform
 
+            // Unix-specific signal handling could be added here using P/Invoke
+            // or by leveraging newer .NET APIs when available
+        }
+
+        /// <summary>
+        /// Unregisters Unix signal handlers.
+        /// </summary>
+        private static void UnregisterUnixSignalHandlers()
+        {
+            // Corresponding cleanup for Unix signal handlers
+        }
+
+        private static void ThrowIfDisposed(bool disposed)
+        {
+            ObjectDisposedException.ThrowIf(disposed, nameof(SignalHandler));
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SignalHandler"/> class.
@@ -112,32 +136,6 @@ namespace EasyCLI.Shell.SignalHandling
             {
                 _shutdownTokenSource.Cancel();
             }
-        }
-
-        /// <summary>
-        /// Registers Unix signal handlers for SIGTERM and SIGHUP.
-        /// </summary>
-        private static void RegisterUnixSignalHandlers()
-        {
-            // Note: In .NET 6+, we could use PosixSignalRegistration
-            // For broader compatibility, we use a simpler approach here
-            // that focuses on the console cancel events which are cross-platform
-
-            // Unix-specific signal handling could be added here using P/Invoke
-            // or by leveraging newer .NET APIs when available
-        }
-
-        /// <summary>
-        /// Unregisters Unix signal handlers.
-        /// </summary>
-        private static void UnregisterUnixSignalHandlers()
-        {
-            // Corresponding cleanup for Unix signal handlers
-        }
-
-        private static void ThrowIfDisposed(bool disposed)
-        {
-            ObjectDisposedException.ThrowIf(disposed, nameof(SignalHandler));
         }
 
         /// <inheritdoc />
