@@ -103,10 +103,10 @@ namespace EasyCLI.Deprecation
         {
             ArgumentException.ThrowIfNullOrEmpty(featureName);
 
-            List<string> parts = new List<string>
-            {
+            List<string> parts =
+            [
                 $"'{featureName}' is deprecated",
-            };
+            ];
 
             if (!string.IsNullOrEmpty(Message))
             {
