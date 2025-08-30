@@ -271,13 +271,16 @@ namespace EasyCLI.Shell
         {
             // Setup signal handling if enabled
             CancellationToken effectiveCancellationToken = cancellationToken;
+            CancellationTokenSource? combinedCts = null;
+
             if (_signalHandler != null)
             {
                 _signalHandler.Start();
                 _terminalStateManager?.CaptureState();
 
                 // Combine external cancellation token with signal-based cancellation
-                using CancellationTokenSource combinedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                // Keep the linked cancellation source alive for the entire shell loop
+                combinedCts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken,
                     _signalHandler.ShutdownToken);
                 effectiveCancellationToken = combinedCts.Token;
@@ -349,6 +352,9 @@ namespace EasyCLI.Shell
             }
             finally
             {
+                // Dispose the combined cancellation token source if it was created
+                combinedCts?.Dispose();
+
                 // Execute cleanup and restore terminal state
                 await PerformShutdownCleanupAsync().ConfigureAwait(false);
             }
