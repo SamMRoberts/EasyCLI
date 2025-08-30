@@ -193,5 +193,64 @@ namespace EasyCLI.Tests
             Assert.DoesNotContain("\u001b[", plainResult);
             Assert.DoesNotContain("✓", plainResult);
         }
+
+        [Fact]
+        public void PlainConsoleWriter_StripsAllSymbolCategories()
+        {
+            var sw = new StringWriter();
+            var innerWriter = new ConsoleWriter(enableColors: false, output: sw);
+            var plainWriter = new PlainConsoleWriter(innerWriter);
+
+            // Test symbols from different categories
+            var testString = "✓Success ✗Error ⚠Warning ℹInfo " +  // Status symbols
+                            "•Bullet ◉Circle ▶Arrow " +             // Bullet and directional symbols
+                            "⚡Lightning ✨Sparkles 🔥Fire " +         // Effect symbols
+                            "🎯Target 🏆Trophy " +                   // Achievement symbols
+                            "📝Memo 📊Chart " +                      // Document symbols
+                            "🔧Wrench ⚙Gear " +                      // Tool symbols
+                            "🎨Art 🔄Process " +                     // Creative and time symbols
+                            "🚀Rocket 🎉Party " +                    // Celebration symbols
+                            "🔔Bell";                                // Notification symbols
+
+            plainWriter.Write(testString);
+
+            var result = sw.ToString();
+            
+            // Should contain only the text, no symbols
+            var expected = "Success Error Warning Info " +
+                          "Bullet Circle Arrow " +
+                          "Lightning Sparkles Fire " +
+                          "Target Trophy " +
+                          "Memo Chart " +
+                          "Wrench Gear " +
+                          "Art Process " +
+                          "Rocket Party " +
+                          "Bell";
+            
+            Assert.Equal(expected, result);
+            
+            // Verify specific symbols are removed
+            Assert.DoesNotContain("✓", result);
+            Assert.DoesNotContain("✗", result);
+            Assert.DoesNotContain("⚠", result);
+            Assert.DoesNotContain("ℹ", result);
+            Assert.DoesNotContain("•", result);
+            Assert.DoesNotContain("◉", result);
+            Assert.DoesNotContain("▶", result);
+            Assert.DoesNotContain("⚡", result);
+            Assert.DoesNotContain("✨", result);
+            Assert.DoesNotContain("🔥", result);
+            Assert.DoesNotContain("🎯", result);
+            Assert.DoesNotContain("🏆", result);
+            Assert.DoesNotContain("📝", result);
+            Assert.DoesNotContain("📊", result);
+            Assert.DoesNotContain("🔧", result);
+            Assert.DoesNotContain("⚙", result);
+            Assert.DoesNotContain("🎨", result);
+            Assert.DoesNotContain("🔄", result);
+            Assert.DoesNotContain("🚀", result);
+            Assert.DoesNotContain("🎉", result);
+            Assert.DoesNotContain("🔔", result);
+        }
     }
 }
