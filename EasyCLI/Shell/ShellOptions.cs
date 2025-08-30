@@ -32,5 +32,12 @@ namespace EasyCLI.Shell
         /// the native shell (bash, cmd, etc.) to preserve full shell functionality.
         /// </summary>
         public bool EnableNativeShellDelegation { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to enable signal handling for graceful shutdown.
+        /// When enabled, the shell will handle SIGINT (Ctrl+C) and SIGTERM signals gracefully,
+        /// executing cleanup actions and restoring terminal state before exiting.
+        /// </summary>
+        public bool EnableSignalHandling { get; set; } = true;
     }
 }

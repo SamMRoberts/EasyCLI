@@ -1,4 +1,5 @@
 using EasyCLI.Console;
+using EasyCLI.Shell.SignalHandling;
 
 namespace EasyCLI.Shell
 {
@@ -7,11 +8,12 @@ namespace EasyCLI.Shell
     /// </summary>
     public class ShellExecutionContext
     {
-        internal ShellExecutionContext(CliShell shell, IConsoleWriter writer, IConsoleReader reader)
+        internal ShellExecutionContext(CliShell shell, IConsoleWriter writer, IConsoleReader reader, ICleanupManager? cleanupManager = null)
         {
             Shell = shell;
             Writer = writer;
             Reader = reader;
+            CleanupManager = cleanupManager;
         }
 
         /// <summary>
@@ -28,6 +30,12 @@ namespace EasyCLI.Shell
         /// Gets the console reader.
         /// </summary>
         public IConsoleReader Reader { get; }
+
+        /// <summary>
+        /// Gets the cleanup manager for registering cleanup actions.
+        /// May be null if signal handling is not enabled.
+        /// </summary>
+        public ICleanupManager? CleanupManager { get; }
 
         /// <summary>
         /// Writes an informational message.

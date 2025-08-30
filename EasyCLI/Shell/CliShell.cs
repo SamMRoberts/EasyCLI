@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using EasyCLI.Console;
+using EasyCLI.Shell.SignalHandling;
 using EasyCLI.Shell.Utilities;
 
 namespace EasyCLI.Shell
@@ -7,7 +8,7 @@ namespace EasyCLI.Shell
     /// <summary>
     /// An interactive, persistent CLI shell hosting registered commands and delegating to external processes.
     /// </summary>
-    public class CliShell
+    public class CliShell : IDisposable
     {
         private readonly IConsoleReader _reader;
         private readonly IConsoleWriter _writer;
@@ -15,6 +16,10 @@ namespace EasyCLI.Shell
         private readonly Dictionary<string, ICliCommand> _commands = new(StringComparer.OrdinalIgnoreCase);
         private readonly List<string> _history = [];
         private readonly Lock _historyLock = new();
+        private readonly SignalHandler? _signalHandler;
+        private readonly CleanupManager? _cleanupManager;
+        private readonly TerminalStateManager? _terminalStateManager;
+        private volatile bool _disposed;
 
         /// <summary>
         /// Set of reserved command names that cannot be overridden by user commands.
@@ -162,6 +167,18 @@ namespace EasyCLI.Shell
             _reader = reader;
             _writer = writer;
             _options = options ?? new ShellOptions();
+
+            // Initialize signal handling if enabled
+            if (_options.EnableSignalHandling)
+            {
+                _signalHandler = new SignalHandler();
+                _cleanupManager = new CleanupManager();
+                _terminalStateManager = new TerminalStateManager();
+
+                // Register signal handler event
+                _signalHandler.SignalReceived += OnSignalReceived;
+            }
+
             // Synchronously wait for async built-in registration (constructor cannot be async)
             RegisterBuiltInsAsync().GetAwaiter().GetResult();
         }
@@ -252,57 +269,89 @@ namespace EasyCLI.Shell
         /// <returns>A <see cref="Task{Int32}"/> representing the asynchronous shell loop operation. Returns 0 on normal exit.</returns>
         public async Task<int> RunAsync(CancellationToken cancellationToken = default)
         {
-            ShellExecutionContext ctx = new(this, _writer, _reader);
-
-            while (!cancellationToken.IsCancellationRequested)
+            // Setup signal handling if enabled
+            CancellationToken effectiveCancellationToken = cancellationToken;
+            if (_signalHandler != null)
             {
-                WritePrompt();
-                string line = _reader.ReadLine();
-                if (line == string.Empty && cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
+                _signalHandler.Start();
+                _terminalStateManager?.CaptureState();
 
-                if (line is null)
-                {
-                    // EOF
-                    break;
-                }
+                // Combine external cancellation token with signal-based cancellation
+                using CancellationTokenSource combinedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    _signalHandler.ShutdownToken);
+                effectiveCancellationToken = combinedCts.Token;
+            }
 
-                line = line.Trim();
-                if (string.IsNullOrEmpty(line))
-                {
-                    continue;
-                }
+            try
+            {
+                ShellExecutionContext ctx = new(this, _writer, _reader, _cleanupManager);
 
-                if (_options.EnableHistory)
+                while (!effectiveCancellationToken.IsCancellationRequested)
                 {
-                    AddHistory(line);
-                }
-
-                if (IsExitCommand(line))
-                {
-                    break;
-                }
-
-                try
-                {
-                    int code = await DispatchAsync(ctx, line, cancellationToken).ConfigureAwait(false);
-                    if (code != 0)
+                    WritePrompt();
+                    string line = _reader.ReadLine();
+                    if (line == string.Empty && effectiveCancellationToken.IsCancellationRequested)
                     {
-                        _writer.WriteLine($"(exit code {code})", ConsoleStyles.FgRed);
+                        break;
+                    }
+
+                    if (line is null)
+                    {
+                        // EOF
+                        break;
+                    }
+
+                    line = line.Trim();
+                    if (string.IsNullOrEmpty(line))
+                    {
+                        continue;
+                    }
+
+                    if (_options.EnableHistory)
+                    {
+                        AddHistory(line);
+                    }
+
+                    if (IsExitCommand(line))
+                    {
+                        break;
+                    }
+
+                    try
+                    {
+                        int code = await DispatchAsync(ctx, line, effectiveCancellationToken).ConfigureAwait(false);
+                        if (code != 0)
+                        {
+                            _writer.WriteLine($"(exit code {code})", ConsoleStyles.FgRed);
+                        }
+                    }
+                    catch (OperationCanceledException) when (effectiveCancellationToken.IsCancellationRequested)
+                    {
+                        // Check if this was due to a signal or external cancellation
+                        if (_signalHandler?.ShutdownToken.IsCancellationRequested == true)
+                        {
+                            _writer.WriteLine("^C", ConsoleStyles.FgYellow);
+                            break; // Exit the shell loop on signal
+                        }
+                        else
+                        {
+                            _writer.WriteLine("^C", ConsoleStyles.FgYellow);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _writer.WriteLine(ex.Message, ConsoleStyles.FgRed);
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                    _writer.WriteLine("^C", ConsoleStyles.FgYellow);
-                }
-                catch (Exception ex)
-                {
-                    _writer.WriteLine(ex.Message, ConsoleStyles.FgRed);
-                }
+
+                return 0;
             }
-            return 0;
+            finally
+            {
+                // Execute cleanup and restore terminal state
+                await PerformShutdownCleanupAsync().ConfigureAwait(false);
+            }
         }
 
         private async Task<int> DispatchAsync(ShellExecutionContext ctx, string line, CancellationToken ct)
@@ -322,6 +371,12 @@ namespace EasyCLI.Shell
             string[] args = parts.Length > 1 ? parts[1..] : [];
             if (_commands.TryGetValue(name, out ICliCommand? cmd))
             {
+                // Register cleanup actions if the command supports them
+                if (_cleanupManager != null)
+                {
+                    _ = cmd.TryRegisterCleanup(_cleanupManager, ctx);
+                }
+
                 return await cmd.ExecuteAsync(ctx, args, ct).ConfigureAwait(false);
             }
 
@@ -685,6 +740,89 @@ namespace EasyCLI.Shell
             // Add standard footer
             context.Writer.WriteLine("");
             HelpFooter.WriteFooter(context.Writer, theme);
+        }
+
+        /// <summary>
+        /// Handles signal received events and initiates graceful shutdown.
+        /// </summary>
+        /// <param name="sender">The signal handler that raised the event.</param>
+        /// <param name="e">Event arguments containing signal information.</param>
+        private void OnSignalReceived(object? sender, SignalReceivedEventArgs e)
+        {
+            // The signal handler has already triggered the shutdown token,
+            // so the shell loop will exit. We don't need to do additional work here.
+        }
+
+        /// <summary>
+        /// Performs cleanup operations during shutdown.
+        /// </summary>
+        private async Task PerformShutdownCleanupAsync()
+        {
+            if (_cleanupManager != null)
+            {
+                try
+                {
+                    // Execute all registered cleanup actions with a reasonable timeout
+                    bool success = await _cleanupManager.ExecuteCleanupAsync(
+                        TimeSpan.FromSeconds(5),
+                        CancellationToken.None).ConfigureAwait(false);
+
+                    if (!success)
+                    {
+                        // Some cleanup actions failed or timed out
+                        // In a production system, this might be logged
+                    }
+                }
+                catch
+                {
+                    // Ignore cleanup failures during shutdown
+                }
+            }
+
+            // Restore terminal state
+            if (_terminalStateManager != null)
+            {
+                try
+                {
+                    await _terminalStateManager.RestoreStateAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Ignore terminal restoration failures
+                }
+            }
+
+            // Stop signal handling
+            _signalHandler?.Stop();
+        }
+
+        /// <summary>
+        /// Releases all resources used by the shell.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            // Perform cleanup if not already done
+            try
+            {
+                _ = PerformShutdownCleanupAsync().Wait(TimeSpan.FromSeconds(2));
+            }
+            catch
+            {
+                // Ignore cleanup failures during dispose
+            }
+
+            // Dispose signal handling components
+            _signalHandler?.Dispose();
+            _cleanupManager?.Dispose();
+            _terminalStateManager?.Dispose();
+
+            _disposed = true;
+            GC.SuppressFinalize(this);
         }
 
         private sealed class DelegateCommand(string name, string description, Func<ShellExecutionContext, string[], CancellationToken, Task<int>> handler, string category = "Core") : ICliCommand
