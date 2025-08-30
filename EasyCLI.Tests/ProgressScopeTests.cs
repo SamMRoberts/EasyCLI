@@ -173,6 +173,36 @@ namespace EasyCLI.Tests
         }
 
         [Fact]
+        public void ProgressScope_UpdateMessage_ClearLineCalculatedFromNewMessageLength()
+        {
+            using var output = new StringWriter();
+            var writer = new ConsoleWriter(output: output);
+
+            // Start with short message
+            using var scope = new ProgressScope(writer, "short");
+            Thread.Sleep(50); // Allow spinner to start
+            
+            // Update with much longer message to test clear line calculation
+            var longMessage = "this is a much longer message that should be properly cleared";
+            scope.UpdateMessage(longMessage);
+            Thread.Sleep(50); // Allow update to occur
+
+            var result = output.ToString();
+            
+            // Verify the new message is displayed
+            Assert.Contains(longMessage, result);
+            
+            // Verify that the clear line contains enough spaces for the longer message
+            // The clear line should be at least as long as the new message plus formatting
+            var expectedMinSpaces = longMessage.Length + 10; // +10 for the formatting and padding
+            var clearSpaces = Math.Max(50, expectedMinSpaces);
+            var expectedClearLine = "\r" + new string(' ', clearSpaces) + "\r";
+            
+            // Verify that sufficient clearing occurred (at least the expected minimum)
+            Assert.Contains(new string(' ', expectedMinSpaces), result);
+        }
+
+        [Fact]
         public void ProgressScope_WithCancellationToken_RespectsToken()
         {
             using var output = new StringWriter();

@@ -141,7 +141,7 @@ namespace EasyCLI.Progress
                 }
 
                 // Clear current line and show new message
-                string clearLine = "\r" + new string(' ', Math.Max(50, _message.Length + 10)) + "\r";
+                string clearLine = "\r" + new string(' ', Math.Max(50, newMessage.Length + 10)) + "\r";
                 _writer.Write(clearLine);
 
                 string updatedLine = $"⟳ {newMessage}...";
