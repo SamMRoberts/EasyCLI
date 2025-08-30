@@ -127,7 +127,7 @@ namespace EasyCLI.Shell.SignalHandling
             {
                 try
                 {
-                    _ = RestoreStateAsync().Wait(TimeSpan.FromSeconds(1));
+                    RestoreStateAsync().GetAwaiter().GetResult();
                 }
                 catch
                 {
