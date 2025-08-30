@@ -33,6 +33,15 @@ TestResults/
 *.cache
 *.pdb
 
+# Distribution artifacts
+dist/
+*.tar.gz
+*.zip
+*.dmg
+*.msi
+*.deb
+*.rpm
+
 # Others
 *.dbmdl
 *.bak

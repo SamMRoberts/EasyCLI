@@ -1,0 +1,215 @@
+name: Distribution Packaging
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to package (leave empty for auto-detection)'
+        required: false
+        type: string
+      platforms:
+        description: 'Platforms to build (comma-separated)'
+        required: false
+        default: 'win-x64,osx-x64,linux-x64'
+        type: string
+      skip-tool:
+        description: 'Skip .NET Global Tool packaging'
+        required: false
+        default: false
+        type: boolean
+      skip-single-file:
+        description: 'Skip single-file executable publishing'
+        required: false
+        default: false
+        type: boolean
+      skip-homebrew:
+        description: 'Skip Homebrew formula generation'
+        required: false
+        default: false
+        type: boolean
+  release:
+    types: [published]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🛒 Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: 🏗️ Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 📋 Detect version
+      id: version
+      run: |
+        if [ -n "${{ github.event.inputs.version }}" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        elif [ "${{ github.event_name }}" = "release" ]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+        else
+          # Auto-detect from project file
+          PROJECT_FILE="EasyCLI.Demo.Enhanced/EasyCLI.Demo.Enhanced.csproj"
+          if [ -f "$PROJECT_FILE" ]; then
+            VERSION=$(grep -o '<Version>[^<]*</Version>' "$PROJECT_FILE" 2>/dev/null | sed 's/<[^>]*>//g' | head -1)
+            if [ -z "$VERSION" ]; then
+              VERSION=$(grep -o '<AssemblyVersion>[^<]*</AssemblyVersion>' "$PROJECT_FILE" 2>/dev/null | sed 's/<[^>]*>//g' | head -1)
+            fi
+            if [ -z "$VERSION" ]; then
+              VERSION="1.0.0"
+            fi
+          else
+            VERSION="1.0.0"
+          fi
+        fi
+        
+        # Normalize version for .NET (ensure it has at least 3 parts)
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          VERSION="$VERSION.0"
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "📋 Detected version: $VERSION"
+        
+    - name: 🔧 Setup packaging parameters
+      id: params
+      run: |
+        # Set platforms
+        if [ -n "${{ github.event.inputs.platforms }}" ]; then
+          PLATFORMS="${{ github.event.inputs.platforms }}"
+        else
+          PLATFORMS="win-x64,osx-x64,linux-x64"
+        fi
+        
+        # Set skip flags
+        SKIP_TOOL="${{ github.event.inputs.skip-tool || 'false' }}"
+        SKIP_SINGLE_FILE="${{ github.event.inputs.skip-single-file || 'false' }}"
+        SKIP_HOMEBREW="${{ github.event.inputs.skip-homebrew || 'false' }}"
+        
+        echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+        echo "skip-tool=$SKIP_TOOL" >> $GITHUB_OUTPUT
+        echo "skip-single-file=$SKIP_SINGLE_FILE" >> $GITHUB_OUTPUT
+        echo "skip-homebrew=$SKIP_HOMEBREW" >> $GITHUB_OUTPUT
+        
+        echo "🎯 Platforms: $PLATFORMS"
+        echo "🔧 Skip .NET Tool: $SKIP_TOOL"
+        echo "🚀 Skip Single-file: $SKIP_SINGLE_FILE"
+        echo "🍺 Skip Homebrew: $SKIP_HOMEBREW"
+        
+    - name: 📦 Restore dependencies
+      run: |
+        dotnet restore EasyCLI/EasyCLI.csproj --locked-mode
+        dotnet restore EasyCLI.Demo.Enhanced/EasyCLI.Demo.Enhanced.csproj --locked-mode
+        
+    - name: 🔨 Build project
+      run: |
+        dotnet build EasyCLI/EasyCLI.csproj --configuration Release --no-restore
+        dotnet build EasyCLI.Demo.Enhanced/EasyCLI.Demo.Enhanced.csproj --configuration Release --no-restore
+        
+    - name: 🧪 Run tests
+      run: |
+        dotnet test EasyCLI.Tests/EasyCLI.Tests.csproj --configuration Release --no-restore --verbosity minimal
+        
+    - name: 🚀 Run comprehensive packaging
+      run: |
+        # Convert boolean strings to PowerShell switch parameters
+        PWSH_ARGS=""
+        if [ "${{ steps.params.outputs.skip-tool }}" = "true" ]; then
+          PWSH_ARGS="$PWSH_ARGS -SkipTool"
+        fi
+        if [ "${{ steps.params.outputs.skip-single-file }}" = "true" ]; then
+          PWSH_ARGS="$PWSH_ARGS -SkipSingleFile"
+        fi
+        if [ "${{ steps.params.outputs.skip-homebrew }}" = "true" ]; then
+          PWSH_ARGS="$PWSH_ARGS -SkipHomebrew"
+        fi
+        
+        # Run packaging script
+        pwsh ./scripts/package-all.ps1 \
+          -OutputDir "./dist" \
+          -Version "${{ steps.version.outputs.version }}" \
+          -Platforms "${{ steps.params.outputs.platforms }}" \
+          $PWSH_ARGS
+          
+    - name: 📊 Package summary
+      run: |
+        echo "## 📦 Distribution Packages Generated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Platforms:** ${{ steps.params.outputs.platforms }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -d "./dist" ]; then
+          echo "### 📋 Package Files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size | Type |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|------|" >> $GITHUB_STEP_SUMMARY
+          
+          find ./dist -type f \( -name "*.nupkg" -o -name "easycli-demo-*" -o -name "*.rb" -o -name "*.tar.gz" \) | while read -r file; do
+            relative_path=${file#"./dist/"}
+            file_size=$(du -h "$file" | cut -f1)
+            
+            case "$file" in
+              *.nupkg) file_type=".NET Tool" ;;
+              *.tar.gz) file_type="Archive" ;;
+              *.rb) file_type="Homebrew Formula" ;;
+              *linux*) file_type="Linux Executable" ;;
+              *win*) file_type="Windows Executable" ;;
+              *osx*) file_type="macOS Executable" ;;
+              *) file_type="Executable" ;;
+            esac
+            
+            echo "| \`$relative_path\` | $file_size | $file_type |" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          # Calculate total size
+          total_size=$(find ./dist -type f \( -name "*.nupkg" -o -name "easycli-demo-*" -o -name "*.rb" -o -name "*.tar.gz" \) -exec du -b {} + | awk '{sum+=$1} END {print sum}')
+          total_size_mb=$(echo "scale=2; $total_size / 1024 / 1024" | bc)
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total package size:** ${total_size_mb}MB" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ No packages were generated" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+    - name: 📤 Upload distribution artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: easycli-distribution-v${{ steps.version.outputs.version }}
+        path: ./dist/
+        retention-days: 30
+        if-no-files-found: warn
+        
+    - name: 📤 Upload release assets (on release)
+      if: github.event_name == 'release'
+      run: |
+        # Upload all distribution files to the release
+        if [ -d "./dist" ]; then
+          find ./dist -type f \( -name "*.nupkg" -o -name "*.tar.gz" -o -name "*.rb" \) | while read -r file; do
+            echo "📤 Uploading $(basename "$file")..."
+            gh release upload "${{ github.event.release.tag_name }}" "$file" --clobber
+          done
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 🎉 Success notification
+      run: |
+        echo "✅ Distribution packaging completed successfully!"
+        echo "📦 Version: ${{ steps.version.outputs.version }}"
+        echo "🚀 Platforms: ${{ steps.params.outputs.platforms }}"
+        
+        if [ "${{ github.event_name }}" = "release" ]; then
+          echo "🎊 Release assets uploaded to: ${{ github.event.release.html_url }}"
+        else
+          echo "📋 Artifacts available in workflow run"
+        fi
