@@ -809,7 +809,7 @@ namespace EasyCLI.Shell
             // Perform cleanup if not already done
             try
             {
-                _ = PerformShutdownCleanupAsync().Wait(TimeSpan.FromSeconds(2));
+                PerformShutdownCleanupAsync().GetAwaiter().GetResult();
             }
             catch
             {
