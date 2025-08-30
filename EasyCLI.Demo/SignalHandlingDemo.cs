@@ -1,4 +1,5 @@
 using EasyCLI.Console;
+using EasyCLI.Extensions;
 using EasyCLI.Shell;
 using EasyCLI.Shell.SignalHandling;
 using System;
@@ -45,7 +46,7 @@ namespace EasyCLI.Demo
         /// <summary>
         /// Demo command that registers cleanup actions and simulates work.
         /// </summary>
-        private class DemoCleanupCommand : ICleanupAwareCommand
+        private sealed class DemoCleanupCommand : ICleanupAwareCommand
         {
             public string Name => "demo";
             public string Description => "Demonstrates cleanup hooks with a long-running task";
